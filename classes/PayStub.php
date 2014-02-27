@@ -5,9 +5,12 @@ class PayStub
 {
 
     private $_id;
+    private $_payPeriodStartDate;
     private $_employee;
     private $_name;
+    private $_address;
     private $_rank;
+    private $_taxId;
     private $_departments;
     private $_salary;
     private $_numDeductions;
@@ -18,6 +21,7 @@ class PayStub
      * Constructs a new PayStub instance.
      *
      * @param   int             $id
+     * @param   Date            $payPeriodStartDate
      * @param   Employee        $employee
      * @param   string          $name
      * @param   string          $address
@@ -30,12 +34,15 @@ class PayStub
      * @param   double          $taxRate
      */
     public function __construct(
-        $id, Employee $employee, $name, $address, $rank, $taxId, $departments,
+        $id, DateTime $payPeriodStartDate, Employee $employee,
+        $name, $address, $rank, $taxId, $departments,
         $salary, $numDeductions, $taxWithheld, $taxRate
     ) {
         if (!is_int($id))
             throw new Exception("The id must be an integer");
         $this->_id = (int) $id;
+
+        $this->_payPeriodStartDate = $payPeriodStartDate;
 
         $this->_employee = $employee;
 
@@ -44,10 +51,20 @@ class PayStub
             throw new Exception("The name cannot be an empty string");
         $this->_name = $name;
 
+        $address = trim($address);
+        if (empty($address))
+            throw new Exception("The address cannot be an empty string");
+        $this->_address = $address;
+
         $rank = trim($rank);
         if (empty($rank))
             throw new Exception("The rank cannot be an empty string");
         $this->_rank = $rank;
+
+        $taxId = trim($taxId);
+        if (empty($taxId))
+            throw new Exception("The taxId cannot be an empty string");
+        $this->_taxId = $taxId;
 
         try {
             if (!is_array($departments))
@@ -83,6 +100,10 @@ class PayStub
         return $this->_id;
     } // getId()
 
+    protected function getPayPeriodStartDate() {
+        return $this->_payPeriodStartDate;
+    } // getPayPeriodStartDate()
+
     protected function getEmployee() {
         return $this->_employee;
     } // getEmployee()
@@ -91,9 +112,17 @@ class PayStub
         return $this->_name;
     } // getName()
 
+    protected function getAddress() {
+        return $this->_address;
+    } // getAddress()
+
     protected function getRank() {
         return $this->_rank;
     } // getRank()
+
+    protected function getTaxId() {
+        return $this->_taxId;
+    } // getTaxId()
 
     protected function getDepartments() {
         return $this->_departments;
@@ -116,8 +145,7 @@ class PayStub
     } // getTaxRate()
 
     public function __toString() {
-        return __CLASS__ ."(id=$this->id, employee=$this->employee, name=$this->name, rank=$this->rank,
-            departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate)";
+        return __CLASS__ ."(id=$this->id, payPeriodStartDate=". $this->payPeriodStartDate->format("Y-m-d H:i:sP") .", employee=$this->employee, name=$this->name, address=$this->address, rank=$this->rank, taxId=$this->taxId, departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate)";
     } // __toString
 
 } // class PayStub
