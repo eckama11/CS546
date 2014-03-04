@@ -12,4 +12,6 @@ CREATE TABLE department(id INT NOT NULL AUTO_INCREMENT, name VARCHAR(50) NOT NUL
 
 CREATE TABLE paystub(id INT NOT NULL AUTO_INCREMENT, employee INT NOT NULL, name VARCHAR(50) NOT NULL, rank INT NOT NULL, department INT NOT NULL, salary DECIMAL(9,2) UNSIGNED NOT NULL, deductions INT NOT NULL, taxWithheld DECIMAL(9,2) UNSIGNED NOT NULL, FOREIGN KEY (rank) REFERENCES rank(id), FOREIGN KEY (department) REFERENCES department(id), PRIMARY KEY (id));	
 
+CREATE TABLE loginSession(sessionID VARCHAR(128) NOT NULL, authenticateEmployee INT NOT NULL, PRIMARY KEY(sessionID), FOREIGN KEY(authenticateEmployee) REFERENCES employee(id));
+
 CREATE TABLE employeeDepartmentAssociation(employee INT, department INT, FOREIGN KEY (employee) REFERENCES employee(id), FOREIGN KEY (department) REFERENCES department(id));
