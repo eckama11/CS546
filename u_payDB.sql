@@ -1,15 +1,8 @@
-
 DROP DATABASE IF EXISTS u_pay;
 
 CREATE DATABASE u_pay;
 USE u_pay;
 
-CREATE TABLE loginSession(
-    sessionId VARCHAR(255) NOT NULL,
-    authenticatedEmployee INT NOT NULL,
-    PRIMARY KEY(sessionID),
-    FOREIGN KEY(authenticatedEmployee) REFERENCES employee(id)
-);
 
 CREATE TABLE taxRate(
     id INT NOT NULL AUTO_INCREMENT,
@@ -48,6 +41,14 @@ CREATE TABLE employee(
     PRIMARY KEY (id)
 );
 
+CREATE TABLE loginSession(
+    sessionId VARCHAR(255) NOT NULL,
+    authenticatedEmployee INT NOT NULL,
+    PRIMARY KEY(sessionID),
+    FOREIGN KEY(authenticatedEmployee) REFERENCES employee(id)
+);
+
+
 CREATE TABLE employeeDepartmentAssociation(
     employee INT NOT NULL,
     department INT NOT NULL,
@@ -82,7 +83,23 @@ CREATE TABLE paystubDepartmentAssociation(
 );
 
 -- Create the user which the app will use to connect to the DB
-DROP USER 'u_pay'@'localhost';
+DROP PROCEDURE IF EXISTS u_pay.drop_user_if_exists ;
+DELIMITER $$
+CREATE PROCEDURE u_pay.drop_user_if_exists()
+BEGIN
+  DECLARE foo BIGINT DEFAULT 0 ;
+  SELECT COUNT(*)
+  INTO foo
+    FROM mysql.user
+      WHERE User = 'u_pay' and  Host = 'localhost';
+   IF foo > 0 THEN
+         DROP USER 'u_pay'@'localhost' ;
+  END IF;
+END ;$$
+DELIMITER ;
+CALL u_pay.drop_user_if_exists() ;
+DROP PROCEDURE IF EXISTS u_pay.drop_users_if_exists ;
+
 CREATE USER 'u_pay'@'localhost' IDENTIFIED BY 'u_pay';
 GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE, LOCK TABLES, CREATE TEMPORARY TABLES ON u_pay.* TO 'u_pay'@'localhost';
 
@@ -138,4 +155,3 @@ INSERT INTO employee (
     activeFlag, username, password, name, address, rank, taxId, numDeductions, salary
   ) VALUES
     ( 1, 'admin', 'admin', 'Administrator', '',  1, '', 0, 0.00 );
-
