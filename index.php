@@ -6,6 +6,7 @@
 		<!-- StyleSheet -->
 		<link rel="stylesheet" href="css/bootstrap.min.css" />
 		<link rel="stylesheet" href="css/custom.css" />
+		<style> input { max-width: 100%; } </style>
 	</head>
  
 	<body>
@@ -29,19 +30,19 @@
    		<div class="container padded">
     		<div class="row" >
     			<div class="col-md-2 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;">
-            		<form class="form-horizontal" method="post" action="/form/">
+            		<form class="form-horizontal" method="post" action="clogin.php">
                			<fieldset>
-                  			<legend>Login</legend>
+                  			<legend style="color:black;">Login</legend>
                    			<div class="control-group">
-                        		<label class="control-label" for="id_username">Username</label>
+                        		<label name="username" class="control-label" for="id_username" style="color:black;">Username</label>
                         		<div class="controls">
-                        			<input name="username" maxlength="100" placeholder="Enter your username..." type="text" class="input-large" id="id_username" />
+                        			<input style="color:black;" name="username" maxlength="50" placeholder="Enter your username..." type="text" class="input-large" id="id_username" />
                     			</div>
                     		</div>
                 			<div class="control-group">
-                        		<label class="control-label" for="id_password">Password</label>
+                        		<label name="password" class="control-label" for="id_password" style="color:black;">Password</label>
                         		<div class="controls">
-                            		<input name="password" maxlength="100" placeholder="Enter your password..." type="password" class="input-large" id="id_password" />
+                            		<input style="color:black;" name="password" maxlength="50" placeholder="Enter your password..." type="password" class="input-large" id="id_password" />
                         		</div>
                         	</div>
                         	</br>
