@@ -1,4 +1,7 @@
 <?php
+include "LoginSession.php";
+include "Employee.php";
+include "Rank.php";
 
 class DBInterface {
 
@@ -63,7 +66,64 @@ class DBInterface {
         return $session;
     } // writeLoginSession
 
-   
+   /**
+     * Authenticates an employee and creates a LoginSession.
+     *
+     * @param   String  $username   The username of the employee to authenticate.
+     * @param   String  $password   The password to use for authentication.
+     *
+     * @return  LoginSession    A new LoginSession instance for the authenticated employee.
+     */
+    public function createLoginSession( $username, $password ) {
+        // Authenticate the employee based on username/password
+        static $loginStmt;
+        static $insertStmt;
+        if ($loginStmt == null) {
+            $loginStmt = $this->dbh->prepare(
+                  "SELECT id ".
+                    "FROM employee ".
+                    "WHERE username=:username ".
+                        "AND password=:password"
+                );
+
+            $insertStmt = $this->dbh->prepare(
+                    "INSERT INTO loginSession ( ".
+                            "sessionId, authenticatedEmployee ".
+                        ") VALUES ( ".
+                            ":sessionId, :authenticatedEmployee ".
+                        ")"
+                );
+        }
+
+        $success = $loginStmt->execute(Array(
+                ':username' => $username,
+                ':password' => $password
+            ));
+        if ($success === false)
+            throw new Exception("Unable to query database to authenticate employee");
+
+        $row = $loginStmt->fetchObject();
+        if ($row === false)
+            throw new Exception("Unable to authenticate employee, incorrect username or password");
+
+        $authenticatedEmployee = $row->id;
+		$authenticatedEmployee = (int)$authenticatedEmployee;
+        // Generate a new session ID
+        // This may be somewhat predictable, but should be strong enough for purposes of the demo
+        $sessionId = md5(uniqid(microtime()) . $_SERVER['REMOTE_ADDR'] . $_SERVER['HTTP_USER_AGENT']);
+
+        $rv = new LoginSession( $sessionId, $this->readEmployee($authenticatedEmployee) );
+
+        // Create the loginSession record
+        $success = $loginStmt->execute(Array(
+                ':sessionId' => $sessionId,
+                ':authenticatedEmployee' => $authenticatedEmployee
+            ));
+        if ($success === false)
+            throw new Exception("Unable to create session record in database");
+
+        return $rv;
+    } // createLoginSession
     /**
      * Removes a login session from the database.
      * @param   LoginSession    $session    The session to destroy.
@@ -455,14 +515,14 @@ class DBInterface {
         $row = $stmt->fetchObject();
         if ($row === false)
             throw new Exception("No such employee: $id");
-
+		
         return new Employee(
                 $row->id,
                 $row->username,
                 $row->password,
                 $row->name,
                 $row->address,
-                $this->readRank( $row->rank ),
+                $this->readRank( (int)$row->rank ),
                 $row->taxId,
                 $row->numDeductions,
                 $row->salary

@@ -1,5 +1,6 @@
 <?php
 	include "classes/DBInterface.php";
+	$myclass = new DBInterface("localhost",  "u_pay",  "u_pay", "");
 	$sql = mysqli_connect("localhost", "u_pay", "", "u_pay") or die(mysql_error());
 	mysqli_select_db($sql, "u_pay") or die(mysqli_error()); 
 	
@@ -16,7 +17,7 @@
 		
 		$count = mysqli_num_rows($result);
 		if ($count==1) {
-			$rv = createLoginSession($username, $password);
+			$rv = $myclass->createLoginSession($username, $password);
 			header("location:Admin.php");
 		}
 		else {
