@@ -34,7 +34,6 @@
             					<li><a href="Generate.php">Generate Pay Stubs</a></li>
           					</ul>
         				</li>
-						<li><a href="Admin.php">Admin</a></li>
 						<li><a href="logout.php">Logout</a></li>
 					</ul>
 				</div>
