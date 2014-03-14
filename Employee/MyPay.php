@@ -1,34 +1,8 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-	<head>
- 		<title>Employee</title>
- 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<!-- StyleSheet -->
-		<link rel="stylesheet" href="../css/bootstrap.min.css" />
-		<link rel="stylesheet" href="../css/custom.css" />
-	</head>
- 
-	<body>
-		<div class="navbar navbar-inverse navbar-static-top">
-			<div class="container">
-				<a href="#" class="navbar-brand">UPay Solutions</a>
-				<button class="navbar-toggle" data-toggle="collapse" data-target=".navHeaderCollapse">
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-				</button>
-				<div class="collapse navbar-collapse navHeaderCollapse">
-					<ul class="nav navbar-nav navbar-right">
-						<li><a href=#">MyPay</a></li>
-						<li><a href="MyInfo.php">MyInfo</a></li>
-						<li><a href="Settings.php">Account Settings</a></li>
-						<li><a href="#">Logout</a></li>
-					</ul>
-				</div>
-			</div>
-		</div>
-		
-		<div>
-		</div>
-	</body>
-</html>
+<?php
+    require_once(dirname(__FILE__)."/../common.php");
+    if (!isset($loginSession))
+        doLogoutRedirect();
+?>
+<div>
+Show the pay stub listing here
+</div>

@@ -44,7 +44,7 @@ function doLogin(form) {
         return false;
     }
 
-    $("#loginForm").hide();
+    $("#loginDiv").hide();
     $("#spinner").show();
 
     $.ajax({
@@ -55,7 +55,7 @@ function doLogin(form) {
         })
         .done(function(data) {
             if (data.error != null) {
-                $("#loginForm").show();
+                $("#loginDiv").show();
                 $("#spinner").hide();
                 showError(data.error);
             } else
@@ -96,7 +96,7 @@ function doLogin(form) {
                     <div style="color:black;padding-bottom:32px;">Authenticating...</div>
                     <img src="spinner.gif">
                 </div>
-    			<div id="loginForm" class="col-md-2 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;">
+    			<div id="loginDiv" class="col-md-2 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;">
             		<form class="form-horizontal" method="post" onsubmit="return doLogin(this)">
                			<fieldset>
                   			<legend style="color:black;">Login</legend>
@@ -125,6 +125,9 @@ function doLogin(form) {
 		<!-- JavaScript -->
 		<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
 		<script src="js/bootstrap.js"></script>
+        <script>
+            $('#username').focus();
+        </script>
 	</body>
 </html>
 	

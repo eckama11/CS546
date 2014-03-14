@@ -42,15 +42,16 @@ if (array_key_exists(session_name(), $_COOKIE)) {
 
 
 function doUnauthorizedRedirect() {
-    header("Location: ". BASE_URL ."index.php");
+    header("Location: ". BASE_URL ."page.php/unauthorized");
+    exit;
 } // doUnauthorizedRedirect()
 
 
 function getLoginRedirect(LoginSession $session) {
     return BASE_URL .
             ($session->isAdministrator
-                ? "Admin/Admin.php"
-                : "Employee/Employee.php");
+                ? "page.php/Admin/Admin"
+                : "page.php/Employee/MyInfo");
 } // getLoginRedirect(LoginSession $session)
 
 
