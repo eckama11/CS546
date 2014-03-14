@@ -154,4 +154,9 @@ INSERT INTO rank (
 INSERT INTO employee (
     activeFlag, username, password, name, address, rank, taxId, numDeductions, salary
   ) VALUES
-    ( 1, 'admin', 'admin', 'Administrator', '',  1, '', 0, 0.00 );
+    ( 1, 'admin', 'admin', 'Administrator', 'No Address',  1, 'Untaxable', 0, 0.00 );
+    
+INSERT INTO employee (
+    activeFlag, username, password, name, address, rank, taxId, numDeductions, salary
+  ) VALUES
+    ( 1, 'brad', 'brad', 'Brad Fisher', 'Somewhere', 9, '123taxme', 5, 10.00 );

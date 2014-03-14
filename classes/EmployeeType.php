@@ -25,6 +25,17 @@ class EmployeeType
         return $softwareDeveloper;
     } // SoftwareDeveloper()
 
+    public static function fromName($name) {
+        switch (strtolower($name)) {
+        case 'administrator':
+            return  self::Administrator();
+        case 'manager':
+            return self::Manager();
+        case 'software developer':
+            return self::SoftwareDeveloper();
+        } // switch
+        throw new Exception("Unknown rank identifier '$name'");
+    } // fromName
 
     private $_name;
     private $_isAdministrator;

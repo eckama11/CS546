@@ -27,6 +27,10 @@ class LoginSession
         return $this->_authenticatedEmployee;
     } // getAuthenticatedEmployee
 
+    protected function getIsAdministrator() {
+        return $this->authenticatedEmployee->rank->employeeType->isAdministrator;
+    } // getIsAdministrator()
+
     public function __toString() {
         return __CLASS__ ."(sessionId=$this->sessionId, authenticatedEmployee=$this->authenticatedEmployee)";
     } // __toString

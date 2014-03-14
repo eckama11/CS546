@@ -1,7 +1,8 @@
 <?php
-include "LoginSession.php";
-include "Employee.php";
-include "Rank.php";
+//require_once( "LoginSession.php" );
+//require_once( "Employee.php" );
+//require_once( "EmployeeType.php" );
+//require_once( "Rank.php" );
 
 class DBInterface {
 
@@ -107,7 +108,7 @@ class DBInterface {
             throw new Exception("Unable to authenticate employee, incorrect username or password");
 
         $authenticatedEmployee = $row->id;
-		$authenticatedEmployee = (int)$authenticatedEmployee;
+
         // Generate a new session ID
         // This may be somewhat predictable, but should be strong enough for purposes of the demo
         $sessionId = md5(uniqid(microtime()) . $_SERVER['REMOTE_ADDR'] . $_SERVER['HTTP_USER_AGENT']);
@@ -115,7 +116,7 @@ class DBInterface {
         $rv = new LoginSession( $sessionId, $this->readEmployee($authenticatedEmployee) );
 
         // Create the loginSession record
-        $success = $loginStmt->execute(Array(
+        $success = $insertStmt->execute(Array(
                 ':sessionId' => $sessionId,
                 ':authenticatedEmployee' => $authenticatedEmployee
             ));
@@ -147,8 +148,9 @@ class DBInterface {
      * @return  TaxRate A TaxRate instance matching the specified ID.
      */
     public function readTaxRate( $id ) {
-        if (!is_int($id))
-            throw new Exception("\$id must be an integer");
+        if (!is_numeric($id))
+            throw new Exception("Parameter \$id must be an integer");
+        $id = (int) $id;
 
         static $stmt;
         if ($stmt == null)
@@ -199,8 +201,9 @@ class DBInterface {
      * @return  Department  A Department instance matching the specified ID.
      */
     public function readDepartment( $id ) {
-        if (!is_int($id))
-            throw new Exception("\$id must be an integer");
+        if (!is_numeric($id))
+            throw new Exception("Parameter \$id must be an integer");
+        $id = (int) $id;
 
         static $stmt;
         if ($stmt == null)
@@ -251,8 +254,9 @@ class DBInterface {
      * @return  Rank  A Rank instance matching the specified ID.
      */
     public function readRank( $id ) {
-        if (!is_int($id))
-            throw new Exception("\$id must be an integer");
+        if (!is_numeric($id))
+            throw new Exception("Parameter \$id must be an integer");
+        $id = (int) $id;
 
         static $stmt;
         if ($stmt == null)
@@ -270,7 +274,7 @@ class DBInterface {
         if ($row === false)
             throw new Exception("No such rank: $id");
 
-        return new Rank( $row->id, $row->name, $row->baseSalary, $row->employeeType );
+        return new Rank( $row->id, $row->name, $row->baseSalary, EmployeeType::fromName($row->employeeType) );
     } // readRank
 
     /**
@@ -303,8 +307,9 @@ class DBInterface {
      * @return  Array[Department]   Array of the departments for the paystub.
      */
     protected function readDepartmentsForPayStub( $paystubId ) {
-        if (!is_int($paystubId))
-            throw new Exception("\$paystubId must be an integer");
+        if (!is_numeric($paystubId))
+            throw new Exception("Parameter \$paystubId must be an integer");
+        $paystubId = (int) $paystubId;
 
         static $stmt;
         if ($stmt == null)
@@ -334,8 +339,9 @@ class DBInterface {
      * @param   Array[Department]   $departments    Array of Departments that associations should be created for.
      */
     protected function writeDepartmentsForPayStub( $paystubId, $departments ) {
-        if (!is_int($paystubId))
+        if (!is_numeric($paystubId))
             throw new Exception("\$paystubId must be an integer");
+        $paystubId = (int) $paystubId;
 
         foreach ($departments as $dept) {
             if (!($dept instanceof Department))
@@ -368,8 +374,9 @@ class DBInterface {
      * @return  PayStub A PayStub instance containing the data for the requested pay stub.
      */
     public function readPayStub( $id ) {
-        if (!is_int($id))
-            throw new Exception("\$id must be an integer");
+        if (!is_numeric($id))
+            throw new Exception("Parameter \$id must be an integer");
+        $id = (int) $id;
 
         static $stmt;
         if ($stmt == null)
@@ -457,8 +464,9 @@ class DBInterface {
      * @return  Array[PayStub]  Array of PayStub instances.
      */
     public function readPayStubs( $employeeId ) {
-        if (!is_int($employeeId))
-            throw new Exception("\$employeeId must be an integer");
+        if (!is_numeric($employeeId))
+            throw new Exception("Parameter \$employeeId must be an integer");
+        $employeeId = (int) $employeeId;
 
         static $stmt;
         if ($stmt == null)
@@ -497,8 +505,9 @@ class DBInterface {
      * @return  Employee    An instance of Employee.
      */
     public function readEmployee( $id ) {
-        if (!is_int($id))
-            throw new Exception("\$id must be an integer");
+        if (!is_numeric($id))
+            throw new Exception("Parameter \$id must be an integer");
+        $id = (int) $id;
 
         static $stmt;
         if ($stmt == null)
@@ -518,11 +527,12 @@ class DBInterface {
 		
         return new Employee(
                 $row->id,
+                $row->activeFlag,
                 $row->username,
                 $row->password,
                 $row->name,
                 $row->address,
-                $this->readRank( (int)$row->rank ),
+                $this->readRank( $row->rank ),
                 $row->taxId,
                 $row->numDeductions,
                 $row->salary
@@ -643,8 +653,9 @@ class DBInterface {
      * @return  Array[Department]   Array of the departments for the employee.
      */
     public function readDepartmentsForEmployee( $employeeId ) {
-        if (!is_int($employeeId))
-            throw new Exception("\$employeeId must be an integer");
+        if (!is_numeric($employeeId))
+            throw new Exception("Parameter \$employeeId must be an integer");
+        $employeeId = (int) $employeeId;
 
         static $stmt;
         if ($stmt == null)
@@ -674,8 +685,9 @@ class DBInterface {
      * @return  Array[Employee]   Array of the Employees for a Department.
      */
     public function readEmployeesForDepartment( $departmentId ) {
-        if (!is_int($departmentId))
-            throw new Exception("\$departmentId must be an integer");
+        if (!is_numeric($departmentId))
+            throw new Exception("Parameter \$departmentId must be an integer");
+        $departmentId = (int) $departmentId;
 
         static $stmt;
         if ($stmt == null)

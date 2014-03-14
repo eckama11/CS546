@@ -34,8 +34,8 @@ class Employee
             $name, $address, Rank $rank, $taxId, $numDeductions, $salary
         )
     {
-        if (!is_int($id))
-            throw new Exception("The id must be an integer");
+        if (!is_numeric($id))
+            throw new Exception("The \$id parameter must be an integer");
         $this->_id = (int) $id;
 
         $this->activeFlag = $activeFlag;
@@ -58,9 +58,15 @@ class Employee
     } // getActiveFlag
 
     protected function setActiveFlag($newActiveFlag) {
-        if (!is_bool($newActiveFlag))
+        if ($newActiveFlag == "true")
+            $newActiveFlag = true;
+        else if (($newActiveFlag == "false") || ($newActiveFlag == null))
+            $newActiveFlag = false;
+
+        if (!is_bool($newActiveFlag) && !is_numeric($newActiveFlag))
             throw new Exception("The activeFlag must be set to a boolean value.");
-        $this->_activeFlag = (bool) $newActiveFlag;
+
+        $this->_activeFlag = ($newActiveFlag && true);
     } // setActiveFlag
 
     protected function getUsername() {
@@ -130,7 +136,7 @@ class Employee
     } // getNumDeductions
     
     protected function setNumDeductions($newNumDeductions) {
-        if (!is_int($newNumDeductions) || ($newNumDeductions < 0))
+        if (!is_numeric($newNumDeductions) || ($newNumDeductions < 0))
             throw new Exception("NumDeductions must be an integer greater or equal to 0");
         $this->_numDeductions = (int) $newNumDeductions;
     } // setNumDeductions

@@ -14,8 +14,9 @@ class Department
      * @param   string  $name  The name assigned to the department.
      */
     public function __construct($id, $name) {
-        if (!is_int($id) || ($id < 0))
+        if (!is_numeric($id) || ($id < 0))
             throw new Exception('The $id parameter must be an integer');
+        $id = (int) $id;
 
         $name = trim($name);
         if (empty($name))

@@ -16,14 +16,17 @@ class TaxRate
      * @param   float   $taxRate        The tax rate to apply (eg. 0.10 = tax rate of 10%)
      */
     public function __construct($id, $minimumSalary, $taxRate) {
-        if (!is_int($id) || ($id < 0))
+        if (!is_numeric($id) || ($id < 0))
             throw new Exception('The $id parameter must be an integer');
+        $id = (int) $id;
 
         if (!is_numeric($minimumSalary) || ($minimumSalary < 0))
             throw new Exception('The $minimumSalary parameter must be a number greater or equal to 0');
+        $minimumSalary = (double) $minimumSalary;
 
         if (!is_numeric($taxRate) || ($taxRate < 0))
             throw new Exception('The $taxRate parameter must be a number greater greater or equal to 0');
+        $taxRate = (double) $taxRate;
 
         $this->_id = $id;
         $this->_minimumSalary = $minimumSalary;

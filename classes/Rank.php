@@ -18,8 +18,9 @@ class Rank
      * @param   EmployeeType $employeeType   The type of employee for this rank (Administrator, Manager, Developer)
      */
     public function __construct($id, $name, $baseSalary, EmployeeType $employeeType) {
-        if (!is_int($id) || ($id < 0))
+        if (!is_numeric($id) || ($id < 0))
             throw new Exception('The $id parameter must be an integer');
+        $id = (int) $id;
 
         $name = trim($name);
         if (empty($name))
@@ -27,6 +28,7 @@ class Rank
 
         if (!is_numeric($baseSalary) || ($baseSalary < 0))
             throw new Exception('The $baseSalary parameter must be a number greater than 0');
+        $baseSalary = (double) $baseSalary;
 
         $this->_id = $id;
         $this->_name = $name;
