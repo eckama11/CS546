@@ -1,9 +1,13 @@
-<?php
-    require_once(dirname(__FILE__)."/../common.php");
-    if (!isset($loginSession)) 
-        doLogoutRedirect(); 
-        echo '     
-    	<div class="container col-md-6 col-md-offset-3">
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<!-- Le styles -->
+	<link href="css/bootstrap.min.css" rel="stylesheet">
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.js"></script>
+	</head>
+ 
+	<body>
+		<div class="container col-md-6 col-md-offset-3">
 			<div id="content" >
 				<ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
 					<li class="active"><a href="#basic" data-toggle="tab">Basic</a></li>
@@ -81,7 +85,12 @@
 					</div>
 				</div>
 			</div>
-			
-		</div> 
-		';
-?>
+			<script type="text/javascript">
+				jQuery(document).ready(function ($) {
+					$('#tabs').tab();
+				});
+			</script>    
+		</div> <!-- container -->
+		<script type="text/javascript" src="js/bootstrap.min.js"></script>
+	</body>
+</html>
