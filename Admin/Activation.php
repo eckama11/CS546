@@ -1,3 +1,11 @@
+<?php
+    require_once(dirname(__FILE__)."/../common.php");
+    if (!isset($loginSession))
+        doUnauthenticatedRedirect();
+    if (!$loginSession->isAdministrator)
+        doUnauthorizedRedirect();
+?>
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
@@ -10,38 +18,34 @@
 	</head>
  
 	<body>
-		<div class="navbar navbar-inverse navbar-static-top">
-			<div class="container">
-				<a href="#" class="navbar-brand">UPay Solutions</a>
-				<button class="navbar-toggle" data-toggle="collapse" data-target=".navHeaderCollapse">
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-				</button>
-				<div class="collapse navbar-collapse navHeaderCollapse">
-					<ul class="nav navbar-nav navbar-right">
-						<li><a href="MyPay.php">MyPay</a></li>
-						<li><a href="MyInfo.php">MyInfo</a></li>
-						<li><a href="Pass.php">Account Settings</a></li>
-						<li class="dropdown">
-          					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Admin <b class="caret"></b></a>
-          					<ul class="dropdown-menu">
-            					<li><a href="AddEmployee.php">Add Employee</a></li>
-            					<li><a href="Activation.php">Activate/Deactivate</a></li>
-            					<li><a href="ViewEmpStub.php">View Pay Stubs</a></li>
-            					<li><a href="ChangeEmpPass.php">Change Employee Passwords</a></li>
-            					<li><a href="Modify.php">Modify Employee</a></li>
-            					<li><a href="Generate.php">Generate Pay Stubs</a></li>
-          					</ul>
-        				</li>
-						<li><a href="Admin.php">Admin</a></li>
-						<li><a href="logout.php">Logout</a></li>
-					</ul>
-				</div>
-			</div>
-		</div>
-		
-		<div>
+		</br>
+		<div id="loginDiv" class="col-md-2 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;">
+			<form class="form-horizontal" method="post" onsubmit="return doLogin(this)">
+				<input type="hidden" name="page" id="page" value="<?php echo htmlentities(@$_SERVER['PATH_INFO']); ?>"/>
+				<fieldset>
+					<legend style="color:black;">Reset Password</legend>
+					<div class="control-group">
+						<label class="control-label" for="curPass">Current Password</label>
+						<div class="controls">
+							<input name="curPass" maxlength="50" placeholder="Current password" type="password" class="input-large" id="curPass" />
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="newPass1">New Password</label>
+						<div class="controls">
+							<input name="newPass1" maxlength="50" placeholder="New password" type="password" class="input-large" id="newPass1" />
+						</div>
+					</div>
+					<label class="control-label" for="newPass2">Retype New Password</label>
+						<div class="controls">
+							<input name="newPass2" maxlength="50" placeholder="New password" type="password" class="input-large" id="newPass2" />
+						</div>
+					</br>
+					<div>
+						<input class="btn btn-primary" name="commit" type="submit" value="Reset" />
+					</div>
+				</fieldset>
+			</form>
 		</div>
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
 		<script type="text/javascript" src="../js/bootstrap.min.js"></script> 
