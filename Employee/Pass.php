@@ -58,25 +58,35 @@ function changePassword(form) {
         <div id="successDiv" class="col-md-3 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;display:none">
         Your password has been successfully updated
         </div>
-        <div id="passwordDiv" class="col-md-3 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;">
-            <form role="form" onsubmit="return changePassword(this)">
-                <div class="form-group">
-                    <label for="currentPassword">Current Password</label>
+        <form role="form" class="form-horizontal" onsubmit="return changePassword(this)">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Username</label>
+                <div class="col-sm-10">
+                    <p class="form-control-static"><?php echo htmlentities($loginSession->authenticatedEmployee->username); ?></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="currentPassword">Current Password</label>
+                <div class="col-sm-10">
                     <input type="password" class="form-control" name="currentPassword" id="currentPassword" placeholder="Enter current password"/>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="newPassword1">New Password</label>
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="newPassword1">New Password</label>
+                <div class="col-sm-10">
                     <input type="password" class="form-control" name="newPassword1" id="newPassword1" placeholder="Enter new password"/>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="newPassword1">Verify New Password</label>
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="newPassword1">Verify New Password</label>
+                <div class="col-sm-10">
                     <input type="password" class="form-control" name="newPassword2" id="newPassword2" placeholder="Enter new password"/>
                 </div>
+            </div>
 
-                <button type="submit" class="btn btn-default">Submit</button>
-            </form>
-        </div>
+            <button type="submit" class="btn btn-default">Submit</button>
+        </form>
     </div>
 </div>

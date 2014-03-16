@@ -547,17 +547,22 @@ class DBInterface {
 
     /**
      * Reads a list of all employees from the database.
+     * @param   Boolean $activeFlag Whether to retrieve active employees (true) or inactive employees (false)
      * @return  Array[Employee] Array of Employee instances.
      */
-    public function readEmployees() {
+    public function readEmployees($activeFlag = true) {
         static $stmt;
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
                     "SELECT id, activeFlag, username, password, name, address, rank, taxId, numDeductions, salary ".
-                        "FROM employee"
+                        "FROM employee ".
+                        "WHERE activeFlag=:activeFlag ".
+                        "ORDER BY name"
                 );
 
-        $success = $stmt->execute(Array( $id ));
+        $success = $stmt->execute(Array(
+                ':activeFlag' => $activeFlag
+            ));
         if ($success === false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for employee records"));
 
@@ -565,6 +570,7 @@ class DBInterface {
         while ($row = $stmt->fetchObject()) {
             $rv[] = new Employee(
                     $row->id,
+                    $row->activeFlag,
                     $row->username,
                     $row->password,
                     $row->name,

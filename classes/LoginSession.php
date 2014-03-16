@@ -1,5 +1,5 @@
 <?php
-include "GetterSetter.php";
+require_once("GetterSetter.php");
 
 class LoginSession
     extends GetterSetter
