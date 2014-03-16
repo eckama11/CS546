@@ -5,7 +5,7 @@ $prefix = dirname(__FILE__) . DIRECTORY_SEPARATOR;
 $page = realpath($prefix . @$_SERVER['PATH_INFO'] .".php");
 
 if (!isset($loginSession))
-    doLogoutRedirect();
+    doUnauthenticatedRedirect();
 else if ((substr($page, 0, strlen($prefix)) != $prefix) || !is_readable($page))
     doUnauthorizedRedirect();
 
@@ -19,6 +19,27 @@ else if ((substr($page, 0, strlen($prefix)) != $prefix) || !is_readable($page))
 		<!-- StyleSheet -->
 		<link rel="stylesheet" href="css/bootstrap.min.css" />
 		<link rel="stylesheet" href="css/custom.css" />
+<script>
+function requiredField(elem, errorMsg) {
+    var rv = elem.val();
+    if (rv == "") {
+        elem.tooltip("destroy")
+            .addClass("error")
+            .data("title", errorMsg)
+            .tooltip();
+    } else {
+        elem.tooltip("destroy")
+            .removeClass("error")
+            .data("title", "");
+    }
+    return rv;
+}
+
+function showError(message) {
+    $("#message").text(message);
+    $("#messageAlert").show().delay(3000).fadeOut("slow");
+}
+</script>
 	</head>
  
 	<body>
@@ -53,6 +74,11 @@ else if ((substr($page, 0, strlen($prefix)) != $prefix) || !is_readable($page))
 				</div>
 			</div>
 		</div>
+
+        <div id="messageAlert" class="alert alert-danger" style="display:none;position:absolute;width:100%">
+            <span id="message"></span>
+        </div>
+
 <?php   require_once($page); ?>
 		<!-- JavaScript -->
 		<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>

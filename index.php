@@ -1,11 +1,12 @@
 <?php
 require_once("common.php");
 if (isset($loginSession))
-    doLoginRedirect($loginSession);
+    doLoginRedirect($loginSession, @$_SERVER['PATH_INFO']);
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
+        <base href="<?php echo htmlentities(BASE_URL); ?>">
  		<title>Login</title>
  		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<!-- StyleSheet -->
@@ -13,9 +14,8 @@ if (isset($loginSession))
 		<link rel="stylesheet" href="css/custom.css" />
 		<style>
         input { max-width: 100%; }
-        .error { border: 1px solid #b94a48!important; background-color: #fee!important; }
         </style>
-<script type="text/javascript">
+<script>
 function requiredField(elem, errorMsg) {
     var rv = elem.val();
     if (rv == "") {
@@ -98,18 +98,19 @@ function doLogin(form) {
                 </div>
     			<div id="loginDiv" class="col-md-2 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;">
             		<form class="form-horizontal" method="post" onsubmit="return doLogin(this)">
+              			<input type="hidden" name="page" id="page" value="<?php echo htmlentities(@$_SERVER['PATH_INFO']); ?>"/>
                			<fieldset>
                   			<legend style="color:black;">Login</legend>
                    			<div class="control-group">
-                        		<label class="control-label" for="username" style="color:black;">Username</label>
+                        		<label class="control-label" for="username">Username</label>
                         		<div class="controls">
-                        			<input style="color:black;" name="username" maxlength="50" placeholder="Enter your username..." type="text" class="input-large" id="username" />
+                        			<input name="username" maxlength="50" placeholder="Enter your username..." type="text" class="input-large" id="username" />
                     			</div>
                     		</div>
                 			<div class="control-group">
-                        		<label class="control-label" for="password" style="color:black;">Password</label>
+                        		<label class="control-label" for="password">Password</label>
                         		<div class="controls">
-                            		<input style="color:black;" name="password" maxlength="50" placeholder="Enter your password..." type="password" class="input-large" id="password" />
+                            		<input name="password" maxlength="50" placeholder="Enter your password..." type="password" class="input-large" id="password" />
                         		</div>
                         	</div>
                         	</br>

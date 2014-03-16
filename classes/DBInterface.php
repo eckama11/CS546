@@ -296,7 +296,7 @@ class DBInterface {
 
         $rv = Array();
         while ($row = $stmt->fetchObject())
-          $rv[] = new Rank( $row->id, $row->name, $row->baseSalary, $row->employeeType );
+          $rv[] = new Rank( $row->id, $row->name, $row->baseSalary, EmployeeType::fromName($row->employeeType) );
 
         return $rv;
     } // readRanks

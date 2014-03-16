@@ -1,8 +1,11 @@
 <?php
     require_once(dirname(__FILE__)."/../common.php");
     if (!isset($loginSession))
-        doLogoutRedirect();
+        doUnauthenticatedRedirect();
+    if (!$loginSession->isAdministrator)
+        doUnauthorizedRedirect();
 ?>
-<div>
-Welcome, <?php echo htmlentities($loginSession->authenticatedEmployee->name); ?>!
+<div class="container padded">
+<p>Welcome, <?php echo htmlentities($loginSession->authenticatedEmployee->name); ?>!</p>
+<p>Please select an action from the menu at the top of the screen.</p>
 </div>

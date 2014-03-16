@@ -1,4 +1,5 @@
-body{background-color: #F7F7F6;}
+body{background-color: #F7F7F6; color:black;}
 .login{padding-top: 65px;}
 .center{float: none; margin-left: auto; margin-right: auto;}
 .padded {padding: 70px;}
+.error { border: 1px solid #b94a48!important; background-color: #fee!important; }

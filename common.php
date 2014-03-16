@@ -47,16 +47,34 @@ function doUnauthorizedRedirect() {
 } // doUnauthorizedRedirect()
 
 
-function getLoginRedirect(LoginSession $session) {
-    return BASE_URL .
-            ($session->isAdministrator
-                ? "page.php/Admin/Admin"
-                : "page.php/Employee/MyInfo");
+function doUnauthenticatedRedirect() {
+    $pathInfo = '';
+    if (array_key_exists('PATH_INFO', $_SERVER)) {
+        $pathInfo = $_SERVER['PATH_INFO'];
+        if ($pathInfo{0} != '/')
+            $pathInfo = '/'. $pathInfo;
+    }
+
+    header("Location: ". BASE_URL ."index.php". $pathInfo);
+    exit;
+} // doUnauthenticatedRedirect()
+
+
+function getLoginRedirect(LoginSession $session, $page) {
+    if (!$page)
+        $page = ($session->isAdministrator
+                    ? "/Admin/Admin"
+                    : "/Employee/MyInfo");
+
+    if ($page{0} != '/')
+        $page = '/'. $page;
+
+    return BASE_URL ."page.php". $page;
 } // getLoginRedirect(LoginSession $session)
 
 
-function doLoginRedirect(LoginSession $session) {
-    header("Location: ". getLoginRedirect($session));
+function doLoginRedirect(LoginSession $session, $page) {
+    header("Location: ". getLoginRedirect($session, $page));
     exit;
-} // doLoginRedirect(LoginSession $session)
+} // doLoginRedirect(LoginSession $session, $page)
 
