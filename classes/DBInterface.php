@@ -20,6 +20,11 @@ class DBInterface {
         $this->dbh = new PDO($dsn, $dbUsername, $dbPassword);
     } // __construct
 
+    public function formatErrorMessage($stmt, $message) {
+        list($sqlState, $driverErrorCode, $driverErrorMessage) = $stmt->errorInfo();
+        return $message .": [$sqlState] $driverErrorCode: $driverErrorMessage";
+    } // formatSqlErrorMessage($pdoErrorInfo)
+
     /**
      * Reads a LoginSession object from the database.
      * @param   int $sessionId  The session ID of the LoginSession record to retrieve.
@@ -37,7 +42,7 @@ class DBInterface {
         $stmt->execute(Array($sessionId));
         $res = $stmt->fetchObject();
         if ($res === false)
-            throw new Exception("Unable to retrieve specified session from database");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to retrieve specified session from database"));
 
         return new LoginSession($res->sessionId, $this->readEmployee($res->authenticatedEmployee));
     } // readLoginSession
@@ -62,7 +67,7 @@ class DBInterface {
         ));
 
         if ($success === false)
-            throw new Exception("Unable to update specified session in database");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to update specified session in database"));
 
         return $session;
     } // writeLoginSession
@@ -84,7 +89,8 @@ class DBInterface {
                   "SELECT id ".
                     "FROM employee ".
                     "WHERE username=:username ".
-                        "AND password=:password"
+                        "AND password=:password ".
+                        "AND activeFlag=1"
                 );
 
             $insertStmt = $this->dbh->prepare(
@@ -101,7 +107,7 @@ class DBInterface {
                 ':password' => $password
             ));
         if ($success === false)
-            throw new Exception("Unable to query database to authenticate employee");
+            throw new Exception($this->formatErrorMessage($loginStmt, "Unable to query database to authenticate employee"));
 
         $row = $loginStmt->fetchObject();
         if ($row === false)
@@ -121,7 +127,7 @@ class DBInterface {
                 ':authenticatedEmployee' => $authenticatedEmployee
             ));
         if ($success === false)
-            throw new Exception("Unable to create session record in database");
+            throw new Exception($this->formatErrorMessage($insertStmt, "Unable to create session record in database"));
 
         return $rv;
     } // createLoginSession
@@ -139,7 +145,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $session->sessionId ));
         if ($success === false)
-            throw new Exception("Unable to destroy session record");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to destroy session record"));
     } // destroyLoginSession
 
     /**
@@ -162,7 +168,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
-            throw new Exception("Unable to query database for tax rate record");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for tax rate record"));
 
         $row = $stmt->fetchObject();
         if ($row === false)
@@ -186,7 +192,7 @@ class DBInterface {
 
         $success = $stmt->execute();
         if ($success === false)
-            throw new Exception("Unable to query database for tax rates");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for tax rates"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject())
@@ -215,7 +221,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
-            throw new Exception("Unable to query database for department record");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for department record"));
 
         $row = $stmt->fetchObject();
         if ($row === false)
@@ -239,7 +245,7 @@ class DBInterface {
 
         $success = $stmt->execute();
         if ($success === false)
-            throw new Exception("Unable to query database for departments");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for departments"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject())
@@ -268,7 +274,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
-            throw new Exception("Unable to query database for rank record");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for rank record"));
 
         $row = $stmt->fetchObject();
         if ($row === false)
@@ -292,7 +298,7 @@ class DBInterface {
 
         $success = $stmt->execute();
         if ($success === false)
-            throw new Exception("Unable to query database for ranks");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for ranks"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject())
@@ -323,7 +329,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $paystubId ));
         if ($success === false)
-            throw new Exception("Unable to query database for paystub departments");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for paystub departments"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject()) {
@@ -364,7 +370,7 @@ class DBInterface {
                     ":department" => $dept->id
                 ));
             if ($success == false)
-                throw new Exception("Unable to write paystubDepartmentAssociation to database");
+                throw new Exception($this->formatErrorMessage($stmt, "Unable to write paystubDepartmentAssociation to database"));
         } // foreach
     } // writeDepartmentsForPayStub
 
@@ -388,7 +394,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
-            throw new Exception("Unable to query database for paystub record");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for paystub record"));
 
         $row = $stmt->fetchObject();
         if ($row === false)
@@ -438,7 +444,7 @@ class DBInterface {
                 ':taxRate' => $paystub->taxRate
             ));
         if ($success == false)
-            throw new Exception("Unable to create paystub record in database");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to create paystub record in database"));
 
         $newId = $this->dbh->lastInsertId();
 
@@ -478,7 +484,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $employeeId ));
         if ($success === false)
-            throw new Exception("Unable to query database for paystubs");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for paystubs"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject()) {
@@ -519,7 +525,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
-            throw new Exception("Unable to query database for employee record");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for employee record"));
 
         $row = $stmt->fetchObject();
         if ($row === false)
@@ -553,7 +559,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
-            throw new Exception("Unable to query database for employee records");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for employee records"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject()) {
@@ -620,13 +626,11 @@ class DBInterface {
                 ':salary' => $employee->salary
             );
 
-        if ($employee->id == 0)
-            $success = $stmtInsert->execute($params);
-        else
-            $success = $stmtUpdate->execute($params);
+        $stmt = (($employee->id == 0) ? $stmtInsert : $stmtUpdate);
+        $success = $stmt->execute($params);
 
         if ($success == false)
-            throw new Exception("Unable to create employee record in database");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to store employee record in database"));
 
         if ($employee->id == 0)
             $newId = $this->dbh->lastInsertId();
@@ -669,7 +673,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $employeeId ));
         if ($success === false)
-            throw new Exception("Unable to query database for employee departments");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for employee departments"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject()) {
@@ -701,7 +705,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $departmentId ));
         if ($success === false)
-            throw new Exception("Unable to query database for department employees");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for department employees"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject()) {
@@ -738,7 +742,7 @@ class DBInterface {
                 ':department' => $assoc->department->id
             ));
         if ($success == false)
-            throw new Exception("Unable to create employeeDepartmentAssociation record in database");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to create employeeDepartmentAssociation record in database"));
 
         return $assoc;
     } // writeEmployeeDepartmentAssociation
@@ -767,7 +771,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array( $payPeriodStartDate->format("Y-m-d H:i:s") ));
         if ($success == false)
-            throw new Exception("Unable to query employees who need pay stubs generated");
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query employees who need pay stubs generated"));
 
         $rv = 0;
         while ($row = $stmt->fetchObject) {

@@ -55,9 +55,10 @@ function doLogin(form) {
         })
         .done(function(data) {
             if (data.error != null) {
-                $("#loginDiv").show();
                 $("#spinner").hide();
                 showError(data.error);
+                $(form.elements.password).val('');
+                $("#loginDiv").show();
             } else
                 document.location.href = data.redirect;
         })

@@ -29,7 +29,7 @@ CREATE TABLE department(
 
 CREATE TABLE employee(
     id INT NOT NULL AUTO_INCREMENT,
-    activeFlag BIT NOT NULL,
+    activeFlag TINYINT(1) NOT NULL,
     username VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
