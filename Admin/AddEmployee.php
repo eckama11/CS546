@@ -27,7 +27,8 @@
 		$.ajax({
 			"type" : "POST",
 			"url" : "Admin/doAddEmployee.php",
-			"data" : $(form).serialize()
+			"data" : $(form).serialize(),
+			"dataType" : "json"
 			})
 			.done(function(data) {
 				$("#spinner").hide();
@@ -56,79 +57,52 @@
 		<div id="successDiv" class="col-md-3 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;display:none">
 			Employee has been successfully added.
 		</div>
+		<legend>Add Employee</legend>
 		<form role="form" onsubmit="return addEmployee(this);">
-			<ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
-				<li class="active"><a href="#basic" data-toggle="tab">Basic</a></li>
-				<li><a href="#rank_department" data-toggle="tab">Rank/Department</a></li>
-				<li><a href="#taxes" data-toggle="tab">Taxes</a></li>
-				<li><a href="#submit" data-toggle="tab">Submit</a></li>
-			</ul>
-		
 			<div id="my-tab-content" class="tab-content">
-				<div class="tab-pane active" id="basic">
-					<div class="form-group">
-						<label  style="color:black;">Name</label>
-						<input type="text" class="form-control" name="name" id="name" placeholder="Enter name">
-					</div>
-					<div class="form-group">
-						<label style="color:black;">Address</label></br>
-						<textarea class="form-control" rows="5" name="address" id="address" placeholder="Enter Address"></textarea>
-					</div>
+				<div class="form-group">
+					<label  style="color:black;">Name</label>
+					<input type="text" class="form-control" name="name" id="name" placeholder="Enter name">
 				</div>
-				<div class="tab-pane" id="rank_department">
-					<div class="form-group">
-						<label style="color:black;">Rank</label>
-						<select class="form-control" name="rank" id="rank">
-							<option selected disabled id="">Select One</option>
-							<option id="2">President</option>
-							<option id="3">Vice-President</option>
-							<option id="4">Human Resources Manager</option>
-							<option id="5">New Product Manager</option>
-							<option id="6">Legacy Product Manager</option>
-							<option id="7">Customer Service Manager</option>
-							<option id="8">Project Leader</option>
-							<option id="9">Senior Software Developer</option>
-							<option id="10">Software Developer II</option>
-							<option id="11">Software Developer</option>
-							<option id="12">Programmer</option>
-						</select>
-					</div>
-					<div class="form-group">
-						<label  style="color:black;">Departments</label>
-						<select multiple class="form-control" name="department" id="department">
-							<option selected disabled id="S_A_L_O">Select At Least One</option>
-							<option id="1">Corporate</option>
-							<option id="2">Human Resources</option>
-							<option id="3">Marketing</option>
-							<option id="4">Customer Support</option>
-							<option id="5">Quality Assurance</option>
-							<option id="6">Graphic Design</option>
-							<option id="7">Documentation</option>
-							<option id="8">Legacy Product Maintenance</option>
-							<option id="9">New Product Development</option>
-						</select>
-					</div>
+				<div class="form-group">
+					<label style="color:black;">Address</label></br>
+					<textarea class="form-control" rows="5" name="address" id="address" placeholder="Enter Address"></textarea>
 				</div>
-				<div class="tab-pane" id="taxes">
-					<div class="form-group">
-						<label style="color:black;">Tax ID</label>
-						<input type="text" class="form-control" name="taxid" id="taxid" placeholder="Enter Soc Sec #">
-					</div>
-					<div class="form-group">
-						<label style="color:black;">Number of Deductions</label>
-						<input type="text" class="form-control" name="numDeductions" id="numDeductions" placeholder="Enter a number">
-					</div>
-					<div class="form-group">
-						<label style="color:black;">Salary</label>
-						<input type="text" class="form-control" name="salary" id="salary" placeholder="Enter a salary">
-					</div>
+				<div class="form-group">
+					<label style="color:black;">Rank</label>
+					<select class="form-control" name="rank" id="rank">
+						<?php 
+							$ranks = $db->readRanks();
+							foreach ($ranks as $rank) {
+							echo '<option id="'. htmlentities($rank->id) .'">'. htmlentities($rank->name) .'</option>';
+						}?>
+					</select>
 				</div>
-				<div class="tab-pane" id="submit">
-					<p style="color:black;">Clicking on Add Employee will add </br>
-					this employee. Please make sure all </br>
-					information is correct before submitting.</p>
-					<button type="submit" class="btn btn-default">Add Employee</button>
+				<div class="form-group">
+					<label  style="color:black;">Departments</label>
+					<select multiple class="form-control" name="department" id="department">
+						<?php 
+							$depts = $db->readDepartments();
+							foreach ($depts as $dept) {
+								echo '<option id="'. htmlentities($dept->id) .'">'. htmlentities($dept->name) .'</option>';
+							}
+                        ?>
+					</select>
 				</div>
+				<div class="form-group">
+					<label style="color:black;">Tax ID</label>
+					<input type="text" class="form-control" name="taxid" id="taxid" placeholder="Enter Soc Sec #">
+				</div>
+				<div class="form-group">
+					<label style="color:black;">Number of Deductions</label>
+					<input type="text" class="form-control" name="numDeductions" id="numDeductions" placeholder="Enter a number">
+				</div>
+				<div class="form-group">
+					<label style="color:black;">Salary</label>
+					<input type="text" class="form-control" name="salary" id="salary" placeholder="Enter a salary">
+				</div>
+				<button type="submit" class="btn btn-default">Add Employee</button>
+				</br>
 			</div>
 		</form>
 	</div>
