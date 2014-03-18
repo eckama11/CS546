@@ -2,7 +2,8 @@
 require_once(dirname(__FILE__)."/../common.php");
 
 // If the form was posted, verify the old password and update the password if the 2 new passwords match and are acceptable
-$employeeId = @$_POST['employeeId'];
+$employeeId = @$_POST['id'];
+$curStatus = @$_POST['curStatus'];
 
 $rv = (Object)[];
 try {

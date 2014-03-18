@@ -16,8 +16,8 @@
 
   // Array of [ activeFlag, targetPage ]
   $forMap = [
-    'activate'   => [ false, 'Reactivate',    'Reactivate' ],
-    'deactivate' => [ true,  'Deactivate',    'Deactivate' ],
+    'activate'   => [ true, 'Activation',    'Reactivate' ],
+    'deactivate' => [ true,  'Activation',    'Deactivate' ],
     'modify'     => [ true,  'Modify',        'Modify' ],
     'password'   => [ true,  'ChangeEmpPass', 'Change Password' ],
     'paystubs'   => [ true,  'ViewEmpStub',   'View Pay Stubs' ]
