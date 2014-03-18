@@ -37,7 +37,9 @@ function requiredField(elem, errorMsg) {
 
 function showError(message) {
     $("#message").text(message);
-    $("#messageAlert").show().delay(3000).fadeOut("slow");
+    var messageAlert = $("#messageAlert");
+    messageAlert.css("z-index", "30000");
+    messageAlert.show().delay(3000).fadeOut("slow");
 }
 </script>
 	</head>
@@ -61,10 +63,10 @@ function showError(message) {
           					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Admin <b class="caret"></b></a>
           					<ul class="dropdown-menu">
             					<li><a href="page.php/Admin/AddEmployee">Add Employee</a></li>
-            					<li><a href="page.php/Admin/Activation">Activate/Deactivate</a></li>
-            					<li><a href="page.php/Admin/ViewEmpStub">View Pay Stubs</a></li>
-            					<li><a href="page.php/Admin/ChangeEmpPass">Change Employee Passwords</a></li>
-            					<li><a href="page.php/Admin/Modify">Modify Employee</a></li>
+            					<li><a href="page.php/Admin/SelectEmployee?for=activation">Activate/Deactivate</a></li>
+            					<li><a href="page.php/Admin/SelectEmployee?for=paystubs">View Pay Stubs</a></li>
+            					<li><a href="page.php/Admin/SelectEmployee?for=password">Change Employee Passwords</a></li>
+            					<li><a href="page.php/Admin/SelectEmployee?for=modify">Modify Employee</a></li>
             					<li><a href="page.php/Admin/Generate">Generate Pay Stubs</a></li>
           					</ul>
         				</li>

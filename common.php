@@ -42,6 +42,7 @@ if (array_key_exists(session_name(), $_COOKIE)) {
 
 
 function doUnauthorizedRedirect() {
+    while (@ob_end_clean());
     header("Location: ". BASE_URL ."page.php/unauthorized");
     exit;
 } // doUnauthorizedRedirect()
@@ -55,6 +56,7 @@ function doUnauthenticatedRedirect() {
             $pathInfo = '/'. $pathInfo;
     }
 
+    while (@ob_end_clean());
     header("Location: ". BASE_URL ."index.php". $pathInfo);
     exit;
 } // doUnauthenticatedRedirect()
@@ -74,7 +76,22 @@ function getLoginRedirect(LoginSession $session, $page) {
 
 
 function doLoginRedirect(LoginSession $session, $page) {
+    while (@ob_end_clean());
     header("Location: ". getLoginRedirect($session, $page));
     exit;
 } // doLoginRedirect(LoginSession $session, $page)
+
+
+function handleDBException($ex) {
+    echo '
+        <div class="alert alert-danger" style="vertical-align:top;position:absolute;width:100%">
+            <span class="glyphicon glyphicon-exclamation-sign" style="color:red;font-size:30px"></span>
+            <div style="display:inline-block;padding-left:10px;">
+                An error occurred while processing your request.<br/>'.
+                htmlentities($ex->getMessage()) .
+           '</div>
+        </div>
+        ';
+} // handleDBException($ex)
+
 

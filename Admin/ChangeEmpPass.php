@@ -1,49 +1,107 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-	<head>
- 		<title>Change Employee Password</title>
- 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<!-- StyleSheet -->
-		<link rel="stylesheet" href="../css/bootstrap.min.css" />
-		<link rel="stylesheet" href="../css/custom.css" />
-		
-	</head>
- 
-	<body>
-		<div class="navbar navbar-inverse navbar-static-top">
-			<div class="container">
-				<a href="#" class="navbar-brand">UPay Solutions</a>
-				<button class="navbar-toggle" data-toggle="collapse" data-target=".navHeaderCollapse">
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-				</button>
-				<div class="collapse navbar-collapse navHeaderCollapse">
-					<ul class="nav navbar-nav navbar-right">
-						<li><a href="MyPay.php">MyPay</a></li>
-						<li><a href="MyInfo.php">MyInfo</a></li>
-						<li><a href="Pass.php">Account Settings</a></li>
-						<li class="dropdown">
-          					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Admin <b class="caret"></b></a>
-          					<ul class="dropdown-menu">
-            					<li><a href="AddEmployee.php">Add Employee</a></li>
-            					<li><a href="Activation.php">Activate/Deactivate</a></li>
-            					<li><a href="ViewEmpStub.php">View Pay Stubs</a></li>
-            					<li><a href="ChangeEmpPass.php">Change Employee Passwords</a></li>
-            					<li><a href="Modify.php">Modify Employee</a></li>
-            					<li><a href="Generate.php">Generate Pay Stubs</a></li>
-          					</ul>
-        				</li>
-						<li><a href="Admin.php">Admin</a></li>
-						<li><a href="logout.php">Logout</a></li>
-					</ul>
-				</div>
-			</div>
-		</div>
-		
-		<div>
-		</div>
-		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
-		<script type="text/javascript" src="../js/bootstrap.min.js"></script> 
-	</body>
-</html>
+<?php
+
+// TODO: Don't allow the currently logged in user to change their own password with this page...
+//       They should use the Change Own Password instead.
+
+    require_once(dirname(__FILE__)."/../common.php");
+
+    if (!isset($loginSession))
+        doUnauthenticatedRedirect();
+
+    if (!$loginSession->isAdministrator)
+        doUnauthorizedRedirect();
+
+    $employeeId = @$_GET['id'];
+    try {
+        $emp = $db->readEmployee($employeeId);
+    } catch (Exception $ex) {
+        handleDBException($ex);
+        return;
+    }
+?>
+<script>
+function updatePassword(form) {
+    var newPassword1 = requiredField($(form.elements.newPassword1), "You must enter a new password");
+    var newPassword2 = requiredField($(form.elements.newPassword2), "You must verify your new password");
+
+    if (newPassword1 != newPassword2) {
+        showError("The new password and verify password do not match.");
+        return false;
+    }
+
+    if (newPassword1.length < 8) {
+        showError("The new password must be at least 8 characters long");
+        return false;
+    }
+
+    $("#spinner").show();
+    $("#content").hide();
+
+    $.ajax({
+        "type" : "POST",
+        "url" : "Admin/doChangeEmployeePassword.php",
+        "data" : $(form).serialize(),
+        "dataType" : "json"
+        })
+        .done(function(data) {
+            $("#spinner").hide();
+
+            if (data.error != null) {
+                showError(data.error);
+                $("#content").show();
+            } else
+                $("#successDiv").show();
+        })
+        .fail(function( jqXHR, textStatus, errorThrown ) {
+            console.log("Error: "+ textStatus +" (errorThrown="+ errorThrown +")");
+            console.log(jqXHR.textContent);
+
+            $("#spinner").hide();
+            $("#content").show();
+            showError("Request failed, unable to change password: "+ errorThrown);
+        })
+
+    return false;
+} // updatePassword(form)
+</script>
+
+<div class="container col-md-6 col-md-offset-3">
+    <div id="spinner" style="padding-bottom:10px;text-align:center;display:none">
+        <div style="color:black;padding-bottom:32px;">Updating Employee Password...</div>
+        <img src="spinner.gif">
+    </div>
+
+    <div id="successDiv" class="col-md-6 col-md-offset-3" style="padding-bottom:10px; outline: 10px solid black;display:none">
+        Employee password has been successfully updated.
+    </div>
+
+	<div id="content">
+        <legend>Change password for <?php echo htmlentities($emp->name); ?></legend>
+        <form role="form" class="form-horizontal" onsubmit="return updatePassword(this);">
+            <input type="hidden" name="id" value="<?php echo htmlentities($emp->id); ?>"/>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Username</label>
+                <div class="col-sm-10">
+                    <p class="form-control-static"><?php echo htmlentities($loginSession->authenticatedEmployee->username); ?></p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="newPassword1">New Password</label>
+                <div class="col-sm-10">
+                    <input type="password" class="form-control" name="newPassword1" id="newPassword1" placeholder="Enter new password"/>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="newPassword2">Verify Password</label>
+                <div class="col-sm-10">
+                    <input type="password" class="form-control" name="newPassword2" id="newPassword2" placeholder="Verify new password"/>
+                </div>
+            </div>
+
+            <button style="margin-top: 10px" type="submit" class="btn btn-default">Submit</button>
+        </form>
+    </div>
+</div>

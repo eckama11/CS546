@@ -23,7 +23,7 @@ function changePassword(form) {
         return false;
     }
 
-    $("#passwordDiv").hide();
+    $("#content").hide();
     $("#spinner").show();
 
     $.ajax({
@@ -37,27 +37,34 @@ function changePassword(form) {
 
             if (data.error != null) {
                 showError(data.error);
-                $("#passwordDiv").show();
+                $("#content").show();
             } else
                 $("#successDiv").show();
         })
         .fail(function( jqXHR, textStatus, errorThrown ) {
             console.log("Error: "+ textStatus +" (errorThrown="+ errorThrown +")");
             console.log(jqXHR.textContent);
+
+            $("#spinner").hide();
+            $("#content").show();
+            showError("Request failed, unable to change password: "+ errorThrown);
         })
 
     return false;
 }
 </script>
-<div class="container padded">
-    <div class="row" >
-        <div id="spinner" class="col-md-2 col-md-offset-5" style="padding-bottom:10px;text-align:center;display:none">
-            <div style="color:black;padding-bottom:32px;">Updating your password...</div>
-            <img src="spinner.gif">
-        </div>
-        <div id="successDiv" class="col-md-3 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;display:none">
-        Your password has been successfully updated
-        </div>
+<div class="container col-md-6 col-md-offset-3">
+    <div id="spinner" style="padding-bottom:10px;text-align:center;display:none">
+        <div style="color:black;padding-bottom:32px;">Updating your password...</div>
+        <img src="spinner.gif">
+    </div>
+
+    <div id="successDiv" class="col-md-6 col-md-offset-3" style="padding-bottom:10px; outline: 10px solid black;display:none">
+    Your password has been successfully updated
+    </div>
+
+	<div id="content">
+        <legend>Change password for <?php echo htmlentities($loginSession->authenticatedEmployee->name); ?></legend>
         <form role="form" class="form-horizontal" onsubmit="return changePassword(this)">
             <div class="form-group">
                 <label class="col-sm-2 control-label">Username</label>
@@ -65,6 +72,7 @@ function changePassword(form) {
                     <p class="form-control-static"><?php echo htmlentities($loginSession->authenticatedEmployee->username); ?></p>
                 </div>
             </div>
+
             <div class="form-group">
                 <label class="col-sm-2 control-label" for="currentPassword">Current Password</label>
                 <div class="col-sm-10">
@@ -80,9 +88,9 @@ function changePassword(form) {
             </div>
 
             <div class="form-group">
-                <label class="col-sm-2 control-label" for="newPassword1">Verify New Password</label>
+                <label class="col-sm-2 control-label" for="newPassword1">Verify Password</label>
                 <div class="col-sm-10">
-                    <input type="password" class="form-control" name="newPassword2" id="newPassword2" placeholder="Enter new password"/>
+                    <input type="password" class="form-control" name="newPassword2" id="newPassword2" placeholder="Verify new password"/>
                 </div>
             </div>
 
