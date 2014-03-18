@@ -2,6 +2,13 @@
     require_once(dirname(__FILE__)."/../common.php");
     if (!isset($loginSession))
         doUnauthenticatedRedirect();
+    $status = htmlentities($loginSession->authenticatedEmployee->activeFlag);
+    if($status = "0") {
+    	$status = "Inactive";
+    }
+    else {
+    	$status = "Active";
+    }
 ?>
 <div class="container padded">
 	<legend>Employee information for <?php echo htmlentities($loginSession->authenticatedEmployee->name); ?></legend>
@@ -12,7 +19,7 @@
 		</tr>
 		<tr>
 		  <td>Status</td>
-		  <td><?php echo htmlentities($loginSession->authenticatedEmployee->activeFlag); ?></td>
+		  <td><?php echo $status; ?></td>
 		</tr>
 		<tr>
 		  <td>Address</td>
