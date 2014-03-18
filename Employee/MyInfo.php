@@ -27,7 +27,7 @@
 		</tr>
 		<tr>
 		  <td>Rank</td>
-		  <td><?php echo htmlentities($loginSession->authenticatedEmployee->rank); ?></td>
+		  <td><?php echo htmlentities($loginSession->authenticatedEmployee->rank->name); ?></td>
 		</tr>
 		<tr>
 		  <td>Tax Id</td>
