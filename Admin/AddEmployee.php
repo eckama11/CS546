@@ -56,7 +56,7 @@
 		<div id="successDiv" class="col-md-3 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;display:none">
 			Employee has been successfully added.
 		</div>
-		<form role="form" onsubmit="return addEmployee(this)">
+		<form role="form" onsubmit="return addEmployee(this);">
 			<ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
 				<li class="active"><a href="#basic" data-toggle="tab">Basic</a></li>
 				<li><a href="#rank_department" data-toggle="tab">Rank/Department</a></li>

@@ -4,15 +4,22 @@
         doUnauthenticatedRedirect();
     if (!$loginSession->isAdministrator)
         doUnauthorizedRedirect();
+    $employeeId = @$_GET['id'];
+    try {
+        $emp = $db->readEmployee($employeeId);
+    } catch (Exception $ex) {
+        handleDBException($ex);
+        return;
+    }
 ?>
 
 <script>
-function changePassword(form) {
-    var employeeId = requiredField($(form.elements.employeeId), "You must enter an employee ID.");
-    if ((employeeId == "")) {
-        showError("You must enter an employee ID to change employee status.");
-        return false;
-    }
+function activate(form) {
+    //var employeeId = requiredField($(form.elements.employeeId), "You must enter an employee ID.");
+    //if ((employeeId == "")) {
+        //showError("You must enter an employee ID to change employee status.");
+        //return false;
+    //}
     
     $("#activeDiv").hide();
     $("#spinner").show();
@@ -41,8 +48,8 @@ function changePassword(form) {
 }
 </script>
 
-<div class="container padded">
-    <div class="row" >
+	<div id="content">
+    	<legend>Change password for <?php echo htmlentities($emp->name); ?></legend>
         <div id="spinner" class="col-md-2 col-md-offset-5" style="padding-bottom:10px;text-align:center;display:none">
             <div style="color:black;padding-bottom:32px;">Updating employee status...</div>
             <img src="spinner.gif">
@@ -50,7 +57,8 @@ function changePassword(form) {
         <div id="successDiv" class="col-md-3 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;display:none">
         Employee has been updated
         </div>
-        <form role="form" class="form-horizontal" onsubmit="return changePassword(this)">
+        <legend>Change password for <?php echo htmlentities($emp->name); ?></legend>
+        <form role="form" class="form-horizontal" onsubmit="return activate(this);">
             <div class="form-group">
                 <label class="col-sm-2 control-label">Employee ID</label>
                 <div class="col-sm-10">
