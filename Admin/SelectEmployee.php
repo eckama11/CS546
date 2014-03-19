@@ -14,13 +14,12 @@
 //  password
 //  paystubs
 
-    // Array of [ activeFlag, targetPage ]
+    // Array of [ activeFlag, targetPage, ???? ]
     $forMap = [
-        'activate'   => [ true, 'Admin/Activation',    'Reactivate' ],
-        'deactivate' => [ true, 'Admin/Activation',    'Deactivate' ],
-        'modify'     => [ true, 'Admin/EditEmployee',  'Modify' ],
-        'password'   => [ true, 'Admin/ChangeEmpPass', 'Change Password' ],
-        'paystubs'   => [ true, 'Employee/MyPay',      'View Pay Stubs' ]
+        'activation'	=> [ true, 'Admin/Activation',    'Deactivate Activate' ],
+        'modify'     	=> [ true, 'Admin/EditEmployee',  'Modify' ],
+        'password'   	=> [ true, 'Admin/ChangeEmpPass', 'Change Password' ],
+        'paystubs'  	=> [ true, 'Employee/MyPay',      'View Pay Stubs' ]
     ];
 
     $for = @$forMap[@$_GET['for']];

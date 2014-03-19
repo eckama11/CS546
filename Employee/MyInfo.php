@@ -2,6 +2,7 @@
     require_once(dirname(__FILE__)."/../common.php");
     if (!isset($loginSession))
         doUnauthenticatedRedirect();
+        
     $status = htmlentities($loginSession->authenticatedEmployee->activeFlag);
     if($status = "0") {
     	$status = "Inactive";

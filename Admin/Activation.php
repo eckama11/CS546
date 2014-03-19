@@ -4,12 +4,21 @@
         doUnauthenticatedRedirect();
     if (!$loginSession->isAdministrator)
         doUnauthorizedRedirect();
-    $employeeId = @$_GET['id'];
+
+	$employeeId = @$_GET['id'];
     try {
         $emp = $db->readEmployee($employeeId);
     } catch (Exception $ex) {
         handleDBException($ex);
         return;
+    }
+    
+    $status = htmlentities($loginSession->authenticatedEmployee->activeFlag);
+    if($status = "0") {
+    	$status = "Inactive";
+    }
+    else {
+    	$status = "Active";
     }
 ?>
 
@@ -48,7 +57,7 @@ function activate(form) {
 }
 </script>
 
-<div class="container col-md-6 col-md-offset-3">
+<div class="container col-md-4 col-md-offset-4">
 	<div id="spinner" style="padding-bottom:10px;text-align:center;display:none">
         <div style="color:black;padding-bottom:32px;">Updating Employee Status...</div>
         <img src="spinner.gif">
@@ -59,7 +68,7 @@ function activate(form) {
     </div>
 
 	<div id="content">
-        <legend>Change password for <?php echo htmlentities($emp->name); ?></legend>
+        <legend>Change status for <?php echo htmlentities($loginSession->authenticatedEmployee->name); ?></legend>
         <form role="form" class="form-horizontal" onsubmit="return activate(this);">
             <input type="hidden" name="id" value="<?php echo htmlentities($emp->id); ?>"/>
 			<div class="form-group">
@@ -67,13 +76,20 @@ function activate(form) {
                 <div class="col-sm-10">
                     <p class="form-control-static"><?php echo htmlentities($loginSession->authenticatedEmployee->username); ?></p>
                 </div>
+                <label class="col-sm-2 control-label">Status</label>
+                <div class="col-sm-10">
+                    <p class="form-control-static"><?php echo $status; ?></p>
+                </div>
             </div>
             <div class="form-group">
-                <label class="col-sm-2 control-label" for="curStatus">Status</label>
+                <label class="col-sm-2 control-label" for="curStatus">Change</label>
                 <div class="col-sm-10">
-                    <input type="checkbox" class="form-control" name="active" id="active" value="active">Activate</input>
-                    <input type="checkbox" class="form-control" name="deactive" id="deactive" value="deactive">Deactivate</input>
-                </div>
+                	<form action="">
+						<input type="radio"  name="status" id="1" value="1">	Activate</input>
+						<br></br>
+						<input type="radio"  name="status" id="0" value="0">	Deactivate</input>
+					</from>				
+				</div>
             </div>
             <button type="submit" class="btn btn-default">Submit</button>
         </form>

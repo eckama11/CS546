@@ -109,15 +109,15 @@
 <?php if ($emp == null) { ?>
 				<div class="form-group">
 					<label>Username</label>
-					<input type="text" class="form-control" name="username" id="username"/>
+					<input type="text" class="form-control" name="username" id="username" placeholder="Enter Username"/>
                 </div>
 				<div class="form-group">
 					<label>Password</label>
-					<input type="password" class="form-control" name="password1" id="password1"/>
+					<input type="password" class="form-control" name="password1" id="password1" placeholder="Enter password"/>
                 </div>
 				<div class="form-group">
 					<label>Verify Password</label>
-					<input type="password" class="form-control" name="password2" id="password2"/>
+					<input type="password" class="form-control" name="password2" id="password2" placeholder="Verify password"/>
                 </div>
 <?php } ?>
 				<div class="form-group">
@@ -195,7 +195,7 @@
                     else
                         echo 'Add Employee';
                 ?></button>
-				</br>
+				<br></br>
 			</div>
 		</form>
 	</div>
