@@ -38,7 +38,8 @@ CREATE TABLE employee(
     numDeductions INT NOT NULL,
     salary DECIMAL(9,2) UNSIGNED NOT NULL,
     FOREIGN KEY (rank) REFERENCES rank(id),
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    UNIQUE (taxId)
 );
 
 CREATE TABLE loginSession(
