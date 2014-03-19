@@ -17,10 +17,10 @@
   // Array of [ activeFlag, targetPage ]
   $forMap = [
     'activate'   => [ true, 'Activation',    'Reactivate' ],
-    'deactivate' => [ true,  'Activation',    'Deactivate' ],
-    'modify'     => [ true,  'Modify',        'Modify' ],
-    'password'   => [ true,  'ChangeEmpPass', 'Change Password' ],
-    'paystubs'   => [ true,  'ViewEmpStub',   'View Pay Stubs' ]
+    'deactivate' => [ true, 'Activation',    'Deactivate' ],
+    'modify'     => [ true, 'EditEmployee',  'Modify' ],
+    'password'   => [ true, 'ChangeEmpPass', 'Change Password' ],
+    'paystubs'   => [ true, 'ViewEmpStub',   'View Pay Stubs' ]
   ];
 
   $for = @$forMap[@$_GET['for']];

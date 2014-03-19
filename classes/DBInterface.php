@@ -131,6 +131,7 @@ class DBInterface {
 
         return $rv;
     } // createLoginSession
+
     /**
      * Removes a login session from the database.
      * @param   LoginSession    $session    The session to destroy.
@@ -506,6 +507,33 @@ class DBInterface {
     } // readPayStubs
 
     /**
+     * Tests whether a specific username is in currently assigned to an employee or not.
+     *
+     * @param   String  $username   The username to test for.
+     *
+     * @return  Boolean    True if the username is assigned to an existing employee, false if not.
+     */
+    public function isUsernameInUse( $username ) {
+        static $stmt;
+        if ($stmt == null) {
+            $stmt = $this->dbh->prepare(
+                  "SELECT id ".
+                    "FROM employee ".
+                    "WHERE username=:username"
+                );
+        }
+
+        $success = $stmt->execute(Array(
+                ':username' => $username
+            ));
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for username"));
+
+        $row = $stmt->fetchObject();
+        return ($row !== false);
+    } // isUsernameInUse
+
+    /**
      * Reads an Employee from the database.
      * @param   int $id The ID of the employee to retrieve.
      * @return  Employee    An instance of Employee.
@@ -620,7 +648,6 @@ class DBInterface {
         }
 
         $params = Array(
-                ':id' => $employee->id,
                 ':activeFlag' => $employee->activeFlag,
                 ':username' => $employee->username,
                 ':password' => $employee->password,
@@ -632,7 +659,13 @@ class DBInterface {
                 ':salary' => $employee->salary
             );
 
-        $stmt = (($employee->id == 0) ? $stmtInsert : $stmtUpdate);
+        if ($employee->id == 0) {
+            $stmt = $stmtInsert;
+        } else {
+            $params[':id'] = $employee->id;
+            $stmt = $stmtUpdate;
+        }
+
         $success = $stmt->execute($params);
 
         if ($success == false)
@@ -722,20 +755,30 @@ class DBInterface {
     } // readEmployeesForDepartment
 
     /**
-     * Writes a new EmployeeDepartmentAssociation to the database.
-     * @param   EmployeeDepartmentAssociation   $assoc  The association to write to the database.
+     * Writes EmployeeDepartmentAssociation records to the database.
+     * @param   Employee   $employee    The employee to update the departments for.
+     * @param   Array[Department]   $departments    The list of departments to associate the employee with.
      * @return
      */
-    public function writeEmployeeDepartmentAssociation( EmployeeDepartmentAssociation $assoc ) {
-        if ($assoc->employee->id == 0)
-            throw new Exception("The id property of the associated employee cannot be 0.");
+    public function writeDepartmentsForEmployee( Employee $employee, $departments ) {
+        if ($employee->id == 0)
+            throw new Exception("The id property of the employee cannot be 0.");
 
-        if ($assoc->department->id == 0)
-            throw new Exception("The id property of the associated department cannot be 0.");
+        if (!is_array($departments))
+            throw new Exception("The departments parameter must be an array.");
 
-        static $stmt;
-        if ($stmt == null)
-            $stmt = $this->dbh->prepare(
+        foreach ($departments as $dept) {
+            if (!($dept instanceof Department))
+                throw new Exception("Every element in the departments parameter must be an instance of Department.");
+
+            if ($dept->id == 0)
+                throw new Exception("The id property of a department cannot be 0.");
+        } // foreach
+
+        static $insertStmt;
+        static $deleteStmt;
+        if ($insertStmt == null) {
+            $insertStmt = $this->dbh->prepare(
                     "INSERT INTO employeeDepartmentAssociation ( ".
                             "employee, department ".
                         ") VALUES ( ".
@@ -743,15 +786,29 @@ class DBInterface {
                         ")"
                 );
 
-        $success = $stmt->execute(Array(
-                ':employee' => $assoc->employee->id,
-                ':department' => $assoc->department->id
+            $deleteStmt = $this->dbh->prepare(
+                    "DELETE FROM employeeDepartmentAssociation ".
+                        "WHERE employee = :employee"
+                );
+        }
+
+        // Remove existing association records for the employee
+        $success = $deleteStmt->execute(Array(
+                ':employee' => $employee->id
             ));
         if ($success == false)
-            throw new Exception($this->formatErrorMessage($stmt, "Unable to create employeeDepartmentAssociation record in database"));
+            throw new Exception($this->formatErrorMessage($deleteStmt, "Unable to delete existing employeeDepartmentAssociation records for employee ". $employee->id));
 
-        return $assoc;
-    } // writeEmployeeDepartmentAssociation
+        // Create new association records for the employee
+        foreach ($departments as $dept) {
+            $success = $insertStmt->execute(Array(
+                    ':employee' => $employee->id,
+                    ':department' => $dept->id
+                ));
+            if ($success == false)
+                throw new Exception($this->formatErrorMessage($insertStmt, "Unable to create employeeDepartmentAssociation record in database"));
+        } // foreach
+    } // writeDepartmentsForEmployee
 
     /**
      * Generates new pay stubs for employees who have not yet had pay stubs generated for the current month.
