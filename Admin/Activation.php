@@ -13,8 +13,8 @@
         return;
     }
     
-    $status = htmlentities($emp->activeFlag);
-    if($status == "1") {
+    $status = ($emp->activeFlag);
+    if($status == true) {
     	$status = "Active";
     }
     else {
@@ -67,7 +67,7 @@ function activate(form) {
         Employee status has been successfully updated.
     </div>
 
-	<div id="content">
+	<div id="activeDiv">
         <legend>Change status for <?php echo htmlentities($emp->name); ?></legend>
         <form role="form" class="form-horizontal" onsubmit="return activate(this);">
             <input type="hidden" name="id" value="<?php echo htmlentities($emp->id); ?>"/>

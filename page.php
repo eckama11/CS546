@@ -80,7 +80,7 @@ function showError(message) {
         <div id="messageAlert" class="alert alert-danger" style="display:none;position:absolute;width:100%">
             <span id="message"></span>
         </div>
-<?php   require_once($page); ?>
+<?php	require_once($page); ?>
 		<!-- JavaScript -->
 		<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
 		<script src="js/bootstrap.js"></script>

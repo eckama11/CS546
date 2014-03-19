@@ -28,7 +28,11 @@ class LoginSession
     } // getAuthenticatedEmployee
 
     protected function getIsAdministrator() {
+    	if (!$this->authenticatedEmployee->activeFlag) {
+    		return false;
+    	}
         return $this->authenticatedEmployee->rank->employeeType->isAdministrator;
+        
     } // getIsAdministrator()
 
     public function __toString() {

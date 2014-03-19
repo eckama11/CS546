@@ -89,8 +89,7 @@ class DBInterface {
                   "SELECT id ".
                     "FROM employee ".
                     "WHERE username=:username ".
-                        "AND password=:password ".
-                        "AND activeFlag=1"
+                        "AND password=:password "
                 );
 
             $insertStmt = $this->dbh->prepare(
