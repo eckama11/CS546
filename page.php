@@ -1,5 +1,5 @@
 <?php
-require_once("common.php");
+require_once(dirname(__FILE__)."/common.php");
 
 $prefix = dirname(__FILE__) . DIRECTORY_SEPARATOR;
 $page = realpath($prefix . @$_SERVER['PATH_INFO'] .".php");
