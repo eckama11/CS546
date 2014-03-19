@@ -102,7 +102,7 @@
 					<input type="text" class="form-control" name="salary" id="salary" placeholder="Enter a salary">
 				</div>
 				<button type="submit" class="btn btn-default">Add Employee</button>
-				</br>
+				<br></br>
 			</div>
 		</form>
 	</div>
