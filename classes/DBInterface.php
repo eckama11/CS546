@@ -533,6 +533,33 @@ class DBInterface {
         return ($row !== false);
     } // isUsernameInUse
 
+	/**
+     * Tests whether a specific taxId is in currently assigned to an employee or not.
+     *
+     * @param   String  $taxId   The taxId to test for.
+     *
+     * @return  Boolean    True if the taxId is assigned to an existing employee, false if not.
+     */
+     public function isTaxIdInUse( $taxId ) {
+        static $stmt;
+        if ($stmt == null) {
+            $stmt = $this->dbh->prepare(
+                  "SELECT id ".
+                    "FROM employee ".
+                    "WHERE taxId=:taxId"
+                );
+        }
+
+        $success = $stmt->execute(Array(
+                ':taxId' => $taxId
+            ));
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for taxId"));
+
+        $row = $stmt->fetchObject();
+        return ($row !== false);
+    } // isTaxIdInUse
+    
     /**
      * Reads an Employee from the database.
      * @param   int $id The ID of the employee to retrieve.
