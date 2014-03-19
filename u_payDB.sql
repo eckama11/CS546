@@ -39,7 +39,8 @@ CREATE TABLE employee(
     salary DECIMAL(9,2) UNSIGNED NOT NULL,
     FOREIGN KEY (rank) REFERENCES rank(id),
     PRIMARY KEY (id),
-    UNIQUE (taxId)
+    UNIQUE KEY (taxId),
+    UNIQUE KEY (username)
 );
 
 CREATE TABLE loginSession(
