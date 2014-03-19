@@ -10,9 +10,9 @@
     	$status = "Active";
     }
 ?>
-<div class="container padded">
+<div class="container">
 	<legend>Employee information for <?php echo htmlentities($loginSession->authenticatedEmployee->name); ?></legend>
-	<table class="table table-striped table-hover table-bordered table-condensed">
+	<table class="table table-striped table-bordered table-condensed">
 		<tr>
 		  <td>Username</td>
 		  <td><?php echo htmlentities($loginSession->authenticatedEmployee->username); ?></td>
@@ -39,7 +39,7 @@
 		</tr>
 		<tr>
 		  <td>Salary</td>
-		  <td><?php echo htmlentities($loginSession->authenticatedEmployee->salary); ?></td>
+		  <td><?php echo htmlentities(sprintf("\$ %.2f", $loginSession->authenticatedEmployee->salary)); ?></td>
 		</tr>
 	</table>
 </div>

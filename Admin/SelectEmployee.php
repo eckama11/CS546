@@ -14,22 +14,29 @@
 //  password
 //  paystubs
 
-  // Array of [ activeFlag, targetPage ]
-  $forMap = [
-    'activate'   => [ true, 'Activation',    'Reactivate' ],
-    'deactivate' => [ true,  'Activation',    'Deactivate' ],
-    'modify'     => [ true,  'Modify',        'Modify' ],
-    'password'   => [ true,  'ChangeEmpPass', 'Change Password' ],
-    'paystubs'   => [ true,  'ViewEmpStub',   'View Pay Stubs' ]
-  ];
+    // Array of [ activeFlag, targetPage ]
+    $forMap = [
+        'activate'   => [ true, 'Admin/Activation',    'Reactivate' ],
+        'deactivate' => [ true, 'Admin/Activation',    'Deactivate' ],
+        'modify'     => [ true, 'Admin/EditEmployee',  'Modify' ],
+        'password'   => [ true, 'Admin/ChangeEmpPass', 'Change Password' ],
+        'paystubs'   => [ true, 'Employee/MyPay',      'View Pay Stubs' ]
+    ];
 
-  $for = @$forMap[@$_GET['for']];
-  if (!$for)
-    doUnauthorizedRedirect();
+    $for = @$forMap[@$_GET['for']];
+    if (!$for)
+        doUnauthorizedRedirect();
 
-  $activeFlag = $for[0];
-  $targetPage = "page.php/Admin/". $for[1];
-  $title = $for[2]
+    $activeFlag = $for[0];
+    $targetPage = "page.php/". $for[1];
+    $title = $for[2];
+
+    try {
+        $employees = $db->readEmployees($activeFlag);
+    } catch (Exception $ex) {
+        handleDBException($ex);
+        return;
+    }
 
 ?>
 <script>
@@ -48,9 +55,7 @@
     </tr></thead>
     <tbody>
 <?php
-
-    $emps = $db->readEmployees($activeFlag);
-    foreach ($emps as $emp) {
+    foreach ($employees as $emp) {
         echo '<tr onclick="selectEmployee(this)" emp-id="'. $emp->id .'">';
         echo   '<td>'. htmlentities($emp->name) .'</td>';
         echo   '<td>'. htmlentities($emp->address) .'</td>';
