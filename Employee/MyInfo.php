@@ -4,7 +4,7 @@
         doUnauthenticatedRedirect();
         
     $status = htmlentities($loginSession->authenticatedEmployee->activeFlag);
-    if($status = "0") {
+    if($status == null) {
     	$status = "Inactive";
     }
     else {

@@ -6,7 +6,7 @@
 
     if (!$loginSession->isAdministrator)
         doUnauthorizedRedirect();
-
+        
 // Admin/SelectEmployee?for=
 //  activate
 //  deactivate
@@ -16,7 +16,7 @@
 
     // Array of [ activeFlag, targetPage, ???? ]
     $forMap = [
-        'activation'	=> [ true, 'Admin/Activation',    'Deactivate Activate' ],
+        'activation'	=> [ true, 'Admin/Activation',    'Deactivate/Activate' ],
         'modify'     	=> [ true, 'Admin/EditEmployee',  'Modify' ],
         'password'   	=> [ true, 'Admin/ChangeEmpPass', 'Change Password' ],
         'paystubs'  	=> [ true, 'Employee/MyPay',      'View Pay Stubs' ]
@@ -31,7 +31,8 @@
     $title = $for[2];
 
     try {
-        $employees = $db->readEmployees($activeFlag);
+        $employees = $db->readEmployees("1");
+        $employeesDe = $db->readEmployees("0");
     } catch (Exception $ex) {
         handleDBException($ex);
         return;
@@ -51,6 +52,11 @@
       <th>Name</th>
       <th>Address</th>
       <th>Tax ID</th>
+      <?php 
+      	if ($title == "Deactivate/Activate") {
+      		echo '<th>Status</th>';
+      	}
+      ?>
     </tr></thead>
     <tbody>
 <?php
@@ -59,8 +65,27 @@
         echo   '<td>'. htmlentities($emp->name) .'</td>';
         echo   '<td>'. htmlentities($emp->address) .'</td>';
         echo   '<td>'. htmlentities($emp->taxId) .'</td>';
+        if ($title == "Deactivate/Activate") {
+        	echo   '<td>Active</td>';
+        }
         echo '</tr>';
     } // foreach
+    
+    if ($title == "Deactivate/Activate") {
+    	foreach ($employeesDe as $emp) {
+			if (htmlentities($emp->activeFlag) == null) {
+				$status = "0";
+			} else {
+				$status = "1";
+			}
+			echo '<tr onclick="selectEmployee(this)" emp-id="'. $emp->id .'">';
+			echo   '<td>'. htmlentities($emp->name) .'</td>';
+			echo   '<td>'. htmlentities($emp->address) .'</td>';
+			echo   '<td>'. htmlentities($emp->taxId) .'</td>';
+			echo   '<td>Inactive</td>';
+			echo '</tr>';
+    	}
+    }
 ?>
     </tbody>
     </table>

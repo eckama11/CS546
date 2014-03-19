@@ -13,12 +13,12 @@
         return;
     }
     
-    $status = htmlentities($loginSession->authenticatedEmployee->activeFlag);
-    if($status = "0") {
-    	$status = "Inactive";
+    $status = htmlentities($emp->activeFlag);
+    if($status == "1") {
+    	$status = "Active";
     }
     else {
-    	$status = "Active";
+    	$status = "Inactive";
     }
 ?>
 
@@ -68,13 +68,13 @@ function activate(form) {
     </div>
 
 	<div id="content">
-        <legend>Change status for <?php echo htmlentities($loginSession->authenticatedEmployee->name); ?></legend>
+        <legend>Change status for <?php echo htmlentities($emp->name); ?></legend>
         <form role="form" class="form-horizontal" onsubmit="return activate(this);">
             <input type="hidden" name="id" value="<?php echo htmlentities($emp->id); ?>"/>
 			<div class="form-group">
                 <label class="col-sm-2 control-label">Username</label>
                 <div class="col-sm-10">
-                    <p class="form-control-static"><?php echo htmlentities($loginSession->authenticatedEmployee->username); ?></p>
+                    <p class="form-control-static"><?php echo htmlentities($emp->username); ?></p>
                 </div>
                 <label class="col-sm-2 control-label">Status</label>
                 <div class="col-sm-10">
