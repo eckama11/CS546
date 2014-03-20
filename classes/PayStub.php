@@ -41,8 +41,8 @@ class PayStub
         $salary, $numDeductions, $taxWithheld, $taxRate,
         $deductions
     ) {
-        if (!is_int($id))
-            throw new Exception("The id must be an integer");
+        if (!is_numeric($id))
+            throw new Exception("The \$id parameter must be an integer");
         $this->_id = (int) $id;
 
         $this->_payPeriodStartDate = $payPeriodStartDate;
@@ -59,6 +59,8 @@ class PayStub
             throw new Exception("The address cannot be an empty string");
         $this->_address = $address;
 
+        if ($rank instanceof Rank)
+            $rank = $rank->name;
         $rank = trim($rank);
         if (empty($rank))
             throw new Exception("The rank cannot be an empty string");
@@ -73,12 +75,19 @@ class PayStub
             if (!is_array($departments))
                 throw new Exception();
 
+/*
             $callback = function($item) {
                     return (string) $item;
                 };
             $departments = array_map($callback, $departments);
+*/
+            // TODO: Should store department names & associated managers at the time of paystub generation!
+            foreach ($departments as $dept) {
+                if (!($dept instanceof Department))
+                    throw new Exception();
+            } // foreac
         } catch (Exception $e) {
-            throw new Exception("The departments must be an array of strings");
+            throw new Exception("The departments must be an array of Departments");
         } // try/catch
         $this->_departments = $departments;
 
@@ -86,7 +95,7 @@ class PayStub
             throw new Exception("The salary must be an number greater or equal to 0");
         $this->_salary = (double) $salary;
 
-        if (!is_int($numDeductions) || ($numDeductions < 0))
+        if (!is_numeric($numDeductions) || ($numDeductions < 0))
             throw new Exception("The numDeductions must be an integer greater or equal to 0");
         $this->_numDeductions = (int) $numDeductions;
 

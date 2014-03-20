@@ -65,6 +65,10 @@ function doLogin(form) {
         .fail(function( jqXHR, textStatus, errorThrown ) {
             console.log("Error: "+ textStatus +" (errorThrown="+ errorThrown +")");
             console.log(jqXHR);
+
+            $("#spinner").hide();
+            $("#loginDiv").show();
+            showError("Request failed, unable to login: "+ errorThrown);
         })
     return false;
 } // doLogin
@@ -87,7 +91,7 @@ function doLogin(form) {
 			</div>
 		</div>
 
-        <div id="messageAlert" class="alert alert-danger" style="display:none;position:absolute;width:100%">
+        <div id="messageAlert" class="alert alert-danger" style="display:none;position:fixed;left:20px;right:20px">
             <span id="message"></span>
         </div>
 

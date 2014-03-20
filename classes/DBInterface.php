@@ -402,9 +402,11 @@ class DBInterface {
 
         return new PayStub(
                 $row->id,
+                new DateTime( $row->payPeriodStartDate ),
+                $this->readEmployee( $row->employee ),
                 $row->name,
                 $row->address,
-                $this->readRank( $row->rank ),
+                $row->rank,
                 $row->taxId,
                 $this->readDepartmentsForPayStub( $row->id ),
                 $row->salary,
@@ -428,16 +430,18 @@ class DBInterface {
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
                     "INSERT INTO paystub ( ".
-                            "name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate, deductions ".
+                            "payPeriodStartDate, employee, name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate, deductions ".
                         ") VALUES ( ".
-                            ":name, :address, :rank, :taxId, :salary, :numDeductions, :taxWithheld, :taxRate, :deductions ".
+                            ":payPeriodStartDate, :employeeId, :name, :address, :rank, :taxId, :salary, :numDeductions, :taxWithheld, :taxRate, :deductions ".
                         ")"
                 );
 
         $success = $stmt->execute(Array(
+                ':payPeriodStartDate' => $paystub->payPeriodStartDate->format("Y-m-d H:i:s"),
+                ':employeeId' => $paystub->employee->id,
                 ':name' => $paystub->name,
                 ':address' => $paystub->address,
-                ':rank' => $paystub->rank->id,
+                ':rank' => $paystub->rank,
                 ':taxId' => $paystub->taxId,
                 ':salary' => $paystub->salary,
                 ':numDeductions' => $paystub->numDeductions,
@@ -454,6 +458,8 @@ class DBInterface {
 
         return new PayStub(
                 $newId,
+                $paystub->payPeriodStartDate,
+                $paystub->employee,
                 $paystub->name,
                 $paystub->address,
                 $paystub->rank,
@@ -482,20 +488,24 @@ class DBInterface {
             $stmt = $this->dbh->prepare(
                     "SELECT id, payPeriodStartDate, employee, name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate, deductions ".
                         "FROM paystub ".
-                        "WHERE employee = ?"
+                        "WHERE employee = :employeeId"
                 );
 
-        $success = $stmt->execute(Array( $employeeId ));
+        $success = $stmt->execute(Array(
+                        ':employeeId' => $employeeId
+                    ));
         if ($success === false)
-            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for paystubs"));
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for pay stubs"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject()) {
             $rv[] = new PayStub(
                     $row->id,
+                    new DateTime( $row->payPeriodStartDate ),
+                    $this->readEmployee( $row->employee ),
                     $row->name,
                     $row->address,
-                    $this->readRank( $row->rank ),
+                    $row->rank,
                     $row->taxId,
                     $this->readDepartmentsForPayStub( $row->id ),
                     $row->salary,
@@ -867,17 +877,19 @@ class DBInterface {
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query employees who need pay stubs generated"));
 
         $rv = 0;
-        while ($row = $stmt->fetchObject) {
+        while ($row = $stmt->fetchObject()) {
             $employee = $this->readEmployee( $row->id );
-
             $monthlySalary = $employee->salary / 12;
             $tax = $this->computeTax($monthlySalary, $employee->numDeductions);
 
-            $paystub = new PayStub(0, $payPeriodStartDate, $employee, 
-                    $employee->name, $employee->address, $employee->rank, $employee->taxId,
+            $effectiveTaxRate = (($monthlySalary > 0) ? $tax->tax / $monthlySalary : 0);
+
+            $paystub = new PayStub(
+                    0, $payPeriodStartDate, $employee, 
+                    $employee->name, $employee->address, $employee->rank->name, $employee->taxId,
                     $this->readDepartmentsForEmployee( $employee->id ), $monthlySalary,
                     $employee->numDeductions,
-                    $tax->tax, $tax->tax / $monthlySalary, $tax->deductions
+                    $tax->tax, $effectiveTaxRate, $tax->deductions
                 );
 
             $this->writePaystub( $paystub );
@@ -900,17 +912,18 @@ class DBInterface {
 
         // Compute the taxable income
         $deductions = ($standardDeduction + $numDeductions * $perDeductionAllowance) / 12;
-        $taxableSalary = $salary - $deductions;
+        $deductions = min($deductions, $salary);
+        $taxableSalary = max($salary - $deductions, 0);
 
         // Compute the tax owed
         $taxOwed = 0;
 
-        $taxRates = $this->getTaxRates();
-        $lastMinSalary = PHP_INT_MAX;
+        $taxRates = $this->readTaxRates();
+        $lastMinSalary = null;
         $taxRate = null;
         foreach ($taxRates as $rate) {
             $minSalary = $rate->minimumSalary / 12;
-            if (($minSalary < $taxableSalary) && ($minSalary > $lastMinSalary)) {
+            if (($minSalary <= $taxableSalary) && (($minSalary > $lastMinSalary) || ($lastMinSalary == null))) {
                 $lastMinSalary = $minSalary;
                 $taxRate = $rate;
             }

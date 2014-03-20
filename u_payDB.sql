@@ -65,7 +65,7 @@ CREATE TABLE paystub(
     employee INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
-    rank INT NOT NULL,
+    rank VARCHAR(255) NOT NULL,
     taxId VARCHAR(255) NOT NULL,
     salary DECIMAL(9,2) UNSIGNED NOT NULL,
     numDeductions INT NOT NULL,
@@ -73,7 +73,6 @@ CREATE TABLE paystub(
     taxRate DECIMAL(7,6) UNSIGNED NOT NULL,
     deductions DECIMAL(9,2) UNSIGNED NOT NULL,
     FOREIGN KEY (employee) REFERENCES employee(id),
-    FOREIGN KEY (rank) REFERENCES rank(id),
     PRIMARY KEY (id)
 );	
 
@@ -159,7 +158,17 @@ INSERT INTO employee (
   ) VALUES
     ( 1, 'admin', 'admin', 'Administrator', 'No Address',  1, 'Untaxable', 0, 0.00 );
     
+INSERT INTO employeeDepartmentAssociation (
+	employee, department
+  ) VALUES
+    ( 1, 1 );
+
 INSERT INTO employee (
     activeFlag, username, password, name, address, rank, taxId, numDeductions, salary
   ) VALUES
-    ( 1, 'brad', 'brad', 'Brad Fisher', 'Somewhere', 9, '123taxme', 5, 10.00 );
+    ( 1, 'brad', 'brad', 'Brad Fisher', 'Somewhere', 9, '123taxme', 5, 25000.00 );
+
+INSERT INTO employeeDepartmentAssociation (
+	employee, department
+  ) VALUES
+    ( 1, 9 );

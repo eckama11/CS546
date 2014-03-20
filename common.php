@@ -84,7 +84,7 @@ function doLoginRedirect(LoginSession $session, $page) {
 
 function handleDBException($ex) {
     echo '
-        <div class="alert alert-danger" style="vertical-align:top;position:absolute;width:100%">
+        <div class="alert alert-danger" style="vertical-align:top;position:absolute;left:20px;right:20px;">
             <span class="glyphicon glyphicon-exclamation-sign" style="color:red;font-size:30px"></span>
             <div style="display:inline-block;padding-left:10px;">
                 An error occurred while processing your request.<br/>'.

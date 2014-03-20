@@ -8,8 +8,7 @@
         doUnauthorizedRedirect();
         
 // Admin/SelectEmployee?for=
-//  activate
-//  deactivate
+//  activation
 //  modify
 //  password
 //  paystubs

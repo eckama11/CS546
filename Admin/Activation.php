@@ -51,6 +51,10 @@ function activate(form) {
         .fail(function( jqXHR, textStatus, errorThrown ) {
             console.log("Error: "+ textStatus +" (errorThrown="+ errorThrown +")");
             console.log(jqXHR.textContent);
+
+            $("#spinner").hide();
+            $("#activeDiv").show();
+            showError("Request failed, unable to change employee status: "+ errorThrown);
         })
 
     return false;

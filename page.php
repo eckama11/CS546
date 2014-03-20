@@ -77,7 +77,7 @@ function showError(message) {
 			</div>
 		</div>
 
-        <div id="messageAlert" class="alert alert-danger" style="display:none;position:absolute;width:100%">
+        <div id="messageAlert" class="alert alert-danger" style="display:none;position:fixed;left:20px;right:20px">
             <span id="message"></span>
         </div>
 <?php	require_once($page); ?>

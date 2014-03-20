@@ -76,6 +76,10 @@
 			.fail(function( jqXHR, textStatus, errorThrown ) {
 				console.log("Error: "+ textStatus +" (errorThrown="+ errorThrown +")");
 				console.log(jqXHR.textContent);
+
+                $("#spinner").hide();
+                $("#employeeDiv").show();
+                showError("Request failed, unable to update employee: "+ errorThrown);
 			})
 
 		return false;
