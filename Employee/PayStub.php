@@ -21,32 +21,33 @@
 	$netPay = ($paystub->salary) - ($paystub->taxWithheld);
 ?>
 <div class="container col-md-12 col-md-offset-0">
-   <TABLE class="table table-striped table-bordered table-condensed">
-   		<TR>
-      		<TH COLSPAN="6">
-      			<BR>
-      			<H3>Paystub <?php echo htmlentities($paystub->id); ?></H3>
-      		</TH>
-  		</TR>
-  		<TR>
-      		<TD><b>Address</b></TD>
-      		<TD>
-      			<?php 
-      				echo nl2br($paystub->address); 
-      			?>
-      		</TD>
-      		<TH>Rank</b></TH>
-      		<TD><?php echo ($paystub->rank); ?>, <?php echo ($paystub->rank->employeeType); ?></TD>
-      		<TH>Tax Id</b></TH>
-      		<TD><?php echo ($paystub->taxId); ?></TD>
-      		
-   		</TR>
-   		<TR>
-      		<TH>Number of Deductions</TH>
-      		<TD><?php echo ($paystub->numDeductions); ?></TD>
-      		<TH>Departments</TH>
-      		<TD>
-      			<?php
+	<!--<pre><?php print_r($paystub) ?></pre>-->
+	<TABLE class="table table-striped table-bordered table-condensed">
+		<TR>
+			<TH COLSPAN="6">
+				<BR>
+				<H3>Paystub <?php echo htmlentities($paystub->id); ?></H3>
+			</TH>
+		</TR>
+		<TR>
+			<TD><b>Address</b></TD>
+			<TD>
+				<?php 
+					echo nl2br($paystub->address); 
+				?>
+			</TD>
+			<TH>Rank</b></TH>
+			<TD><?php echo ($paystub->rank); ?>, </TD>
+			<TH>Tax Id</b></TH>
+			<TD><?php echo ($paystub->taxId); ?></TD>
+		
+		</TR>
+		<TR>
+			<TH>Number of Deductions</TH>
+			<TD><?php echo ($paystub->numDeductions); ?></TD>
+			<TH>Departments</TH>
+			<TD>
+				<?php
 				foreach ($departments as $dept) {
 					$deptName = $dept->name;
 					if ($dept === end($departments))
@@ -56,17 +57,17 @@
 				}
 				?>
 			</TD>
-      		<TH>Pay Period</TH>
-      		<TD><?php echo $payPeriodStartDate; ?> - <?php echo $payPeriodEndDate;?></TD>
-   		</TR>
-   		<TR>
-   			<TH>Pay Period Earnings</TH>
-      		<TD>$ <?php echo ($paystub->salary); ?></TD>
-      		<TH>Taxes</TH>
-      		<TD>$ <?php echo ($paystub->taxWithheld); ?></TD>
-      		<TH><b>Net Pay</TH>
-      		<TD>$ <?php echo $netPay; ?></TD>
-   		</TR>
+			<TH>Pay Period</TH>
+			<TD><?php echo $payPeriodStartDate; ?> - <?php echo $payPeriodEndDate;?></TD>
+		</TR>
+		<TR>
+			<TH>Pay Period Earnings</TH>
+			<TD>$ <?php echo ($paystub->salary); ?></TD>
+			<TH>Taxes</TH>
+			<TD>$ <?php echo ($paystub->taxWithheld); ?></TD>
+			<TH><b>Net Pay</TH>
+			<TD>$ <?php echo $netPay; ?></TD>
+		</TR>
 	</TABLE>
 <?php
 /*
