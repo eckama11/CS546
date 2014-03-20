@@ -21,64 +21,7 @@
 	$netPay = ($paystub->salary) - ($paystub->taxWithheld);
 ?>
 <div class="container col-md-12 col-md-offset-0">
-    <!--<legend>Paystub <?php echo htmlentities($paystub->id); ?></legend>
-    
-    <div class="col-sm-10">
-    	<label class="col-sm-5 control-label">Address</label>
-		<p class="form-control-static"><?php echo ($paystub->address); ?></p> 
-	</div>
-	
-	<div class="col-sm-10">
-    	<label class="col-sm-5 control-label">Rank</label>
-		<p class="form-control-static"><?php echo ($paystub->rank); ?></p> 
-	</div>
-	
-	<div class="col-sm-10">
-    	<label class="col-sm-5 control-label">Tax ID</label>
-		<p class="form-control-static"><?php echo ($paystub->taxId); ?></p> 
-	</div>
-	
-	<div class="col-sm-10">
-    	<label class="col-sm-5 control-label">Number of Deductions</label>
-		<p class="form-control-static"><?php echo ($paystub->numDeductions); ?></p> 
-	</div>
-	
-	<div class="col-sm-10">
-    	<label class="col-sm-5 control-label">Departments</label>
-		<p class="form-control-static">
-			<?php
-				foreach ($departments as $dept) {
-					$deptName = $dept->name;
-					echo $deptName;
-					?>
-					<div></div>
-					<?php
-				}
-			?>
-		</p>
-	</div>
-	
-	<div class="col-sm-10">
-    	<label class="col-sm-5 control-label">Pay Period</label>
-    	<p class="form-control-static"><?php echo $payPeriodStartDate; ?> - <?php echo $payPeriodEndDate;?></p> 
-	</div>
-	
-	<div class="col-sm-10">
-    	<label class="col-sm-5 control-label">Pay Period Earnings</label>
-		<p class="form-control-static">$ <?php echo ($paystub->salary); ?></p> 
-	</div>
-	
-	<div class="col-sm-10">
-    	<label class="col-sm-5 control-label">Federal Tax Withheld</label>
-		<p class="form-control-static">$ <?php echo ($paystub->taxWithheld); ?></p> 
-	</div>
-	
-	<div class="col-sm-10">
-    	<label class="col-sm-5 control-label">Net Pay</label>
-		<p class="form-control-static">$ <?php echo $netPay; ?></p> 
-	</div>-->
-	
-	<TABLE class="table table-striped table-hover table-bordered table-condensed">
+   <TABLE class="table table-striped table-hover table-bordered table-condensed">
    		<TR>
       		<TH COLSPAN="6">
       			<BR>
@@ -87,7 +30,11 @@
   		</TR>
   		<TR>
       		<TD><b>Address</b></TD>
-      		<TD><?php echo ($paystub->address); ?></TD>
+      		<TD>
+      			<?php 
+      				echo nl2br($paystub->address); 
+      			?>
+      		</TD>
       		<TD><b>Rank</b></TD>
       		<TD><?php echo ($paystub->rank); ?></TD>
       		<TD><b>Tax Id</b></TD>
@@ -115,7 +62,7 @@
    		<TR>
    			<TD><b>Pay Period Earnings</b></TD>
       		<TD>$ <?php echo ($paystub->salary); ?></TD>
-      		<TD><b>Federal Taxes</b></TD>
+      		<TD><b>Taxes</b></TD>
       		<TD>$ <?php echo ($paystub->taxWithheld); ?></TD>
       		<TD><b>Net Pay</b></TD>
       		<TD>$ <?php echo $netPay; ?></TD>
