@@ -186,7 +186,7 @@
 					<input type="text" class="form-control" name="numDeductions" id="numDeductions" placeholder="Enter a number" value="<?php empProperty($emp, 'numDeductions'); ?>">
 				</div>
 				<div class="form-group">
-					<label>Salary</label>
+					<label>Yearly Salary</label>
 					<input type="text" class="form-control" name="salary" id="salary" placeholder="Enter a salary" value="<?php empProperty($emp, 'salary'); ?>">
 				</div>
 				<button type="submit" class="btn btn-default"><?php

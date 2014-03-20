@@ -39,7 +39,7 @@
 		  <td><?php echo htmlentities($loginSession->authenticatedEmployee->numDeductions); ?></td>
 		</tr>
 		<tr>
-		  <td>Salary</td>
+		  <td>Yearly Salary</td>
 		  <td><?php echo htmlentities(sprintf("\$ %.2f", $loginSession->authenticatedEmployee->salary)); ?></td>
 		</tr>
 	</table>
