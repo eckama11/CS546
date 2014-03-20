@@ -21,7 +21,7 @@
 	$netPay = ($paystub->salary) - ($paystub->taxWithheld);
 ?>
 <div class="container col-md-12 col-md-offset-0">
-   <TABLE class="table table-striped table-hover table-bordered table-condensed">
+   <TABLE class="table table-striped table-bordered table-condensed">
    		<TR>
       		<TH COLSPAN="6">
       			<BR>
@@ -35,16 +35,16 @@
       				echo nl2br($paystub->address); 
       			?>
       		</TD>
-      		<TD><b>Rank</b></TD>
-      		<TD><?php echo ($paystub->rank); ?></TD>
-      		<TD><b>Tax Id</b></TD>
+      		<TH>Rank</b></TH>
+      		<TD><?php echo ($paystub->rank); ?>, <?php echo ($paystub->rank->employeeType); ?></TD>
+      		<TH>Tax Id</b></TH>
       		<TD><?php echo ($paystub->taxId); ?></TD>
       		
    		</TR>
    		<TR>
-      		<TD><b>Number of Deductions</b></TD>
+      		<TH>Number of Deductions</TH>
       		<TD><?php echo ($paystub->numDeductions); ?></TD>
-      		<TD><b>Departments</b></TD>
+      		<TH>Departments</TH>
       		<TD>
       			<?php
 				foreach ($departments as $dept) {
@@ -56,15 +56,15 @@
 				}
 				?>
 			</TD>
-      		<TD><b>Pay Period</b></TD>
+      		<TH>Pay Period</TH>
       		<TD><?php echo $payPeriodStartDate; ?> - <?php echo $payPeriodEndDate;?></TD>
    		</TR>
    		<TR>
-   			<TD><b>Pay Period Earnings</b></TD>
+   			<TH>Pay Period Earnings</TH>
       		<TD>$ <?php echo ($paystub->salary); ?></TD>
-      		<TD><b>Taxes</b></TD>
+      		<TH>Taxes</TH>
       		<TD>$ <?php echo ($paystub->taxWithheld); ?></TD>
-      		<TD><b>Net Pay</b></TD>
+      		<TH><b>Net Pay</TH>
       		<TD>$ <?php echo $netPay; ?></TD>
    		</TR>
 	</TABLE>
