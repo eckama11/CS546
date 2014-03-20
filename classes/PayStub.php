@@ -16,6 +16,7 @@ class PayStub
     private $_numDeductions;
     private $_taxWithheld;
     private $_taxRate;
+    private $_deductions;
 
     /**
      * Constructs a new PayStub instance.
@@ -32,11 +33,13 @@ class PayStub
      * @param   int             $numDeductions
      * @param   double          $taxWithheld
      * @param   double          $taxRate
+     * @param   double          $deductions
      */
     public function __construct(
         $id, DateTime $payPeriodStartDate, Employee $employee,
         $name, $address, $rank, $taxId, $departments,
-        $salary, $numDeductions, $taxWithheld, $taxRate
+        $salary, $numDeductions, $taxWithheld, $taxRate,
+        $deductions
     ) {
         if (!is_int($id))
             throw new Exception("The id must be an integer");
@@ -94,6 +97,10 @@ class PayStub
         if (!is_numeric($taxRate) || ($taxRate < 0))
             throw new Exception("The taxRate must be an number greater or equal to 0");
         $this->_taxRate = (double) $taxRate;
+
+        if (!is_numeric($deductions) || ($deductions < 0))
+            throw new Exception("The deductions must be an number greater or equal to 0");
+        $this->_deductions = (double) $deductions;
     } // __construct
 
     protected function getId() {
@@ -144,8 +151,12 @@ class PayStub
         return $this->_taxRate;
     } // getTaxRate()
 
+    protected function getDeductions() {
+        return $this->_deductions;
+    } // getDeductions()
+
     public function __toString() {
-        return __CLASS__ ."(id=$this->id, payPeriodStartDate=". $this->payPeriodStartDate->format("Y-m-d H:i:sP") .", employee=$this->employee, name=$this->name, address=$this->address, rank=$this->rank, taxId=$this->taxId, departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate)";
+        return __CLASS__ ."(id=$this->id, payPeriodStartDate=". $this->payPeriodStartDate->format("Y-m-d H:i:sP") .", employee=$this->employee, name=$this->name, address=$this->address, rank=$this->rank, taxId=$this->taxId, departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate, deductions=$this->deductions)";
     } // __toString
 
 } // class PayStub

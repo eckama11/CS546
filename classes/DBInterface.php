@@ -387,7 +387,7 @@ class DBInterface {
         static $stmt;
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
-                    "SELECT id, payPeriodStartDate, employee, name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate ".
+                    "SELECT id, payPeriodStartDate, employee, name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate, deductions ".
                         "FROM paystub ".
                         "WHERE id = ?"
                 );
@@ -410,7 +410,8 @@ class DBInterface {
                 $row->salary,
                 $row->numDeductions,
                 $row->taxWithheld,
-                $row->taxRate
+                $row->taxRate,
+                $row->deductions
             );
     } // readPayStub
 
@@ -427,9 +428,9 @@ class DBInterface {
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
                     "INSERT INTO paystub ( ".
-                            "name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate ".
+                            "name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate, deductions ".
                         ") VALUES ( ".
-                            ":name, :address, :rank, :taxId, :salary, :numDeductions, :taxWithheld, :taxRate ".
+                            ":name, :address, :rank, :taxId, :salary, :numDeductions, :taxWithheld, :taxRate, :deductions ".
                         ")"
                 );
 
@@ -441,7 +442,8 @@ class DBInterface {
                 ':salary' => $paystub->salary,
                 ':numDeductions' => $paystub->numDeductions,
                 ':taxWithheld' => $paystub->taxWithheld,
-                ':taxRate' => $paystub->taxRate
+                ':taxRate' => $paystub->taxRate,
+                ':deductions' => $paystub->deductions
             ));
         if ($success == false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to create paystub record in database"));
@@ -460,7 +462,8 @@ class DBInterface {
                 $paystub->salary,
                 $paystub->numDeductions,
                 $paystub->taxWithheld,
-                $paystub->taxRate
+                $paystub->taxRate,
+                $paystub->deductions
             );
     } // writePayStub
 
@@ -477,7 +480,7 @@ class DBInterface {
         static $stmt;
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
-                    "SELECT id, payPeriodStartDate, employee, name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate ".
+                    "SELECT id, payPeriodStartDate, employee, name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate, deductions ".
                         "FROM paystub ".
                         "WHERE employee = ?"
                 );
@@ -498,7 +501,8 @@ class DBInterface {
                     $row->salary,
                     $row->numDeductions,
                     $row->taxWithheld,
-                    $row->taxRate
+                    $row->taxRate,
+                    $row->deductions
                 );
         } // while
 
@@ -866,13 +870,14 @@ class DBInterface {
         while ($row = $stmt->fetchObject) {
             $employee = $this->readEmployee( $row->id );
 
-            $taxWithheld = $this->computeTax($employee->salary, $employee->numDeductions);
+            $monthlySalary = $employee->salary / 12;
+            $tax = $this->computeTax($monthlySalary, $employee->numDeductions);
 
             $paystub = new PayStub(0, $payPeriodStartDate, $employee, 
                     $employee->name, $employee->address, $employee->rank, $employee->taxId,
-                    $this->readDepartmentsForEmployee( $employee->id ), $employee->salary,
+                    $this->readDepartmentsForEmployee( $employee->id ), $monthlySalary,
                     $employee->numDeductions,
-                    $taxWithheld, $taxWithheld / $employee->salary
+                    $tax->tax, $tax->tax / $monthlySalary, $tax->deductions
                 );
 
             $this->writePaystub( $paystub );
@@ -889,27 +894,38 @@ class DBInterface {
      * @return  double  The tax owed.
      */
     protected function computeTax($salary, $numDeductions) {
-        // TODO: Finish this!
-        throw new Exception("NOT IMPLEMENTED: ".  __METHOD__);
-
         // Annual deduction amounts
         $standardDeduction = 5000;
         $perDeductionAllowance = 1000;
 
         // Compute the taxable income
-        $taxableSalary = $salary - ($standardDeduction + $numDeductions * $perDeductionAllowance) / 12;
+        $deductions = ($standardDeduction + $numDeductions * $perDeductionAllowance) / 12;
+        $taxableSalary = $salary - $deductions;
 
         // Compute the tax owed
         $taxOwed = 0;
 
         $taxRates = $this->getTaxRates();
+        $lastMinSalary = PHP_INT_MAX;
+        $taxRate = null;
         foreach ($taxRates as $rate) {
-
-// TODO: Finish this!
-
+            $minSalary = $rate->minimumSalary / 12;
+            if (($minSalary < $taxableSalary) && ($minSalary > $lastMinSalary)) {
+                $lastMinSalary = $minSalary;
+                $taxRate = $rate;
+            }
         } // foreach
 
-        return $taxOwed;
+        if ($taxRate == null)
+            throw new Exception("Unable to determine tax rate!");
+
+        $taxOwed = $taxRate->taxRate * $taxableSalary;
+
+        return (Object)[
+				'tax' => $taxOwed,
+				'taxableSalary' => $taxableSalary,
+				'deductions' => $deductions
+			];
     } // computeTax($salary, $numDeductions)
 
 } // DBInterface

@@ -71,6 +71,7 @@ CREATE TABLE paystub(
     numDeductions INT NOT NULL,
     taxWithheld DECIMAL(9,2) UNSIGNED NOT NULL,
     taxRate DECIMAL(7,6) UNSIGNED NOT NULL,
+    deductions DECIMAL(9,2) UNSIGNED NOT NULL,
     FOREIGN KEY (employee) REFERENCES employee(id),
     FOREIGN KEY (rank) REFERENCES rank(id),
     PRIMARY KEY (id)
@@ -109,11 +110,11 @@ GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE, LOCK TABLES, CREATE TEMPORARY TAB
 INSERT INTO taxRate (
     minimumSalary, taxRate
   ) VALUES
-    (    0.00, 0.000000 ),
-    ( 1000.00, 0.100000 ),
-    ( 2000.00, 0.150000 ),
-    ( 3000.00, 0.200000 ),
-    ( 4000.00, 0.250000 )
+    (     0.00, 0.050000 ), -- $0 to $9999.99
+    ( 10000.00, 0.100000 ), -- $10000 to $19999.99
+    ( 20000.00, 0.150000 ),
+    ( 30000.00, 0.200000 ),
+    ( 40000.00, 0.250000 )
 ;
 
 -- Populate the departments
