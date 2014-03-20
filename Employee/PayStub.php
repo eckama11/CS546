@@ -34,6 +34,7 @@
      * @param   int             $numDeductions
      * @param   double          $taxWithheld
      * @param   double          $taxRate
+     *d@param	int				$deductions
 */
 ?>
 </div>
