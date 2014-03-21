@@ -21,7 +21,7 @@ class EmployeeType
     public static function SoftwareDeveloper() {
         static $softwareDeveloper;
         if ($softwareDeveloper === null)
-            $softwareDeveloper = new EmployeeType("SoftwareDeveloper", false, false, true);
+            $softwareDeveloper = new EmployeeType("Software Developer", false, false, true);
         return $softwareDeveloper;
     } // SoftwareDeveloper()
 
@@ -48,6 +48,10 @@ class EmployeeType
         $this->_isManager = $isManager;
         $this->_isSoftwareDeveloper = $isSoftwareDeveloper;
     } // __construct
+
+    protected function getName() {
+        return $this->_name;
+    } // getName
 
     protected function getIsAdministrator() {
         return $this->_isAdministrator;

@@ -61,7 +61,7 @@
     <tbody>
 <?php
     foreach ($employees as $emp) {
-    	if ($for != "activation" || $loginSession->authenticatedEmployee->id != $emp->id) {
+    	if ($loginSession->authenticatedEmployee->id != $emp->id) {
 			echo '<tr onclick="selectEmployee(this)" emp-id="'. $emp->id .'">';
 			echo   '<td>'. htmlentities($emp->name) .'</td>';
 			echo   '<td>'. htmlentities($emp->address) .'</td>';

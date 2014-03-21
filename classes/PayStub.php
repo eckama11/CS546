@@ -10,6 +10,7 @@ class PayStub
     private $_name;
     private $_address;
     private $_rank;
+    private $_employeeType;
     private $_taxId;
     private $_departments;
     private $_salary;
@@ -27,8 +28,9 @@ class PayStub
      * @param   string          $name
      * @param   string          $address
      * @param   string          $rank
+     * @param   string          $employeeType
      * @param   string          $taxId
-     * @param   array[String]   $departments
+     * @param   array[PayStubDepartment]   $departments
      * @param   double          $salary
      * @param   int             $numDeductions
      * @param   double          $taxWithheld
@@ -37,7 +39,7 @@ class PayStub
      */
     public function __construct(
         $id, DateTime $payPeriodStartDate, Employee $employee,
-        $name, $address, $rank, $taxId, $departments,
+        $name, $address, $rank, $employeeType, $taxId, $departments,
         $salary, $numDeductions, $taxWithheld, $taxRate,
         $deductions
     ) {
@@ -66,6 +68,13 @@ class PayStub
             throw new Exception("The rank cannot be an empty string");
         $this->_rank = $rank;
 
+        if ($employeeType instanceof EmployeeType)
+            $employeeType = $employeeType->name;
+        $employeeType = trim($employeeType);
+        if (empty($employeeType))
+            throw new Exception("The employeeType cannot be an empty string");
+        $this->_employeeType = $employeeType;
+
         $taxId = trim($taxId);
         if (empty($taxId))
             throw new Exception("The taxId cannot be an empty string");
@@ -75,19 +84,12 @@ class PayStub
             if (!is_array($departments))
                 throw new Exception();
 
-/*
-            $callback = function($item) {
-                    return (string) $item;
-                };
-            $departments = array_map($callback, $departments);
-*/
-            // TODO: Should store department names & associated managers at the time of paystub generation!
             foreach ($departments as $dept) {
-                if (!($dept instanceof Department))
+                if (!($dept instanceof PayStubDepartment))
                     throw new Exception();
-            } // foreac
+            } // foreach
         } catch (Exception $e) {
-            throw new Exception("The departments must be an array of Departments");
+            throw new Exception("The departments must be an array of PayStubDepartments");
         } // try/catch
         $this->_departments = $departments;
 
@@ -136,6 +138,10 @@ class PayStub
         return $this->_rank;
     } // getRank()
 
+    protected function getEmployeeType() {
+        return $this->_employeeType;
+    } // getEmployeeType()
+
     protected function getTaxId() {
         return $this->_taxId;
     } // getTaxId()
@@ -165,7 +171,7 @@ class PayStub
     } // getDeductions()
 
     public function __toString() {
-        return __CLASS__ ."(id=$this->id, payPeriodStartDate=". $this->payPeriodStartDate->format("Y-m-d H:i:sP") .", employee=$this->employee, name=$this->name, address=$this->address, rank=$this->rank, taxId=$this->taxId, departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate, deductions=$this->deductions)";
+        return __CLASS__ ."(id=$this->id, payPeriodStartDate=". $this->payPeriodStartDate->format("Y-m-d H:i:sP") .", employee=$this->employee, name=$this->name, address=$this->address, rank=$this->rank, employeeType=$this->employeeType, taxId=$this->taxId, departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate, deductions=$this->deductions)";
     } // __toString
 
 } // class PayStub

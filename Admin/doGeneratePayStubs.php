@@ -11,7 +11,6 @@ try {
     $rv->success = true;
 } catch (Exception $ex) {
     $rv->error = $ex->getMessage();
-    throw $rv;
 } // try/catch
 
 echo json_encode($rv);

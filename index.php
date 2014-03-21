@@ -101,7 +101,7 @@ function doLogin(form) {
                     <div style="color:black;padding-bottom:32px;">Authenticating...</div>
                     <img src="spinner.gif">
                 </div>
-    			<div id="loginDiv" class="col-md-2 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;">
+    			<div id="loginDiv" class="col-md-3 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;">
             		<form class="form-horizontal" method="post" onsubmit="return doLogin(this)">
               			<input type="hidden" name="page" id="page" value="<?php echo htmlentities(@$_SERVER['PATH_INFO']); ?>"/>
                			<fieldset>
@@ -109,13 +109,13 @@ function doLogin(form) {
                    			<div class="control-group">
                         		<label class="control-label" for="username">Username</label>
                         		<div class="controls">
-                        			<input name="username" maxlength="50" placeholder="Enter your username..." type="text" class="input-large" id="username" />
+                        			<input name="username" maxlength="50" placeholder="Enter your username..." type="text" class="form-control" id="username" />
                     			</div>
                     		</div>
                 			<div class="control-group">
                         		<label class="control-label" for="password">Password</label>
                         		<div class="controls">
-                            		<input name="password" maxlength="50" placeholder="Enter your password..." type="password" class="input-large" id="password" />
+                            		<input name="password" maxlength="50" placeholder="Enter your password..." type="password" class="form-control" id="password" />
                         		</div>
                         	</div>
                         	</br>

@@ -66,6 +66,7 @@ CREATE TABLE paystub(
     name VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
     rank VARCHAR(255) NOT NULL,
+    employeeType VARCHAR(255) NOT NULL,
     taxId VARCHAR(255) NOT NULL,
     salary DECIMAL(9,2) UNSIGNED NOT NULL,
     numDeductions INT NOT NULL,
@@ -79,6 +80,8 @@ CREATE TABLE paystub(
 CREATE TABLE paystubDepartmentAssociation(
     paystub INT NOT NULL,
     department INT NOT NULL,
+    departmentName VARCHAR(255) NOT NULL,
+    departmentManagers TEXT NOT NULL,
     FOREIGN KEY (paystub) REFERENCES paystub(id),
     FOREIGN KEY (department) REFERENCES department(id),
     PRIMARY KEY (paystub, department)
@@ -166,9 +169,9 @@ INSERT INTO employeeDepartmentAssociation (
 INSERT INTO employee (
     activeFlag, username, password, name, address, rank, taxId, numDeductions, salary
   ) VALUES
-    ( 1, 'brad', 'brad', 'Brad Fisher', 'Somewhere', 9, '123taxme', 5, 25000.00 );
+    ( 1, 'brad', 'brad', 'Brad Fisher', 'Somewhere', 9, '123taxme', 5, 85000.00 );
 
 INSERT INTO employeeDepartmentAssociation (
 	employee, department
   ) VALUES
-    ( 1, 9 );
+    ( 2, 9 );

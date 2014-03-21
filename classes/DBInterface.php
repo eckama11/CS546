@@ -320,59 +320,76 @@ class DBInterface {
         static $stmt;
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
-                    "SELECT d.id, d.name ".
-                        "FROM paystubDepartmentAssociation a ".
-                        "INNER JOIN department d ON d.id = a.department ".
-                        "WHERE a.paystub=? ".
-                        "ORDER BY d.name"
+                    "SELECT department, departmentName, departmentManagers ".
+                        "FROM paystubDepartmentAssociation ".
+                        "WHERE paystub=? ".
+                        "ORDER BY departmentName"
                 );
 
         $success = $stmt->execute(Array( $paystubId ));
         if ($success === false)
-            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for paystub departments"));
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for pay stub departments"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject()) {
-            $rv[] = new Department( $row->id, $row->name );
+            $rv[] = new PayStubDepartment( $row->department, $row->departmentName, explode("\n", $row->departmentManagers) );
         } // while
 
         return $rv;
     } // readDepartmentsForPayStub
 
     /**
-     * Writes the departments associated with a paystub.
-     * @param   int $paystubId  The ID of the paystub to write the association records for.
-     * @param   Array[Department]   $departments    Array of Departments that associations should be created for.
+     * Writes the departments associated with a pay stub.
+     * @param   int $paystubId  The ID of the pay stub to write the association records for.
+     * @param   Array[PayStubDepartment|Department]   $departments    Array of PayStubDepartments or Departments that associations should be created for.
      */
     protected function writeDepartmentsForPayStub( $paystubId, $departments ) {
         if (!is_numeric($paystubId))
             throw new Exception("\$paystubId must be an integer");
         $paystubId = (int) $paystubId;
 
-        foreach ($departments as $dept) {
-            if (!($dept instanceof Department))
-                throw new Exception("\$departments must be an array of Department");
-        } // foreach
+        for ($i = count($departments) - 1; $i >= 0; --$i) {
+            $dept = $departments[$i];
+            if (!($dept instanceof PayStubDepartment)) {
+                if ($dept instanceof Department)
+                    $departments[$i] = $this->departmentToPayStubDepartment($dept);
+                else
+                    throw new Exception("\$departments must be an array of Department");
+            }
+        } // for
 
         static $stmt;
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
                     "INSERT INTO paystubDepartmentAssociation ( ".
-                            "paystub, department ".
+                            "paystub, department, departmentName, departmentManagers ".
                         ") VALUES ( ".
-                            ":paystub, :department ".
+                            ":paystub, :department, :departmentName, :departmentManagers ".
                         ")"
                 );
 
         foreach ($departments as $dept) {
             $success = $stmt->execute(Array(
                     ":paystub" => $paystubId,
-                    ":department" => $dept->id
+                    ":department" => $dept->id,
+                    ":departmentName" => $dept->name,
+                    ":departmentManagers" => implode("\n", $dept->managers)
                 ));
             if ($success == false)
                 throw new Exception($this->formatErrorMessage($stmt, "Unable to write paystubDepartmentAssociation to database"));
         } // foreach
     } // writeDepartmentsForPayStub
+
+    /**
+     * Creates a PayStubDepartment from a Department instance.
+     * @param   Department $department  The Department to convert to a PayStubDepartment.
+     * @return  A new PayStubDepartment instance.
+     */
+    public function departmentToPayStubDepartment(Department $department) {
+        $managers = $this->readEmployeesForDepartment($department->id, EmployeeType::Manager());
+        $managers = array_map(function($mgr) { return $mgr->name; }, $managers);
+        return new PayStubDepartment( $department->id, $department->name, $managers );
+    } // departmentToPayStubDepartment
 
     /**
      * Reads a pay stub from the database.
@@ -387,7 +404,9 @@ class DBInterface {
         static $stmt;
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
-                    "SELECT id, payPeriodStartDate, employee, name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate, deductions ".
+                    "SELECT id, payPeriodStartDate, employee, name, address, ".
+                            "rank, employeeType, taxId, salary, numDeductions, ".
+                            "taxWithheld, taxRate, deductions ".
                         "FROM paystub ".
                         "WHERE id = ?"
                 );
@@ -407,6 +426,7 @@ class DBInterface {
                 $row->name,
                 $row->address,
                 $row->rank,
+                $row->employeeType,
                 $row->taxId,
                 $this->readDepartmentsForPayStub( $row->id ),
                 $row->salary,
@@ -430,9 +450,13 @@ class DBInterface {
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
                     "INSERT INTO paystub ( ".
-                            "payPeriodStartDate, employee, name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate, deductions ".
+                            "payPeriodStartDate, employee, name, address, ".
+                            "rank, employeeType, taxId, salary, numDeductions, ".
+                            "taxWithheld, taxRate, deductions ".
                         ") VALUES ( ".
-                            ":payPeriodStartDate, :employeeId, :name, :address, :rank, :taxId, :salary, :numDeductions, :taxWithheld, :taxRate, :deductions ".
+                            ":payPeriodStartDate, :employeeId, :name, :address, ".
+                            ":rank, :employeeType, :taxId, :salary, :numDeductions, ".
+                            ":taxWithheld, :taxRate, :deductions ".
                         ")"
                 );
 
@@ -442,6 +466,7 @@ class DBInterface {
                 ':name' => $paystub->name,
                 ':address' => $paystub->address,
                 ':rank' => $paystub->rank,
+                ':employeeType' => $paystub->employeeType,
                 ':taxId' => $paystub->taxId,
                 ':salary' => $paystub->salary,
                 ':numDeductions' => $paystub->numDeductions,
@@ -463,6 +488,7 @@ class DBInterface {
                 $paystub->name,
                 $paystub->address,
                 $paystub->rank,
+                $paystub->employeeType,
                 $paystub->taxId,
                 $paystub->departments,
                 $paystub->salary,
@@ -486,7 +512,9 @@ class DBInterface {
         static $stmt;
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
-                    "SELECT id, payPeriodStartDate, employee, name, address, rank, taxId, salary, numDeductions, taxWithheld, taxRate, deductions ".
+                    "SELECT id, payPeriodStartDate, employee, name, address, ".
+                            "rank, employeeType, taxId, salary, numDeductions, ".
+                            "taxWithheld, taxRate, deductions ".
                         "FROM paystub ".
                         "WHERE employee = :employeeId"
                 );
@@ -506,6 +534,7 @@ class DBInterface {
                     $row->name,
                     $row->address,
                     $row->rank,
+                    $row->employeeType,
                     $row->taxId,
                     $this->readDepartmentsForPayStub( $row->id ),
                     $row->salary,
@@ -765,9 +794,11 @@ class DBInterface {
    /**
      * Reads all of the Employees associated with a Department.
      * @param   int $departmentId The ID of the Department to retrieve the Employees for.
+     * @param   EmployeeType $employeeType Type of employees to return.  If not specified,
+     *                     all employees associated with the department will be returned.
      * @return  Array[Employee]   Array of the Employees for a Department.
      */
-    public function readEmployeesForDepartment( $departmentId ) {
+    public function readEmployeesForDepartment( $departmentId, EmployeeType $employeeType = null ) {
         if (!is_numeric($departmentId))
             throw new Exception("Parameter \$departmentId must be an integer");
         $departmentId = (int) $departmentId;
@@ -778,11 +809,16 @@ class DBInterface {
                     "SELECT a.employee ".
                         "FROM employeeDepartmentAssociation a ".
                         "INNER JOIN employee e ON e.id = a.employee ".
-                        "WHERE department=? ".
+                        "INNER JOIN rank r ON r.id = e.rank ".
+                        "WHERE department=:departmentId ".
+                            "AND (:employeeType IS NULL OR r.employeeType = :employeeType) ".
                         "ORDER BY e.name"
                 );
 
-        $success = $stmt->execute(Array( $departmentId ));
+        $success = $stmt->execute(Array(
+                ':departmentId' => $departmentId,
+                ':employeeType' => $employeeType->name
+            ));
         if ($success === false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for department employees"));
 
@@ -884,10 +920,13 @@ class DBInterface {
 
             $effectiveTaxRate = (($monthlySalary > 0) ? $tax->tax / $monthlySalary : 0);
 
+            $departments = $this->readDepartmentsForEmployee( $employee->id );
+            $departments = array_map(function($dept) { return $this->departmentToPaystubDepartment($dept); }, $departments);
+
             $paystub = new PayStub(
                     0, $payPeriodStartDate, $employee, 
-                    $employee->name, $employee->address, $employee->rank->name, $employee->taxId,
-                    $this->readDepartmentsForEmployee( $employee->id ), $monthlySalary,
+                    $employee->name, $employee->address, $employee->rank, $employee->rank->employeeType, $employee->taxId,
+                    $departments, $monthlySalary,
                     $employee->numDeductions,
                     $tax->tax, $effectiveTaxRate, $tax->deductions
                 );
