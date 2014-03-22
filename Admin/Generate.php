@@ -18,14 +18,14 @@
     $payPeriodEndDate = htmlentities($payPeriodEndDate->format("Y-m-d"));
 ?>
 <script>
-function generatePaystubs() {
+function generatePaystubs(form) {
     $("#spinner").show();
     $("#content").hide();
 
     $.ajax({
         "type" : "POST",
         "url" : "Admin/doGeneratePayStubs.php",
-        "data" : {},
+        "data" : $(form).serialize(),
         "dataType" : "json"
         })
         .done(function(data) {
@@ -34,8 +34,10 @@ function generatePaystubs() {
             if (data.error != null) {
                 showError(data.error);
                 $("#content").show();
-            } else
+            } else {
+                $("#successDiv .message").text(data.message);
                 $("#successDiv").show();
+            }
         })
         .fail(function( jqXHR, textStatus, errorThrown ) {
             console.log("Error: "+ textStatus +" (errorThrown="+ errorThrown +")");
@@ -45,6 +47,8 @@ function generatePaystubs() {
             $("#content").show();
             showError("Request failed, unable to generate paystubs: "+ errorThrown);
         })
+
+    return false;
 } // generatePaystubs
 </script>
 
@@ -54,8 +58,8 @@ function generatePaystubs() {
         <img src="spinner.gif">
     </div>
 
-    <div id="successDiv" class="col-md-6 col-md-offset-3" style="padding-bottom:10px; outline: 10px solid black;display:none">
-        Pay stubs successfully generated for <?php echo $payPeriodStartDate .' to '. $payPeriodEndDate; ?>
+    <div id="successDiv" style="padding:10px; outline:10px solid black; display:none">
+        <span class="message"></span>
     </div>
 
     <div id="content">
@@ -76,6 +80,9 @@ function generatePaystubs() {
             </tr>
         </table>
 
-        <button style="margin-top: 10px" type="submit" class="btn btn-default" onclick="generatePaystubs()">Generate Paystubs</button>
+        <form class="form" onsubmit="return generatePaystubs(this)">
+            <input type="hidden" name="payPeriodStartDate" id="payPeriodStartDate" value="<?php echo htmlentities($payPeriodStartDate); ?>"/>
+            <button style="margin-top: 10px" type="submit" class="btn btn-default">Generate Paystubs</button>
+        </form>
     </div>
 </div>

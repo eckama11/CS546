@@ -67,7 +67,7 @@
 			echo   '<td>'. htmlentities($emp->address) .'</td>';
 			echo   '<td>'. htmlentities($emp->taxId) .'</td>';
 			if ($for == "activation") {
-				echo   '<td>'.($emp->activeFlag?"Active":"Inactive").'</td>';	
+				echo   '<td><span class="'.($emp->activeFlag ? 'active">Active' : 'inactive">Inactive').'</span></td>';	
 			}
 			echo '</tr>';
 		}

@@ -2,6 +2,7 @@
     require_once(dirname(__FILE__)."/../common.php");
     if (!isset($loginSession))
         doUnauthenticatedRedirect();
+
     if (!$loginSession->isAdministrator)
         doUnauthorizedRedirect();
 
@@ -12,6 +13,9 @@
         if ($employeeId != null) {
             $employeeId = (int) $employeeId;
             $emp = $db->readEmployee($employeeId);
+
+            if (!$emp->activeFlag)
+                throw new Exception("Inactive employees cannot be updated.");
         }
 
         $ranks = $db->readRanks();
@@ -115,7 +119,7 @@
         ?></div>
         <img src="spinner.gif">
     </div>
-    <div id="successDiv" class="col-md-4 col-md-offset-4" style="padding-bottom:10px; outline: 10px solid black;display:none">
+    <div id="successDiv" style="padding:10px; outline:10px solid black; display:none">
         Employee has been successfully <?php echo ($emp == null) ? 'added' : 'updated'; ?>.
     </div>
 	<div id="employeeDiv" class="row" >

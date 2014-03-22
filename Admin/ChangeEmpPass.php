@@ -8,12 +8,16 @@
     if (!isset($loginSession))
         doUnauthenticatedRedirect();
 
-    if (!$loginSession->isAdministrator)
+    $employeeId = @$_GET['id'];
+
+    if (!$loginSession->isAdministrator || ($loginSession->authenticatedEmployee->id == $employeeId))
         doUnauthorizedRedirect();
 
-    $employeeId = @$_GET['id'];
     try {
         $emp = $db->readEmployee($employeeId);
+
+        if (!$emp->activeFlag)
+            throw new Exception("Inactive employees cannot be updated.");
     } catch (Exception $ex) {
         handleDBException($ex);
         return;
@@ -71,7 +75,7 @@ function updatePassword(form) {
         <img src="spinner.gif">
     </div>
 
-    <div id="successDiv" class="col-md-6 col-md-offset-3" style="padding-bottom:10px; outline: 10px solid black;display:none">
+    <div id="successDiv" style="padding:10px; outline:10px solid black; display:none">
         Employee password has been successfully updated.
     </div>
 

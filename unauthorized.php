@@ -3,6 +3,6 @@
     if (!isset($loginSession))
         doUnauthenticatedRedirect();
 ?>
-<div class="alert alert-warning">
+<div class="alert alert-warning" style="position:fixed;left:20px;right:20px">
 Sorry, you are not authorized to see that content.
 </div>

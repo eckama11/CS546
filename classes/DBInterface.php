@@ -721,7 +721,7 @@ class DBInterface {
         }
 
         $params = Array(
-                ':activeFlag' => $employee->activeFlag,
+                ':activeFlag' => ($employee->activeFlag ? 1 : 0),
                 ':username' => $employee->username,
                 ':password' => $employee->password,
                 ':name' => $employee->name,
@@ -892,13 +892,26 @@ class DBInterface {
 
     /**
      * Generates new pay stubs for employees who have not yet had pay stubs generated for the current month.
-     * @return  int The number of paystubs which were generated.
+     *
+     * @param   $generationDate The effective date to generate pay stubs for.  If null, will
+     *                          use the current date.  May be a date string or a DateTime instance.
+     *
+     * @return  Object  An object with the following properties:
+     *                      int      numGenerated    The number of paystubs which were generated.
+     *                      DateTime startDate       The pay period start date
+     *                      DateTime endDate         The pay period end date
      */
-    public function generatePayStubs() {
-        $currentDate = new DateTime();
-        $currentDate->setTimezone(new DateTimeZone('GMT'));
+    public function generatePayStubs( $generationDate ) {
+        if ($generationDate == null) {
+            $generationDate = new DateTime();
+            $generationDate->setTimezone(new DateTimeZone('GMT'));
+        } else if (!($generationDate instanceof DateTime))
+            $generationDate = new DateTime($generationDate);
 
-        $payPeriodStartDate = new DateTime( $currentDate->format("Y-m-01T00:00:00P") );
+        $payPeriodStartDate = new DateTime( $generationDate->format("Y-m-01T00:00:00P") );
+
+        $payPeriodEndDate = (clone $payPeriodStartDate);
+        $payPeriodEndDate->add(new DateInterval('P1M'))->sub(new DateInterval('P1D'));
 
         // Determine which employees need to have pay stubs generated
         static $stmt;
@@ -916,7 +929,7 @@ class DBInterface {
         if ($success == false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query employees who need pay stubs generated"));
 
-        $rv = 0;
+        $numGenerated = 0;
         while ($row = $stmt->fetchObject()) {
             $employee = $this->readEmployee( $row->id );
             $monthlySalary = $employee->salary / 12;
@@ -936,10 +949,15 @@ class DBInterface {
                 );
 
             $this->writePaystub( $paystub );
-            ++$rv;
+            ++$numGenerated;
         } // while
 
-        return $rv;
+        return (Object)[
+                "numGenerated" => $numGenerated,
+                "generationDate" => $generationDate,
+                "startDate" => $payPeriodStartDate,
+                "endDate" => $payPeriodEndDate
+            ];
     } // generatePayStubs
 
     /**

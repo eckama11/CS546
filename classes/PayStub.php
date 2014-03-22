@@ -6,6 +6,7 @@ class PayStub
 
     private $_id;
     private $_payPeriodStartDate;
+    private $_payPeriodEndDate;
     private $_employee;
     private $_name;
     private $_address;
@@ -48,6 +49,10 @@ class PayStub
         $this->_id = (int) $id;
 
         $this->_payPeriodStartDate = $payPeriodStartDate;
+
+        $payPeriodEndDate = (clone $payPeriodStartDate);
+        $payPeriodEndDate->add(new DateInterval('P1M'))->sub(new DateInterval('P1D'));
+        $this->_payPeriodEndDate = $payPeriodEndDate;
 
         $this->_employee = $employee;
 
@@ -122,6 +127,10 @@ class PayStub
         return $this->_payPeriodStartDate;
     } // getPayPeriodStartDate()
 
+    protected function getPayPeriodEndDate() {
+        return $this->_payPeriodEndDate;
+    } // getPayPeriodEndDate()
+
     protected function getEmployee() {
         return $this->_employee;
     } // getEmployee()
@@ -171,7 +180,7 @@ class PayStub
     } // getDeductions()
 
     public function __toString() {
-        return __CLASS__ ."(id=$this->id, payPeriodStartDate=". $this->payPeriodStartDate->format("Y-m-d H:i:sP") .", employee=$this->employee, name=$this->name, address=$this->address, rank=$this->rank, employeeType=$this->employeeType, taxId=$this->taxId, departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate, deductions=$this->deductions)";
+        return __CLASS__ ."(id=$this->id, payPeriodStartDate=". $this->payPeriodStartDate->format("Y-m-d H:i:sP") .", payPeriodEndDate=". $this->payPeriodEndDate->format("Y-m-d H:i:sP") .", employee=$this->employee, name=$this->name, address=$this->address, rank=$this->rank, employeeType=$this->employeeType, taxId=$this->taxId, departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate, deductions=$this->deductions)";
     } // __toString
 
 } // class PayStub

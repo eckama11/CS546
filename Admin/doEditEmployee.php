@@ -20,7 +20,7 @@ if (!$departments)
 
 $rv = (Object)[];
 try {
-    if (!isset($loginSession))
+    if (!isset($loginSession) || !$loginSession->isAdministrator)
         throw new Exception("You do not have sufficient access to perform this action");
 
     $rank = $db->readRank($rank);
@@ -38,6 +38,9 @@ try {
         $activeFlag = $emp->activeFlag;
         $username = $emp->username;
         $password1 = $emp->password;
+
+        if (!$activeFlag)
+            throw new Exception("Inactive employees cannot be updated.");
     } else {
         // Verify the username is unique
         if ($db->isUsernameInUse($username))

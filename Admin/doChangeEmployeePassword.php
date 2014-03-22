@@ -8,7 +8,7 @@ $newPassword2 = @$_POST['newPassword2'];
 
 $rv = (Object)[];
 try {
-    if (!isset($loginSession) || !$loginSession->isAdministrator)
+    if (!isset($loginSession) || !$loginSession->isAdministrator || ($loginSession->authenticatedEmployee->id == $employeeId))
         throw new Exception("You do not have sufficient access to perform this action");
 
     if ($newPassword1 != $newPassword2)
@@ -20,6 +20,10 @@ try {
 
     // Update the employee
     $employee = $db->readEmployee($employeeId);
+
+    if (!$employee->activeFlag)
+        throw new Exception("Inactive employees cannot be updated.");
+
     $employee->password = $newPassword1;
     $db->writeEmployee($employee);
 
