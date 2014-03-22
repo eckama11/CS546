@@ -26,6 +26,10 @@
     } // selectPaystub(row)
 </script>
 <div class="container col-md-6 col-md-offset-3">
+<?php if (count($paystubs) == 0) { ?>
+    <div>Sorry, there are currently no pay stubs to display.</div>
+    <div>Please check back later.</div>
+<?php } else { ?>
     <legend>Select Pay Stub</legend>
     <table class="table table-striped table-hover table-bordered table-condensed">
     <thead><tr>
@@ -33,15 +37,15 @@
       <th>Date</th>
     </tr></thead>
     <tbody>
-<?php
-
+    <?php
     foreach ($paystubs as $stub) {
         echo '<tr onclick="selectPaystub(this)" stub-id="'. $stub->id .'">';
         echo   '<td>'. htmlentities($stub->id) .'</td>';
         echo   '<td>'. htmlentities($stub->payPeriodStartDate->format("Y-m-d")) .'</td>';
         echo '</tr>';
     } // foreach
-?>
+    ?>
     </tbody>
     </table>
+<?php } ?>
 </div>

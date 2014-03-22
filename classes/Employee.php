@@ -149,7 +149,7 @@ class Employee
     
     protected function setSalary($newSalary) {
         if (!is_numeric($newSalary) || ($newSalary < 0))
-            throw new Exception("Salary must be an number greater or equal to 0");
+            throw new Exception("Salary must be a number greater or equal to 0");
         if ($this->rank != null && $newSalary < $this->rank->baseSalary) 
         	throw new Exception("Salary must be above rank minimum salary");
         $this->_salary = (double) $newSalary;

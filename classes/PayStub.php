@@ -94,7 +94,7 @@ class PayStub
         $this->_departments = $departments;
 
         if (!is_numeric($salary) || ($salary < 0))
-            throw new Exception("The salary must be an number greater or equal to 0");
+            throw new Exception("The salary must be a number greater or equal to 0");
         $this->_salary = (double) $salary;
 
         if (!is_numeric($numDeductions) || ($numDeductions < 0))
@@ -102,15 +102,15 @@ class PayStub
         $this->_numDeductions = (int) $numDeductions;
 
         if (!is_numeric($taxWithheld) || ($taxWithheld < 0))
-            throw new Exception("The taxWithheld must be an number greater or equal to 0");
+            throw new Exception("The taxWithheld must be a number greater or equal to 0");
         $this->_taxWithheld = (double) $taxWithheld;
 
         if (!is_numeric($taxRate) || ($taxRate < 0))
-            throw new Exception("The taxRate must be an number greater or equal to 0");
+            throw new Exception("The taxRate must be a number greater or equal to 0");
         $this->_taxRate = (double) $taxRate;
 
         if (!is_numeric($deductions) || ($deductions < 0))
-            throw new Exception("The deductions must be an number greater or equal to 0");
+            throw new Exception("The deductions must be a number greater or equal to 0");
         $this->_deductions = (double) $deductions;
     } // __construct
 

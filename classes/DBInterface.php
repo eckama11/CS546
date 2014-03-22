@@ -580,9 +580,10 @@ class DBInterface {
      *
      * @param   String  $taxId   The taxId to test for.
      *
-     * @return  Boolean    True if the taxId is assigned to an existing employee, false if not.
+     * @return  int    Returns the employee ID of the employee the tax ID is assigned to if found,
+     *                  false if the tax ID is not assigned to an existing employee.
      */
-     public function isTaxIdInUse( $taxId ) {
+     public function isTaxIdInUse( $taxId, $ignoreEmployeeId = null ) {
         static $stmt;
         if ($stmt == null) {
             $stmt = $this->dbh->prepare(
@@ -599,7 +600,10 @@ class DBInterface {
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for taxId"));
 
         $row = $stmt->fetchObject();
-        return ($row !== false);
+        if ($row == false)
+            return false;
+
+        return $row->id;
     } // isTaxIdInUse
     
     /**

@@ -115,7 +115,7 @@
         ?></div>
         <img src="spinner.gif">
     </div>
-    <div id="successDiv" class="col-md-3 col-md-offset-5" style="padding-bottom:10px; outline: 10px solid black;display:none">
+    <div id="successDiv" class="col-md-4 col-md-offset-4" style="padding-bottom:10px; outline: 10px solid black;display:none">
         Employee has been successfully <?php echo ($emp == null) ? 'added' : 'updated'; ?>.
     </div>
 	<div id="employeeDiv" class="row" >

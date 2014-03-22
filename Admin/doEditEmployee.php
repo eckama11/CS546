@@ -30,10 +30,6 @@ try {
     if (count($departments) == 0)
         throw new Exception("You must select at least one department for employee");
 	
-	// Verify the taxId is unique
-	if ($db->isTaxIdInUse($taxId))
-		throw new Exception("The Tax ID '$taxId' is already assigned to another employee");
-			
     if ($id != null) {
         // Read existing employee when updating for activeFlag, username & password
         //   fields, which cannot be updated by this service
@@ -57,6 +53,11 @@ try {
 
         $id = 0;
     }
+
+	// Verify the taxId is unique
+    $existingEmployeeId = $db->isTaxIdInUse($taxId);
+	if (($existingEmployeeId !== false) && ($id != $existingEmployeeId))
+		throw new Exception("The Tax ID '$taxId' is already assigned to another employee");
 
     // Create/update the employee record
     $emp = new Employee(
