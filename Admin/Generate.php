@@ -14,9 +14,26 @@
 
     $payPeriodDuration = $payPeriodEndDate->diff($payPeriodStartDate)->format("%a") + 1;
 
+    $payPeriod = htmlentities($payPeriodStartDate->format("F, Y"));
     $payPeriodStartDate = htmlentities($payPeriodStartDate->format("Y-m-d"));
     $payPeriodEndDate = htmlentities($payPeriodEndDate->format("Y-m-d"));
 ?>
+<style type="text/css">
+  .navigateButton {
+    padding:5px 5px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+
+  .navigateButton:hover {
+    color: red;
+    background-color: #ccc;
+    border: 1px solid black;
+  }
+</style>
+
 <script>
 function generatePaystubs(form) {
     $("#spinner").show();
@@ -50,6 +67,62 @@ function generatePaystubs(form) {
 
     return false;
 } // generatePaystubs
+
+function previousMonth() {
+    updatePayPeriodDisplay(-1);
+} // previousMonth
+
+function nextMonth() {
+    updatePayPeriodDisplay(1);
+} // nextMonth
+
+var monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+function formatDate(fmt, date) {
+    return fmt.replace(/[YmdF]/g, function(match, offset, str) {
+            var rv = match;
+
+            switch (match) {
+            case "Y":
+                rv = date.getUTCFullYear();
+                break;
+            case "m":
+                rv = date.getUTCMonth() + 1;
+                if (rv < 10) rv = "0"+ rv;
+                break;
+            case "d":
+                rv = date.getUTCDate();
+                if (rv < 10) rv = "0"+ rv;
+                break;
+            case "F":
+                rv = monthNames[date.getUTCMonth()];
+                break;
+            }
+
+            return rv;
+        });
+} // formatDate
+
+function updatePayPeriodDisplay(addMonths) {
+    var formElem = $('#generateForm input[name="payPeriodStartDate"]');
+
+    var date = new Date(formElem.val());
+    date = new Date(date.getUTCFullYear(), date.getUTCMonth() + addMonths, date.getUTCDate());
+
+    var endDate = new Date(date.getUTCFullYear(), date.getUTCMonth() + 1, 0);
+
+    $("#payPeriod").text(formatDate("F, Y", date));
+    $("#payPeriodStartDate").text(formatDate("Y-m-d", date));
+    $("#payPeriodEndDate").text(formatDate("Y-m-d", endDate));
+
+    var numDays = endDate.getUTCDate() - date.getUTCDate() + 1;
+    $("#payPeriodDuration").text(numDays);
+
+    formElem.val(formatDate("Y-m-d", date));
+} // updatePayPeriodDisplay
 </script>
 
 <div class="container col-md-6 col-md-offset-3">
@@ -63,25 +136,35 @@ function generatePaystubs(form) {
     </div>
 
     <div id="content">
-        <legend>Generate Pay Stubs</legend>
+        <form id="generateForm" class="form" onsubmit="return generatePaystubs(this)">
+            <legend>Generate Pay Stubs</legend>
 
-        <table class="table">
-            <tr>
-                <th>Pay Period Start Date</th>
-                <td><?php echo $payPeriodStartDate; ?></td>
-            </tr>
-            <tr>
-                <th>Pay Period End Date</th>
-                <td><?php echo $payPeriodEndDate; ?></td>
-            </tr>
-            <tr>
-                <th>Pay Period Duration</th>
-                <td><?php echo $payPeriodDuration; ?></td>
-            </tr>
-        </table>
+            <table class="table">
+                <tr>
+                    <th>Pay Period</th>
+                    <td style="width:50%">
+                        <span id="payPeriod"><?php echo $payPeriod; ?></span>
+                        <span style="float:right">
+                        <span class="navigateButton" onclick="previousMonth(event)">&lt;</span>
+                        <span class="navigateButton" onclick="nextMonth(event)">&gt;</span>
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Pay Period Start Date</th>
+                    <td><span id="payPeriodStartDate"><?php echo $payPeriodStartDate; ?></span></td>
+                </tr>
+                <tr>
+                    <th>Pay Period End Date</th>
+                    <td><span id="payPeriodEndDate"><?php echo $payPeriodEndDate; ?></span></td>
+                </tr>
+                <tr>
+                    <th>Pay Period Duration</th>
+                    <td><span id="payPeriodDuration"><?php echo $payPeriodDuration; ?></span></td>
+                </tr>
+            </table>
 
-        <form class="form" onsubmit="return generatePaystubs(this)">
-            <input type="hidden" name="payPeriodStartDate" id="payPeriodStartDate" value="<?php echo htmlentities($payPeriodStartDate); ?>"/>
+            <input type="hidden" name="payPeriodStartDate" value="<?php echo htmlentities($payPeriodStartDate); ?>"/>
             <button style="margin-top: 10px" type="submit" class="btn btn-default">Generate Paystubs</button>
         </form>
     </div>

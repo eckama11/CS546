@@ -951,13 +951,17 @@ class DBInterface {
             $stmt = $this->dbh->prepare(
                     "SELECT e.id ".
                         "FROM employee e ".
-                        "LEFT JOIN paystub p ".
-                            "ON p.employee = e.id ".
-                                "AND p.payPeriodStartDate = ? ".
-                        "WHERE p.id IS NULL"
+                        "WHERE NOT EXISTS (".
+                            "SELECT * ".
+                                "FROM paystub p ".
+                                "WHERE p.employee = e.id ".
+                                    "AND p.payPeriodStartDate >= :payPeriodStartDate ".
+                        ")"
                 );
 
-        $success = $stmt->execute(Array( $payPeriodStartDate->format("Y-m-d H:i:s") ));
+        $success = $stmt->execute(Array(
+                        ':payPeriodStartDate' => $payPeriodStartDate->format("Y-m-d H:i:s")
+                    ));
         if ($success == false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query employees who need pay stubs generated"));
 

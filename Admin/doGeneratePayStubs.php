@@ -1,7 +1,7 @@
 <?php
 require_once(dirname(__FILE__)."/../common.php");
 
-$payPeriodStartDate = @$_GET['payPeriodStartDate'];
+$payPeriodStartDate = @$_POST['payPeriodStartDate'];
 
 $rv = (Object)[];
 try {
