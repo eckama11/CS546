@@ -19,6 +19,9 @@ class PayStub
     private $_taxWithheld;
     private $_taxRate;
     private $_deductions;
+    private $_salaryYTD;
+    private $_taxWithheldYTD;
+    private $_deductionsYTD;
 
     /**
      * Constructs a new PayStub instance.
@@ -37,12 +40,15 @@ class PayStub
      * @param   double          $taxWithheld
      * @param   double          $taxRate
      * @param   double          $deductions
+     * @param   double          $salaryYTD
+     * @param   double          $taxWithheldYTD
+     * @param   double          $deductionsYTD
      */
     public function __construct(
         $id, DateTime $payPeriodStartDate, Employee $employee,
         $name, $address, $rank, $employeeType, $taxId, $departments,
         $salary, $numDeductions, $taxWithheld, $taxRate,
-        $deductions
+        $deductions, $salaryYTD, $taxWithheldYTD, $deductionsYTD
     ) {
         if (!is_numeric($id))
             throw new Exception("The \$id parameter must be an integer");
@@ -117,6 +123,18 @@ class PayStub
         if (!is_numeric($deductions) || ($deductions < 0))
             throw new Exception("The deductions must be a number greater or equal to 0");
         $this->_deductions = (double) $deductions;
+
+        if (!is_numeric($salaryYTD) || ($salaryYTD < 0))
+            throw new Exception("The salaryYTD must be a number greater or equal to 0");
+        $this->_salaryYTD = (double) $salaryYTD;
+
+        if (!is_numeric($taxWithheldYTD) || ($taxWithheldYTD < 0))
+            throw new Exception("The taxWithheldYTD must be a number greater or equal to 0");
+        $this->_taxWithheldYTD = (double) $taxWithheldYTD;
+
+        if (!is_numeric($deductionsYTD) || ($deductionsYTD < 0))
+            throw new Exception("The deductionsYTD must be a number greater or equal to 0");
+        $this->_deductionsYTD = (double) $deductionsYTD;
     } // __construct
 
     protected function getId() {
@@ -179,8 +197,20 @@ class PayStub
         return $this->_deductions;
     } // getDeductions()
 
+    protected function getSalaryYTD() {
+        return $this->_salaryYTD;
+    } // getSalaryYTD()
+
+    protected function getTaxWithheldYTD() {
+        return $this->_taxWithheldYTD;
+    } // getTaxWithheldYTD()
+
+    protected function getDeductionsYTD() {
+        return $this->_deductionsYTD;
+    } // getDeductionsYTD()
+
     public function __toString() {
-        return __CLASS__ ."(id=$this->id, payPeriodStartDate=". $this->payPeriodStartDate->format("Y-m-d H:i:sP") .", payPeriodEndDate=". $this->payPeriodEndDate->format("Y-m-d H:i:sP") .", employee=$this->employee, name=$this->name, address=$this->address, rank=$this->rank, employeeType=$this->employeeType, taxId=$this->taxId, departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate, deductions=$this->deductions)";
+        return __CLASS__ ."(id=$this->id, payPeriodStartDate=". $this->payPeriodStartDate->format("Y-m-d H:i:sP") .", payPeriodEndDate=". $this->payPeriodEndDate->format("Y-m-d H:i:sP") .", employee=$this->employee, name=$this->name, address=$this->address, rank=$this->rank, employeeType=$this->employeeType, taxId=$this->taxId, departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate, deductions=$this->deductions, salaryYTD=$this->salaryYTD, taxWithheldYTD=$this->taxWithheldYTD, deductionsYTD=$this->deductionsYTD)";
     } // __toString
 
 } // class PayStub

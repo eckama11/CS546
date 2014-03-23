@@ -73,6 +73,9 @@ CREATE TABLE paystub(
     taxWithheld DECIMAL(9,2) UNSIGNED NOT NULL,
     taxRate DECIMAL(7,6) UNSIGNED NOT NULL,
     deductions DECIMAL(9,2) UNSIGNED NOT NULL,
+    salaryYTD DECIMAL(9,2) UNSIGNED NOT NULL,
+    taxWithheldYTD DECIMAL(9,2) UNSIGNED NOT NULL,
+    deductionsYTD DECIMAL(9,2) UNSIGNED NOT NULL,
     FOREIGN KEY (employee) REFERENCES employee(id),
     PRIMARY KEY (id)
 );	

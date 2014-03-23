@@ -391,6 +391,46 @@ class DBInterface {
         return new PayStubDepartment( $department->id, $department->name, $managers );
     } // departmentToPayStubDepartment
 
+    private static $payStubColumns = Array(
+                "payPeriodStartDate",
+                "employee",
+                "name",
+                "address",
+                "rank",
+                "employeeType",
+                "taxId",
+                "salary",
+                "numDeductions",
+                "taxWithheld",
+                "taxRate",
+                "deductions",
+                "salaryYTD",
+                "taxWithheldYTD",
+                "deductionsYTD"
+            );
+
+    private function _rowToPayStub($row) {
+        return new PayStub(
+                    $row->id,
+                    new DateTime( $row->payPeriodStartDate ),
+                    $this->readEmployee( $row->employee ),
+                    $row->name,
+                    $row->address,
+                    $row->rank,
+                    $row->employeeType,
+                    $row->taxId,
+                    $this->readDepartmentsForPayStub( $row->id ),
+                    $row->salary,
+                    $row->numDeductions,
+                    $row->taxWithheld,
+                    $row->taxRate,
+                    $row->deductions,
+                    $row->salaryYTD,
+                    $row->taxWithheldYTD,
+                    $row->deductionsYTD
+                );
+    } // _rowToPayStub()
+
     /**
      * Reads a pay stub from the database.
      * @param   int $id The ID of the paystub to retrieve.
@@ -404,9 +444,7 @@ class DBInterface {
         static $stmt;
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
-                    "SELECT id, payPeriodStartDate, employee, name, address, ".
-                            "rank, employeeType, taxId, salary, numDeductions, ".
-                            "taxWithheld, taxRate, deductions ".
+                    "SELECT id, ". implode(", ", self::$payStubColumns) ." ".
                         "FROM paystub ".
                         "WHERE id = ?"
                 );
@@ -419,22 +457,7 @@ class DBInterface {
         if ($row === false)
             throw new Exception("No such paystub: $id");
 
-        return new PayStub(
-                $row->id,
-                new DateTime( $row->payPeriodStartDate ),
-                $this->readEmployee( $row->employee ),
-                $row->name,
-                $row->address,
-                $row->rank,
-                $row->employeeType,
-                $row->taxId,
-                $this->readDepartmentsForPayStub( $row->id ),
-                $row->salary,
-                $row->numDeductions,
-                $row->taxWithheld,
-                $row->taxRate,
-                $row->deductions
-            );
+        return $this->_rowToPayStub($row);
     } // readPayStub
 
     /**
@@ -450,13 +473,12 @@ class DBInterface {
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
                     "INSERT INTO paystub ( ".
-                            "payPeriodStartDate, employee, name, address, ".
-                            "rank, employeeType, taxId, salary, numDeductions, ".
-                            "taxWithheld, taxRate, deductions ".
+                            implode(", ", self::$payStubColumns) .
                         ") VALUES ( ".
                             ":payPeriodStartDate, :employeeId, :name, :address, ".
                             ":rank, :employeeType, :taxId, :salary, :numDeductions, ".
-                            ":taxWithheld, :taxRate, :deductions ".
+                            ":taxWithheld, :taxRate, :deductions, :salaryYTD, ".
+                            ":taxWithheldYTD, :deductionsYTD ".
                         ")"
                 );
 
@@ -472,7 +494,10 @@ class DBInterface {
                 ':numDeductions' => $paystub->numDeductions,
                 ':taxWithheld' => $paystub->taxWithheld,
                 ':taxRate' => $paystub->taxRate,
-                ':deductions' => $paystub->deductions
+                ':deductions' => $paystub->deductions,
+                ':salaryYTD' => $paystub->salaryYTD,
+                ':taxWithheldYTD' => $paystub->taxWithheldYTD,
+                ':deductionsYTD' => $paystub->deductionsYTD
             ));
         if ($success == false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to create paystub record in database"));
@@ -495,54 +520,59 @@ class DBInterface {
                 $paystub->numDeductions,
                 $paystub->taxWithheld,
                 $paystub->taxRate,
-                $paystub->deductions
+                $paystub->deductions,
+                $paystub->salaryYTD,
+                $paystub->taxWithheldYTD,
+                $paystub->deductionsYTD
             );
     } // writePayStub
 
     /**
      * Reads the list of pay stubs for an employee.
-     * @param   int $employeeId The ID of the employee to retrieve the paystubs for.
+     *
+     * @param   int              $employeeId The ID of the employee to retrieve the paystubs for.
+     * @param   DateTime|String  $afterDate  Only return pay stubs generated on or after the specified date.
+     * @param   DateTime|String  $beforeDate Only return pay stubs generated before, but not including, the specified date.
+     *
      * @return  Array[PayStub]  Array of PayStub instances.
      */
-    public function readPayStubs( $employeeId ) {
+    public function readPayStubs( $employeeId, $afterDate = null, $beforeDate = null ) {
         if (!is_numeric($employeeId))
             throw new Exception("Parameter \$employeeId must be an integer");
         $employeeId = (int) $employeeId;
 
+        if ($afterDate == null)
+            $afterDate = new DateTime('1900-01-01 00:00:00');
+        else if (!($afterDate instanceof DateTime))
+            $afterDate = new DateTime($afterDate);
+
+        if ($beforeDate == null)
+            $beforeDate = new DateTime('9999-12-31 23:59:59');
+        else if (!($beforeDate instanceof DateTime))
+            $beforeDate = new DateTime($beforeDate);
+
         static $stmt;
         if ($stmt == null)
             $stmt = $this->dbh->prepare(
-                    "SELECT id, payPeriodStartDate, employee, name, address, ".
-                            "rank, employeeType, taxId, salary, numDeductions, ".
-                            "taxWithheld, taxRate, deductions ".
+                    "SELECT id, ". implode(", ", self::$payStubColumns) ." ".
                         "FROM paystub ".
-                        "WHERE employee = :employeeId"
+                        "WHERE employee = :employeeId ".
+                            "AND payPeriodStartDate >= :afterDate ".
+                            "AND LAST_DAY(payPeriodStartDate) < :beforeDate ".
+                        "ORDER BY payPeriodStartDate ASC"
                 );
 
         $success = $stmt->execute(Array(
-                        ':employeeId' => $employeeId
+                        ':employeeId' => $employeeId,
+                        ':afterDate' => $afterDate->format('Y-m-d H:i:s'),
+                        ':beforeDate' => $beforeDate->format('Y-m-d H:i:s')
                     ));
         if ($success === false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for pay stubs"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject()) {
-            $rv[] = new PayStub(
-                    $row->id,
-                    new DateTime( $row->payPeriodStartDate ),
-                    $this->readEmployee( $row->employee ),
-                    $row->name,
-                    $row->address,
-                    $row->rank,
-                    $row->employeeType,
-                    $row->taxId,
-                    $this->readDepartmentsForPayStub( $row->id ),
-                    $row->salary,
-                    $row->numDeductions,
-                    $row->taxWithheld,
-                    $row->taxRate,
-                    $row->deductions
-                );
+            $rv[] = $this->_rowToPayStub($row);
         } // while
 
         return $rv;
@@ -913,6 +943,8 @@ class DBInterface {
         $payPeriodEndDate = (clone $payPeriodStartDate);
         $payPeriodEndDate->add(new DateInterval('P1M'))->sub(new DateInterval('P1D'));
 
+        $firstOfYear = new DateTime( $generationDate->format("Y-01-01T00:00:00P") );
+
         // Determine which employees need to have pay stubs generated
         static $stmt;
         if ($stmt == null)
@@ -940,12 +972,27 @@ class DBInterface {
             $departments = $this->readDepartmentsForEmployee( $employee->id );
             $departments = array_map(function($dept) { return $this->departmentToPaystubDepartment($dept); }, $departments);
 
+            // Read previous pay stub for YTD information
+            $salaryYTD = 0;
+            $taxWithheldYTD = 0;
+            $deductionsYTD = 0;
+
+            $lastPaystub = $this->readPayStubs($employee->id, $firstOfYear, $payPeriodStartDate);
+            if (count($lastPaystub)) {
+                $lastPaystub = $lastPaystub[count($lastPaystub) - 1];
+
+                $salaryYTD = $lastPaystub->salaryYTD;
+                $taxWithheldYTD = $lastPaystub->taxWithheldYTD;
+                $deductionsYTD = $lastPaystub->deductionsYTD;
+            }
+
             $paystub = new PayStub(
                     0, $payPeriodStartDate, $employee, 
                     $employee->name, $employee->address, $employee->rank, $employee->rank->employeeType, $employee->taxId,
                     $departments, $monthlySalary,
                     $employee->numDeductions,
-                    $tax->tax, $effectiveTaxRate, $tax->deductions
+                    $tax->tax, $effectiveTaxRate, $tax->deductions,
+                    $salaryYTD, $taxWithheldYTD, $deductionsYTD
                 );
 
             $this->writePaystub( $paystub );
