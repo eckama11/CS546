@@ -158,23 +158,20 @@ INSERT INTO rank (
     ( 'Programmer',                45000.00, 'Software Developer' )
 ;
 
--- Populate the pre-defined system admin user
+-- Populate some the pre-defined system admin user and some employees
 INSERT INTO employee (
     activeFlag, username, password, name, address, rank, taxId, numDeductions, salary
   ) VALUES
-    ( 1, 'admin', 'admin', 'Administrator', 'No Address',  1, 'Untaxable', 0, 0.00 );
+    ( 1, 'admin', 'admin', 'Administrator', 'No Address',  1, 'Untaxable', 0, 0.00 ),
+    ( 1, 'joe', 'password', 'Joe Josephson', '123 Main Street
+Smalltown, WI 55555', 5, '999-88-7777', 3, 125000.00 ),
+    ( 1, 'linda', 'password', 'Linda Linders', 'W1234 Highway 12
+Westville, WI 55556', 6, '111-22-3333', 2, 125000.00 );
     
 INSERT INTO employeeDepartmentAssociation (
 	employee, department
   ) VALUES
-    ( 1, 1 );
-
-INSERT INTO employee (
-    activeFlag, username, password, name, address, rank, taxId, numDeductions, salary
-  ) VALUES
-    ( 1, 'brad', 'brad', 'Brad Fisher', 'Somewhere', 9, '123taxme', 5, 85000.00 );
-
-INSERT INTO employeeDepartmentAssociation (
-	employee, department
-  ) VALUES
-    ( 2, 9 );
+    ( 1, 1 ),
+    ( 2, 9 ),
+    ( 2, 8 ),
+    ( 3, 8 );
