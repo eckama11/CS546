@@ -5,3 +5,4 @@ body{background-color: #F7F7F6; color:black;}
 .error { border: 1px solid #b94a48!important; background-color: #fee!important; }
 .active { color: green; font-weight: bold; }
 .inactive { color: red; font-weight: bold; }
+.currency { text-align: right; }

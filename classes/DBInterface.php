@@ -977,17 +977,17 @@ class DBInterface {
             $departments = array_map(function($dept) { return $this->departmentToPaystubDepartment($dept); }, $departments);
 
             // Read previous pay stub for YTD information
-            $salaryYTD = 0;
-            $taxWithheldYTD = 0;
-            $deductionsYTD = 0;
+            $salaryYTD = $monthlySalary;
+            $taxWithheldYTD = $tax->tax;
+            $deductionsYTD = $tax->deductions;
 
             $lastPaystub = $this->readPayStubs($employee->id, $firstOfYear, $payPeriodStartDate);
             if (count($lastPaystub)) {
                 $lastPaystub = $lastPaystub[count($lastPaystub) - 1];
 
-                $salaryYTD = $lastPaystub->salaryYTD;
-                $taxWithheldYTD = $lastPaystub->taxWithheldYTD;
-                $deductionsYTD = $lastPaystub->deductionsYTD;
+                $salaryYTD += $lastPaystub->salaryYTD;
+                $taxWithheldYTD += $lastPaystub->taxWithheldYTD;
+                $deductionsYTD += $lastPaystub->deductionsYTD;
             }
 
             $paystub = new PayStub(
