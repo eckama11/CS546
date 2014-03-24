@@ -70,6 +70,14 @@ function showError(message) {
             					<li><a href="page.php/Admin/Generate">Generate Pay Stubs</a></li>
           					</ul>
         				</li>
+						<li class="dropdown">
+          					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Info <b class="caret"></b></a>
+          					<ul class="dropdown-menu">
+            					<li><a href="page.php/Admin/TaxTable">Tax Table</a></li>
+            					<li><a href="page.php/Admin/Ranks">Ranks</a></li>
+            					<li><a href="page.php/Admin/Departments">Departments</a></li>
+          					</ul>
+        				</li>
 <?php } ?>
 						<li><a href="logout.php">Logout</a></li>
 					</ul>
