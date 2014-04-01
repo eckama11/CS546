@@ -1053,4 +1053,145 @@ class DBInterface {
 			];
     } // computeTax($salary, $numDeductions)
 
+    /**
+     * Reads a Project from the database.
+     * @param   int     $id The ID of the project to retrieve.
+     * @return  Project An instance of Project.
+     */
+    public function readProject( $id ) {
+        if (!is_numeric($id))
+            throw new Exception("Parameter \$id must be an integer");
+        $id = (int) $id;
+
+        static $stmt;
+        if ($stmt == null)
+            $stmt = $this->dbh->prepare(
+                    "SELECT id, startDate, endDate, name, description, otherCosts ".
+                        "FROM project ".
+                        "WHERE id = ?"
+                );
+
+        $success = $stmt->execute(Array( $id ));
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for project record"));
+
+        $row = $stmt->fetchObject();
+        if ($row === false)
+            throw new Exception("No such project: $id");
+		
+        return new Project(
+                $row->id,
+                new DateTime( $row->startDate ),
+                new DateTime( $row->endDate ),
+                $row->name,
+                $row->description,
+                $row->otherCosts
+            );
+    } // readProject
+
+    /**
+     * Reads a list of all projects from the database.
+     * @return  Array[Project] Array of Project instances.
+     */
+    public function readProjects() {
+        static $stmt;
+        if ($stmt == null)
+            $stmt = $this->dbh->prepare(
+                    "SELECT id, startDate, endDate, name, description, otherCosts ".
+                        "FROM employee ".
+                        "ORDER BY name"
+                );
+
+        $success = $stmt->execute(Array( ));
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for project records"));
+
+        $rv = Array();
+        while ($row = $stmt->fetchObject()) {
+            $rv[] = new Project(
+                    $row->id,
+                    new DateTime( $row->startDate ),
+                    new DateTime( $row->endDate ),
+                    $row->name,
+                    $row->description,
+                    $row->otherCosts
+                );
+        } // while
+
+        return $rv;
+    } // readProjects
+
+    /**
+     * Writes a Project to the database.
+     * @param   Project    $project   The Project to write.  If the id property is 0, a new
+     *                                  record will be created, otherwise an existing record matching
+     *                                  the id will be updated.
+     * @return  Project    A new Project instance (with the new id if a new record was created).
+     */
+    public function writeProject( Project $project ) {
+        static $stmtInsert;
+        static $stmtUpdate;
+        if ($stmtInsert == null) {
+            $stmtInsert = $this->dbh->prepare(
+                    "INSERT INTO project ( ".
+                            "startDate, endDate, name, description, otherCosts ".
+                        ") VALUES ( ".
+                            ":startDate, :endDate, :name, :description, :otherCosts ".
+                        ")"
+                );
+
+            $stmtUpdate = $this->dbh->prepare(
+                    "UPDATE project SET ".
+                            "startDate = :startDate, ".
+                            "endDate = :endDate, ".
+                            "name = :name, ".
+                            "description = :description, ".
+                            "otherCosts = :otherCosts ".
+                        "WHERE id = :id"
+                );
+        }
+
+        $params = Array(
+                ':startDate' => $project->startDate,
+                ':endDate' => $project->endDate,
+                ':name' => $project->name,
+                ':description' => $project->description,
+                ':otherCosts' => $project->otherCosts
+            );
+
+        if ($project->id == 0) {
+            $stmt = $stmtInsert;
+        } else {
+            $params[':id'] = $project->id;
+            $stmt = $stmtUpdate;
+        }
+
+        $success = $stmt->execute($params);
+
+        if ($success == false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to store project record in database"));
+
+        if ($project->id == 0)
+            $newId = $this->dbh->lastInsertId();
+        else
+            $newId = $project->id;
+
+        return new Project(
+                $newId,
+                $project->startDate,
+                $project->endDate,
+                $project->name,
+                $project->description,
+                $project->otherCosts
+            );
+    } // writeProject
+
+    public function readDepartmentsForProject($projectId) {
+        //XXX
+    } // readDepartmentsForProject
+
+    public function readEmployeesForProject($projectId) {
+        //XXX
+    } // readEmployeesForProject
+    
 } // DBInterface

@@ -90,6 +90,40 @@ CREATE TABLE paystubDepartmentAssociation(
     PRIMARY KEY (paystub, department)
 );
 
+CREATE TABLE project(
+    id INT NOT NULL AUTO_INCREMENT,
+    startDate DATETIME NOT NULL,
+    endDate DATETIME NOT NULL,
+    name VARCHAR(255),
+    description TEXT,
+    otherCosts DECIMAL(9,2) UNSIGNED NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE projectCostHistory(
+    id INT NOT NULL AUTO_INCREMENT,
+    entryDate DATETIME NOT NULL,
+    employee INT NOT NULL,
+    cost DECIMAL(9,2) UNSIGNED NOT NULL,
+    PRIMARY KEY (id)
+);
+
+projectDepartmentAssociation(
+    project INT NOT NULL,
+    department INT NOT NULL,
+    FOREIGN KEY (project) REFERENCES project(id),
+    FOREIGN KEY (department) REFERENCES department(id),
+    PRIMARY KEY (project, department)
+);
+
+projectEmployeeAssociation(
+    project INT NOT NULL,
+    employee INT NOT NULL,
+    FOREIGN KEY (project) REFERENCES project(id),
+    FOREIGN KEY (employee) REFERENCES employee(id),
+    PRIMARY KEY (project, employee)
+);
+
 -- Create the user which the app will use to connect to the DB
 DROP PROCEDURE IF EXISTS u_pay.drop_user_if_exists ;
 DELIMITER $$
