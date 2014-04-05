@@ -6,3 +6,6 @@ body{background-color: #F7F7F6; color:black;}
 .active { color: green; font-weight: bold; }
 .inactive { color: red; font-weight: bold; }
 .currency { text-align: right; }
+
+.form-control { color: black; }
+.form-control[disabled] { background-color: #ccc; }

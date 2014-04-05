@@ -31,7 +31,7 @@ class LoginSession
     	if (!$this->authenticatedEmployee->activeFlag) {
     		return false;
     	}
-        return $this->authenticatedEmployee->rank->employeeType->isAdministrator;
+        return $this->authenticatedEmployee->current->rank->employeeType->isAdministrator;
         
     } // getIsAdministrator()
 

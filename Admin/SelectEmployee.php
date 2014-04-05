@@ -18,7 +18,8 @@
         'activation'	=> [ 'Admin/Activation',    'Deactivate/Activate' ],
         'modify'     	=> [ 'Admin/EditEmployee',  'Modify' ],
         'password'   	=> [ 'Admin/ChangeEmpPass', 'Change Password' ],
-        'paystubs'  	=> [ 'Employee/MyPay',      'View Pay Stubs' ]
+        'paystubs'  	=> [ 'Employee/MyPay',      'View Pay Stubs' ],
+        'info'  	    => [ 'Employee/MyInfo',     'View Info' ]
     ];
 
     $for = @$_GET['for'];
@@ -46,6 +47,10 @@
     } // selectEmployee(row)
 </script>
 <div class="container col-md-6 col-md-offset-3">
+<?php if (count($employees) == 0) { ?>
+    <div>Sorry, there are currently no employees to display.</div>
+    <div>Please check back later.</div>
+<?php } else { ?>
     <legend>Select Employee to <?php echo htmlentities($title); ?></legend>
     <table class="table table-striped table-hover table-bordered table-condensed">
     <thead><tr>
@@ -75,4 +80,5 @@
 ?>
     </tbody>
     </table>
+<?php } ?>
 </div>

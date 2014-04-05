@@ -18,9 +18,12 @@ class DBInterface {
     public function __construct( $dbServer, $dbName, $dbUsername, $dbPassword ) {
         $dsn = "mysql:host=$dbServer;dbname=$dbName";
         $this->dbh = new PDO($dsn, $dbUsername, $dbPassword);
+        //$this->dbh->setAttribute( PDO::ATTR_EMULATE_PREPARES, false );
     } // __construct
 
     public function formatErrorMessage($stmt, $message) {
+        if (!$stmt)
+            $stmt = $this->dbh;
         list($sqlState, $driverErrorCode, $driverErrorMessage) = $stmt->errorInfo();
         return $message .": [$sqlState] $driverErrorCode: $driverErrorMessage";
     } // formatSqlErrorMessage($pdoErrorInfo)
@@ -32,12 +35,17 @@ class DBInterface {
      */
     public function readLoginSession( $sessionId ) {
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT sessionId, authenticatedEmployee ".
                         "FROM loginSession ".
                         "WHERE sessionId=?"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare login session query"));
+        }
+
 
         $stmt->execute(Array($sessionId));
         $res = $stmt->fetchObject();
@@ -54,12 +62,16 @@ class DBInterface {
      */
     public function writeLoginSession( LoginSession $session ) {
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "UPDATE loginSession ".
                         "SET authenticatedEmployee=:authenticatedEmployee ".
                         "WHERE sessionID=:sessionId"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to login session update"));
+        }
 
         $success = $stmt->execute(Array(
             ':sessionId' => $session->sessionId,
@@ -92,6 +104,9 @@ class DBInterface {
                         "AND password=:password "
                 );
 
+            if (!$loginStmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare login query"));
+
             $insertStmt = $this->dbh->prepare(
                     "INSERT INTO loginSession ( ".
                             "sessionId, authenticatedEmployee ".
@@ -99,6 +114,9 @@ class DBInterface {
                             ":sessionId, :authenticatedEmployee ".
                         ")"
                 );
+
+            if (!$insertStmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare login session insert"));
         }
 
         $success = $loginStmt->execute(Array(
@@ -137,11 +155,15 @@ class DBInterface {
      */
     public function destroyLoginSession( LoginSession $session ) {
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "DELETE FROM loginSession ".
                         "WHERE sessionId = ?"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare login session delete"));
+        }
 
         $success = $stmt->execute(Array( $session->sessionId ));
         if ($success === false)
@@ -159,12 +181,16 @@ class DBInterface {
         $id = (int) $id;
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT id, minimumSalary, taxRate ".
                         "FROM taxRate ".
                         "WHERE id = ?"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare tax rate query"));
+        }
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
@@ -183,12 +209,16 @@ class DBInterface {
      */
     public function readTaxRates() {
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT id, minimumSalary, taxRate ".
                         "FROM taxRate ".
                         "ORDER BY minimumSalary ASC"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare tax rates query"));
+        }
 
         $success = $stmt->execute();
         if ($success === false)
@@ -212,12 +242,16 @@ class DBInterface {
         $id = (int) $id;
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT id, name ".
                         "FROM department ".
                         "WHERE id = ?"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare department query"));
+        }
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
@@ -236,12 +270,16 @@ class DBInterface {
      */
     public function readDepartments() {
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT id, name ".
                         "FROM department ".
                         "ORDER BY name ASC"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare departments query"));
+        }
 
         $success = $stmt->execute();
         if ($success === false)
@@ -265,12 +303,16 @@ class DBInterface {
         $id = (int) $id;
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT id, name, baseSalary, employeeType ".
                         "FROM rank ".
                         "WHERE id = ?"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare rank query"));
+        }
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
@@ -289,12 +331,16 @@ class DBInterface {
      */
     public function readRanks() {
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT id, name, baseSalary, employeeType ".
                         "FROM rank ".
                         "ORDER BY name"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare ranks query"));
+        }
 
         $success = $stmt->execute();
         if ($success === false)
@@ -318,13 +364,17 @@ class DBInterface {
         $paystubId = (int) $paystubId;
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT department, departmentName, departmentManagers ".
                         "FROM paystubDepartmentAssociation ".
                         "WHERE paystub=? ".
                         "ORDER BY departmentName"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to paystub departments query"));
+        }
 
         $success = $stmt->execute(Array( $paystubId ));
         if ($success === false)
@@ -359,7 +409,7 @@ class DBInterface {
         } // for
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "INSERT INTO paystubDepartmentAssociation ( ".
                             "paystub, department, departmentName, departmentManagers ".
@@ -367,6 +417,10 @@ class DBInterface {
                             ":paystub, :department, :departmentName, :departmentManagers ".
                         ")"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to paystub departments update"));
+        }
 
         foreach ($departments as $dept) {
             $success = $stmt->execute(Array(
@@ -442,12 +496,16 @@ class DBInterface {
         $id = (int) $id;
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT id, ". implode(", ", self::$payStubColumns) ." ".
                         "FROM paystub ".
                         "WHERE id = ?"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to pay stub query"));
+        }
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
@@ -470,7 +528,7 @@ class DBInterface {
             throw new Exception("The id property of the \$paystub must be 0.  Updating existing pay stubs is not permitted.");
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "INSERT INTO paystub ( ".
                             implode(", ", self::$payStubColumns) .
@@ -482,8 +540,12 @@ class DBInterface {
                         ")"
                 );
 
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare pay stub update"));
+        }
+
         $success = $stmt->execute(Array(
-                ':payPeriodStartDate' => $paystub->payPeriodStartDate->format("Y-m-d H:i:s"),
+                ':payPeriodStartDate' => $paystub->payPeriodStartDate->format("Y-m-d"),
                 ':employeeId' => $paystub->employee->id,
                 ':name' => $paystub->name,
                 ':address' => $paystub->address,
@@ -552,7 +614,7 @@ class DBInterface {
             $beforeDate = new DateTime($beforeDate);
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT id, ". implode(", ", self::$payStubColumns) ." ".
                         "FROM paystub ".
@@ -562,10 +624,14 @@ class DBInterface {
                         "ORDER BY payPeriodStartDate ASC"
                 );
 
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to pay stub query"));
+        }
+
         $success = $stmt->execute(Array(
                         ':employeeId' => $employeeId,
-                        ':afterDate' => $afterDate->format('Y-m-d H:i:s'),
-                        ':beforeDate' => $beforeDate->format('Y-m-d H:i:s')
+                        ':afterDate' => $afterDate->format('Y-m-d'),
+                        ':beforeDate' => $beforeDate->format('Y-m-d')
                     ));
         if ($success === false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for pay stubs"));
@@ -593,6 +659,9 @@ class DBInterface {
                     "FROM employee ".
                     "WHERE username=:username"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare username query"));
         }
 
         $success = $stmt->execute(Array(
@@ -621,6 +690,9 @@ class DBInterface {
                     "FROM employee ".
                     "WHERE taxId=:taxId"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare taxId query"));
         }
 
         $success = $stmt->execute(Array(
@@ -635,7 +707,95 @@ class DBInterface {
 
         return $row->id;
     } // isTaxIdInUse
-    
+
+    /**
+     * Reads employee history data.
+     *
+     * @param   int         $employeeId The ID of the employee to retrieve history for.
+     * @param   DateTime    $startDate  If provided, the starting date to filter by.  Only
+     *                                  records with an end date greater than or equal to the
+     *                                  date provided will be returned.
+     * @param   DateTime    $endDate    If provided, the ending date to filter by.  Only records
+     *                                  with a start date less than or equal to the provided date
+     *                                  will be returned.
+     * @param   int         $limit      The number of records to return, most recent first.  If not
+     *                                  specified or null, no limit is applied.
+     *
+     * @return  
+     */
+    public function readEmployeeHistory(
+                        $employeeId,
+                        DateTime $startDate = null,
+                        DateTime $endDate = null,
+                        $limit = null
+                    )
+    {
+        if (!is_numeric($employeeId))
+            throw new Exception("Parameter \$employeeId must be an integer");
+        $employeeId = (int) $employeeId;
+
+        if ($limit !== null) {
+            if (!is_numeric($limit) || ($limit <= 0))
+                throw new Exception("Parameter \$limit must be a positive integer");
+            $limit = (int) $limit;
+        } else
+            $limit = PHP_INT_MAX;
+
+        static $stmt;
+        if ($stmt == null) {
+            $stmt = $this->dbh->prepare(
+                    "SELECT id, startDate, endDate, lastPayPeriodEndDate, rank, numDeductions, salary ".
+                        "FROM employeeHistory ".
+                        "WHERE employee = :employeeId ".
+                            "AND startDate <= :endDate ".
+                            "AND (endDate >= :startDate OR endDate IS NULL) ".
+                        "ORDER BY startDate DESC ".
+                        "LIMIT :limit"
+                );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee history query"));
+        }
+
+        if ($startDate == null)
+            $startDate = new DateTime('1900-01-01');
+        $startDate = $startDate->format("Y-m-d");
+
+        if ($endDate == null)
+            $endDate = new DateTime('9999-12-31');
+        $endDate = $endDate->format("Y-m-d");
+
+        // bindParam must be used here because :limit param must be bound as an int
+        // to function properly
+        $stmt->bindParam(':employeeId', $employeeId, PDO::PARAM_INT);
+        $stmt->bindParam(':startDate', $startDate);
+        $stmt->bindParam(':endDate', $endDate);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+
+        $success = $stmt->execute();
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for employee history"));
+
+        $rv = [];
+        while ($row = $stmt->fetchObject()) {
+            $rv[] = new EmployeeHistory(
+                $row->id,
+                new DateTime( $row->startDate ),
+                ($row->endDate
+                    ? new DateTime( $row->endDate )
+                    : null),
+                ($row->lastPayPeriodEndDate
+                    ? new DateTime ( $row->lastPayPeriodEndDate )
+                    : null),
+                $this->readRank( $row->rank ),
+                $row->numDeductions,
+                $row->salary
+            );
+        } // while
+
+        return $rv;
+    } // readEmployeeHistory
+
     /**
      * Reads an Employee from the database.
      * @param   int $id The ID of the employee to retrieve.
@@ -647,12 +807,16 @@ class DBInterface {
         $id = (int) $id;
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
-                    "SELECT id, activeFlag, username, password, name, address, rank, taxId, numDeductions, salary ".
+                    "SELECT id, activeFlag, username, password, name, address, taxId ".
                         "FROM employee ".
                         "WHERE id = ?"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to employee query"));
+        }
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
@@ -662,6 +826,11 @@ class DBInterface {
         if ($row === false)
             throw new Exception("No such employee: $id");
 		
+        $current = $this->readEmployeeHistory( $row->id, null, null, 1 );
+        if (count($current) == 0)
+            throw new Exception("No history found for employee: $row->id");
+        $current = $current[0];
+
         return new Employee(
                 $row->id,
                 $row->activeFlag,
@@ -669,10 +838,8 @@ class DBInterface {
                 $row->password,
                 $row->name,
                 $row->address,
-                $this->readRank( $row->rank ),
                 $row->taxId,
-                $row->numDeductions,
-                $row->salary
+                $current
             );
     } // readEmployee
 
@@ -683,13 +850,17 @@ class DBInterface {
      */
     public function readEmployees($activeFlag = true) {
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
-                    "SELECT id, activeFlag, username, password, name, address, rank, taxId, numDeductions, salary ".
+                    "SELECT id, activeFlag, username, password, name, address, taxId ".
                         "FROM employee ".
                         "WHERE activeFlag=:activeFlag ".
                         "ORDER BY name"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare employees query"));
+        }
 
         $success = $stmt->execute(Array(
                 ':activeFlag' => $activeFlag
@@ -699,6 +870,11 @@ class DBInterface {
 
         $rv = Array();
         while ($row = $stmt->fetchObject()) {
+            $current = $this->readEmployeeHistory( $row->id, null, null, 1 );
+            if (count($current) == 0)
+                throw new Exception("No history found for employee: $row->id");
+            $current = $current[0];
+
             $rv[] = new Employee(
                     $row->id,
                     $row->activeFlag,
@@ -706,10 +882,8 @@ class DBInterface {
                     $row->password,
                     $row->name,
                     $row->address,
-                    $this->readRank( $row->rank ),
                     $row->taxId,
-                    $row->numDeductions,
-                    $row->salary
+                    $current
                 );
         } // while
 
@@ -729,11 +903,15 @@ class DBInterface {
         if ($stmtInsert == null) {
             $stmtInsert = $this->dbh->prepare(
                     "INSERT INTO employee ( ".
-                            "activeFlag, username, password, name, address, rank, taxId, numDeductions, salary ".
+                            "activeFlag, username, password, name, address, taxId ".
                         ") VALUES ( ".
-                            ":activeFlag, :username, :password, :name, :address, :rank, :taxId, :numDeductions, :salary ".
+                            ":activeFlag, :username, :password, :name, :address, :taxId ".
                         ")"
                 );
+
+
+            if (!$stmtInsert)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee insert"));
 
             $stmtUpdate = $this->dbh->prepare(
                     "UPDATE employee SET ".
@@ -742,13 +920,16 @@ class DBInterface {
                             "password = :password, ".
                             "name = :name, ".
                             "address = :address, ".
-                            "rank = :rank, ".
-                            "taxId = :taxId, ".
-                            "numDeductions = :numDeductions, ".
-                            "salary = :salary ".
+                            "taxId = :taxId ".
                         "WHERE id = :id"
                 );
+
+            if (!$stmtUpdate)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee update"));
         }
+
+        if (!$employee->activeFlag && ($employee->current->endDate == null))
+            throw new Exception("Cannot make employee inactive without specifying end date");
 
         $params = Array(
                 ':activeFlag' => ($employee->activeFlag ? 1 : 0),
@@ -756,10 +937,7 @@ class DBInterface {
                 ':password' => $employee->password,
                 ':name' => $employee->name,
                 ':address' => $employee->address,
-                ':rank' => $employee->rank->id,
-                ':taxId' => $employee->taxId,
-                ':numDeductions' => $employee->numDeductions,
-                ':salary' => $employee->salary
+                ':taxId' => $employee->taxId
             );
 
         if ($employee->id == 0) {
@@ -779,6 +957,8 @@ class DBInterface {
         else
             $newId = $employee->id;
 
+        $current = $this->writeEmployeeHistory( $newId, $employee->current );
+
         return new Employee(
                 $newId,
                 $employee->activeFlag,
@@ -786,12 +966,176 @@ class DBInterface {
                 $employee->password,
                 $employee->name,
                 $employee->address,
-                $employee->rank,
                 $employee->taxId,
-                $employee->numDeductions,
-                $employee->salary
+                $current
             );
     } // writeEmployee
+
+    private function _employeeHistoryToParams($entry) {
+        return Array(
+                ":startDate" => $entry->startDate->format("Y-m-d"),
+                ":endDate" => ($entry->endDate
+                                ? $entry->endDate->format("Y-m-d")
+                                : null),
+                ":lastPayPeriodEndDate" => ($entry->lastPayPeriodEndDate
+                                                ? $entry->lastPayPeriodEndDate->format("Y-m-d")
+                                                : null),
+                ":rank" => $entry->rank->id,
+                ":numDeductions" => $entry->numDeductions,
+                ":salary" => $entry->salary
+            );
+    } // _employeeHistoryToParams
+
+    /**
+     * Writes and EmployeeHistory entry for an employee.
+     *
+     * The most recent employee history record will be updated if:
+     *
+     * - Only one history record exists, and the lastPayPeriodEndDate value on the existing entry
+     *   is null, in which case any of the properties may be updated.
+     *
+     * - The startDate of the new entry matches the start date of the history record
+     *   AND EITHER
+     *     1) the lastPayPeriodEndDate value on the history record is null, in which case any of
+     *        the other properties may be updated (except of course the startDate).
+     *   OR
+     *     2) the lastPayPeriodEndDate is not less than the lastPayPeriodEndDate value on the
+     *        history record.  In this case, only the lastPayPeriodEndDate and endDate properties
+     *        may be updated.
+     *
+     * - the startDate of the new entry is greater than the lastPayPeriodEndDate value on the
+     *   most recent history record (In this case, the existing record will have its endDate set,
+     *   and a new record is also added)
+     *
+     * If no history records exist, or none of the above conditions are met a new record will
+     * be created.  Unless the startDate of the new entry is not greater than the most
+     * recent lastPayPeriodEndDate, in which case an exception is thrown.
+     *
+     * If at least on history record exists, and its lastPayPeriodEndDate is not null,
+     * an exception will be thrown if the lastPayPeriodEndDate on the new entry is less than
+     * the existing lastPayPeriodEndDate.
+     *
+     * @param {int} $employeeId 
+     * @param {EmployeeHistory} $entry 
+     *
+     * @return  Returns a new EmployeeHistory instance (with a new id if a new record was created).
+     */
+    public function writeEmployeeHistory( $employeeId, EmployeeHistory $entry ) {
+        static $stmtInsert;
+        static $stmtUpdate;
+        if ($stmtInsert == null) {
+            $stmtInsert = $this->dbh->prepare(
+                    "INSERT INTO employeeHistory ( ".
+                            "employee, startDate, endDate, lastPayPeriodEndDate, ".
+                            "rank, numDeductions, salary ".
+                        ") VALUES ( ".
+                            ":employee, :startDate, :endDate, :lastPayPeriodEndDate, ".
+                            ":rank, :numDeductions, :salary ".
+                        ")"
+                );
+
+            if (!$stmtInsert)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee history insert"));
+
+            $stmtUpdate = $this->dbh->prepare(
+                    "UPDATE employeeHistory SET ".
+                            "startDate = :startDate, ".
+                            "endDate = :endDate, ".
+                            "lastPayPeriodEndDate = :lastPayPeriodEndDate, ".
+                            "rank = :rank, ".
+                            "numDeductions = :numDeductions, ".
+                            "salary = :salary ".
+                        "WHERE id = :id"
+                );
+
+            if (!$stmtUpdate)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee history update"));
+        }
+
+        if (!is_numeric($employeeId))
+            throw new Exception("Parameter \$employeeId must be an integer");
+        $employeeId = (int) $employeeId;
+
+        // Read up to 2 existing history records if they exist
+        $update = false;
+        $history = $this->readEmployeeHistory( $employeeId, null, null, 2 );
+        if (count($history) > 0) {
+            $current = $history[0];
+
+            if (($current->lastPayPeriodEndDate !== null) &&
+                ($entry->lastPayPeriodEndDate < $current->lastPayPeriodEndDate))
+            {
+                throw new Exception("The new lastPayPeriodEndDate cannot be less than ". $current->lastPayPeriodEndDate->format("Y-m-d"));
+            }
+
+            if ($entry->startDate == $current->startDate) {
+                $update = ($current->lastPayPeriodEndDate === null) ||
+                    (
+                        ($entry->rank == $current->rank) &&
+                        ($entry->numDeductions == $current->numDeductions) &&
+                        ($entry->salary == $current->salary)
+                    );
+            } else if ($entry->startDate > $current->startDate) {
+                if ($entry->lastPayPeriodEndDate !== null) {
+                    if (($current->lastPayPeriodEndDate === null) ||
+                        ($entry->lastPayPeriodEndDate < $current->lastPayPeriodEndDate))
+                    {
+                        throw new Exception("The new lastPayPeriodEndDate is invalid");
+                    }
+                }
+
+                if ($current->endDate === null) {
+                    // Update existing record to set end date to day before new start date
+
+                    $params = $this->_employeeHistoryToParams($current);
+                    $params[':id'] = $current->id;
+                    $endDate = (clone $entry->startDate);
+                    $params[':endDate'] = $endDate->sub(new DateInterval('P1D'))->format("Y-m-d");
+                    
+                    $success = $stmtUpdate->execute($params);
+                    if ($success == false)
+                        throw new Exception($this->formatErrorMessage($stmtUpdate, "Unable to update employee history record in database"));
+                } else if ($entry->startDate <= $current->endDate)
+                    throw new Exception("The new startDate must be greater than the prior endDate");
+            } else {
+                if (count($history) == 1) {
+                    // May update IFF no lastPayPeriodEndDate on existing record
+                    $update = ($current->lastPayPeriodEndDate === null);
+                } else
+                    throw new Exception("The new startDate must be greater than the prior endDate");
+            }
+        }
+
+        $params = $this->_employeeHistoryToParams($entry);
+
+        if ($update) {
+            $stmt = $stmtUpdate;
+            $params[':id'] = $current->id;
+        } else {
+            $stmt = $stmtInsert;
+            $params[':employee'] = $employeeId;
+        }
+
+        $success = $stmt->execute($params);
+
+        if ($success == false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to ". ($update ? "update" : "insert") ." employee history record in database"));
+
+        if ($update)
+            $newId = $current->id;
+        else
+            $newId = $this->dbh->lastInsertId();
+
+        return new EmployeeHistory(
+                $newId,
+                $entry->startDate,
+                $entry->endDate,
+                $entry->lastPayPeriodEndDate,
+                $entry->rank,
+                $entry->numDeductions,
+                $entry->salary
+            );
+    } // writeEmployeeHistory( $employeeId, EmployeeHistory $entry )
 
    /**
      * Reads all of the departments associated with an employee.
@@ -804,7 +1148,7 @@ class DBInterface {
         $employeeId = (int) $employeeId;
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT d.id, d.name ".
                         "FROM employeeDepartmentAssociation a ".
@@ -812,6 +1156,10 @@ class DBInterface {
                         "WHERE employee=? ".
                         "ORDER BY d.name"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee departments query"));
+        }
 
         $success = $stmt->execute(Array( $employeeId ));
         if ($success === false)
@@ -838,20 +1186,34 @@ class DBInterface {
         $departmentId = (int) $departmentId;
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT a.employee ".
-                        "FROM employeeDepartmentAssociation a ".
-                        "INNER JOIN employee e ON e.id = a.employee ".
-                        "INNER JOIN rank r ON r.id = e.rank ".
-                        "WHERE department=:departmentId ".
-                            "AND (:employeeType IS NULL OR r.employeeType = :employeeType) ".
+                        "FROM ( ".
+                            "SELECT :date as theDate, :employeeType as employeeType, :departmentId as departmentId ".
+                        ") s ".
+                        "INNER JOIN employeeDepartmentAssociation a ".
+                            "ON a.department=s.departmentId ".
+                        "INNER JOIN employee e ".
+                            "ON e.id = a.employee ".
+                        "INNER JOIN employeeHistory h ".
+                            "ON h.employee = a.employee ".
+                                "AND h.startDate <= s.theDate ".
+                                "AND (h.endDate >= s.theDate OR h.endDate IS NULL) ".
+                        "INNER JOIN rank r ".
+                            "ON r.id = h.rank ".
+                                "AND (s.employeeType IS NULL OR r.employeeType = s.employeeType) ".
                         "ORDER BY e.name"
                 );
 
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare department employees query"));
+        }
+
         $success = $stmt->execute(Array(
+                ':date' => (new DateTime())->format("Y-m-d"),
+                ':employeeType' => $employeeType->name,
                 ':departmentId' => $departmentId,
-                ':employeeType' => $employeeType->name
             ));
         if ($success === false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for department employees"));
@@ -896,10 +1258,17 @@ class DBInterface {
                         ")"
                 );
 
+
+            if (!$insertStmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee department insert"));
+
             $deleteStmt = $this->dbh->prepare(
                     "DELETE FROM employeeDepartmentAssociation ".
                         "WHERE employee = :employee"
                 );
+
+            if (!$deleteStmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee department delete"));
         }
 
         // Remove existing association records for the employee
@@ -947,7 +1316,7 @@ class DBInterface {
 
         // Determine which employees need to have pay stubs generated
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT e.id ".
                         "FROM employee e ".
@@ -959,8 +1328,12 @@ class DBInterface {
                         ")"
                 );
 
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare generate pay stub query"));
+        }
+
         $success = $stmt->execute(Array(
-                        ':payPeriodStartDate' => $payPeriodStartDate->format("Y-m-d H:i:s")
+                        ':payPeriodStartDate' => $payPeriodStartDate->format("Y-m-d")
                     ));
         if ($success == false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query employees who need pay stubs generated"));
@@ -968,8 +1341,8 @@ class DBInterface {
         $numGenerated = 0;
         while ($row = $stmt->fetchObject()) {
             $employee = $this->readEmployee( $row->id );
-            $monthlySalary = $employee->salary / 12;
-            $tax = $this->computeTax($monthlySalary, $employee->numDeductions);
+            $monthlySalary = $employee->current->salary / 12;
+            $tax = $this->computeTax($monthlySalary, $employee->current->numDeductions);
 
             $effectiveTaxRate = (($monthlySalary > 0) ? $tax->tax / $monthlySalary : 0);
 
@@ -992,9 +1365,9 @@ class DBInterface {
 
             $paystub = new PayStub(
                     0, $payPeriodStartDate, $employee, 
-                    $employee->name, $employee->address, $employee->rank, $employee->rank->employeeType, $employee->taxId,
+                    $employee->name, $employee->address, $employee->current->rank, $employee->current->rank->employeeType, $employee->taxId,
                     $departments, $monthlySalary,
-                    $employee->numDeductions,
+                    $employee->current->numDeductions,
                     $tax->tax, $effectiveTaxRate, $tax->deductions,
                     $salaryYTD, $taxWithheldYTD, $deductionsYTD
                 );
@@ -1064,12 +1437,16 @@ class DBInterface {
         $id = (int) $id;
 
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT id, startDate, endDate, name, description, otherCosts ".
                         "FROM project ".
                         "WHERE id = ?"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project query"));
+        }
 
         $success = $stmt->execute(Array( $id ));
         if ($success === false)
@@ -1095,12 +1472,16 @@ class DBInterface {
      */
     public function readProjects() {
         static $stmt;
-        if ($stmt == null)
+        if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT id, startDate, endDate, name, description, otherCosts ".
-                        "FROM employee ".
+                        "FROM project ".
                         "ORDER BY name"
                 );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare projects query"));
+        }
 
         $success = $stmt->execute(Array( ));
         if ($success === false)
@@ -1140,6 +1521,10 @@ class DBInterface {
                         ")"
                 );
 
+
+            if (!$stmtInsert)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project insert"));
+
             $stmtUpdate = $this->dbh->prepare(
                     "UPDATE project SET ".
                             "startDate = :startDate, ".
@@ -1149,6 +1534,9 @@ class DBInterface {
                             "otherCosts = :otherCosts ".
                         "WHERE id = :id"
                 );
+
+            if (!$stmtUpdate)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project update"));
         }
 
         $params = Array(

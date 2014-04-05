@@ -9,27 +9,37 @@ $password1 = @$_POST['password1'];
 $password2 = @$_POST['password2'];
 $name = @$_POST['name'];
 $address = @$_POST['address'];
-$rank = @$_POST['rank'];
 $taxId = @$_POST['taxid'];
-$numDeductions = @$_POST['numDeductions'];
-$salary = @$_POST['salary'];
 
 $departments = @$_POST['departments'];
 if (!$departments)
     $departments = [];
+
+$updatePay = (@$_POST['updatePay'] == true) || !$id;
+$startDate = @$_POST['startDate'];
+$numDeductions = @$_POST['numDeductions'];
+$rank = @$_POST['rank'];
+$salary = @$_POST['salary'];
 
 $rv = (Object)[];
 try {
     if (!isset($loginSession) || !$loginSession->isAdministrator)
         throw new Exception("You do not have sufficient access to perform this action");
 
-    $rank = $db->readRank($rank);
-
     $departments = array_map(function($deptId) { return $GLOBALS['db']->readDepartment($deptId); }, $departments);
 
     if (count($departments) == 0)
         throw new Exception("You must select at least one department for employee");
 	
+    if ($updatePay) {
+        $rank = $db->readRank($rank);
+
+        if (!$startDate)
+            throw new Exception("You must provide an effective date");
+        $startDate = new DateTime($startDate);
+        $current = new EmployeeHistory(0, $startDate, null, null, $rank, $numDeductions, $salary);
+    }
+
     if ($id != null) {
         // Read existing employee when updating for activeFlag, username & password
         //   fields, which cannot be updated by this service
@@ -41,6 +51,14 @@ try {
 
         if (!$activeFlag)
             throw new Exception("Inactive employees cannot be updated.");
+
+        // Create new history record if needed
+        if ($updatePay) {
+            // Validate the new startDate
+            if ($startDate < $emp->current->startDate)
+                throw new Exception("The new effective date must be on or after ". $emp->current->startDate->format("Y-m-d"));
+        } else
+            $current = $emp->current;
     } else {
         // Verify the username is unique
         if ($db->isUsernameInUse($username))
@@ -65,8 +83,10 @@ try {
     // Create/update the employee record
     $emp = new Employee(
                 $id, $activeFlag, $username, $password1,
-                $name, $address, $rank, $taxId, $numDeductions, $salary
+                $name, $address, $taxId,
+                $current
             );
+
     $emp = $db->writeEmployee($emp);
 
     // Create/update the department associations

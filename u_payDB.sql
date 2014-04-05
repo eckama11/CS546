@@ -34,22 +34,26 @@ CREATE TABLE employee(
     password VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
-    rank INT NOT NULL, taxId VARCHAR(255) NOT NULL,
-    numDeductions INT NOT NULL,
-    salary DECIMAL(9,2) UNSIGNED NOT NULL,
-    FOREIGN KEY (rank) REFERENCES rank(id),
+    taxId VARCHAR(255) NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY (taxId),
     UNIQUE KEY (username)
 );
 
-CREATE TABLE loginSession(
-    sessionId VARCHAR(255) NOT NULL,
-    authenticatedEmployee INT NOT NULL,
-    PRIMARY KEY(sessionID),
-    FOREIGN KEY(authenticatedEmployee) REFERENCES employee(id)
+CREATE TABLE employeeHistory(
+    id INT NOT NULL AUTO_INCREMENT,
+    employee INT NOT NULL,
+    startDate DATE NOT NULL,
+    endDate DATE NULL,
+    lastPayPeriodEndDate DATE NULL,
+    rank INT NOT NULL,
+    numDeductions INT NOT NULL,
+    salary DECIMAL(9,2) UNSIGNED NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (employee) REFERENCES employee(id),
+    FOREIGN KEY (rank) REFERENCES rank(id),
+    INDEX (employee, startDate)
 );
-
 
 CREATE TABLE employeeDepartmentAssociation(
     employee INT NOT NULL,
@@ -59,9 +63,16 @@ CREATE TABLE employeeDepartmentAssociation(
     PRIMARY KEY (employee, department)
 );
 
+CREATE TABLE loginSession(
+    sessionId VARCHAR(255) NOT NULL,
+    authenticatedEmployee INT NOT NULL,
+    PRIMARY KEY(sessionID),
+    FOREIGN KEY(authenticatedEmployee) REFERENCES employee(id)
+);
+
 CREATE TABLE paystub(
     id INT NOT NULL AUTO_INCREMENT,
-    payPeriodStartDate DATETIME NOT NULL,
+    payPeriodStartDate DATE NOT NULL,
     employee INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
@@ -92,36 +103,52 @@ CREATE TABLE paystubDepartmentAssociation(
 
 CREATE TABLE project(
     id INT NOT NULL AUTO_INCREMENT,
-    startDate DATETIME NOT NULL,
-    endDate DATETIME NOT NULL,
+    startDate DATE NOT NULL,
+    endDate DATE NOT NULL,
     name VARCHAR(255),
     description TEXT,
     otherCosts DECIMAL(9,2) UNSIGNED NOT NULL,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    INDEX (startDate)
 );
 
 CREATE TABLE projectCostHistory(
-    id INT NOT NULL AUTO_INCREMENT,
-    entryDate DATETIME NOT NULL,
-    employee INT NOT NULL,
+    project INT NOT NULL,
+    paystub INT NOT NULL,
+    department INT NOT NULL,
+    startDate DATE NOT NULL,
+    endDate DATE NOT NULL,
     cost DECIMAL(9,2) UNSIGNED NOT NULL,
-    PRIMARY KEY (id)
+    FOREIGN KEY (project) REFERENCES project(id),
+    FOREIGN KEY (paystub) REFERENCES paystub(id),
+    FOREIGN KEY (department) REFERENCES department(id),
+    INDEX (project),
+    INDEX (paystub),
+    INDEX (department),
+    INDEX (startDate)
 );
 
-projectDepartmentAssociation(
+CREATE TABLE projectDepartmentAssociation(
     project INT NOT NULL,
     department INT NOT NULL,
     FOREIGN KEY (project) REFERENCES project(id),
     FOREIGN KEY (department) REFERENCES department(id),
-    PRIMARY KEY (project, department)
+    PRIMARY KEY (project, department),
+    INDEX (department)
 );
 
-projectEmployeeAssociation(
+CREATE TABLE projectEmployeeAssociation(
     project INT NOT NULL,
     employee INT NOT NULL,
+    department INT NOT NULL,
+    startDate DATE NOT NULL,
+    endDate DATE NOT NULL,
     FOREIGN KEY (project) REFERENCES project(id),
     FOREIGN KEY (employee) REFERENCES employee(id),
-    PRIMARY KEY (project, employee)
+    FOREIGN KEY (department) REFERENCES department(id),
+    INDEX (project, startDate),
+    INDEX (employee, startDate),
+    INDEX (department)
 );
 
 -- Create the user which the app will use to connect to the DB
@@ -194,14 +221,21 @@ INSERT INTO rank (
 
 -- Populate some the pre-defined system admin user and some employees
 INSERT INTO employee (
-    activeFlag, username, password, name, address, rank, taxId, numDeductions, salary
+    activeFlag, username, password, name, address, taxId
   ) VALUES
-    ( 1, 'admin', 'admin', 'Administrator', 'No Address',  1, 'Untaxable', 0, 0.00 ),
+    ( 1, 'admin', 'admin', 'Administrator', 'No Address', 'Untaxable' ),
     ( 1, 'joe', 'password', 'Joe Josephson', '123 Main Street
-Smalltown, WI 55555', 5, '999-88-7777', 3, 125000.00 ),
+Smalltown, WI 55555', '999-88-7777' ),
     ( 1, 'linda', 'password', 'Linda Linders', 'W1234 Highway 12
-Westville, WI 55556', 6, '111-22-3333', 2, 125000.00 );
-    
+Westville, WI 55556', '111-22-3333' );
+
+INSERT INTO employeeHistory (
+    employee, startDate, rank, numDeductions, salary
+  ) VALUES
+    (1, CURDATE(), 1, 0, 0.00),
+    (2, CURDATE(), 5, 3, 125000.00),
+    (3, CURDATE(), 6, 2, 125000.00);
+
 INSERT INTO employeeDepartmentAssociation (
 	employee, department
   ) VALUES

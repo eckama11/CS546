@@ -45,11 +45,11 @@ function showEmployeeInfo( $employee ) {
 		</tr>
 		<tr>
 		  <th>Number of Deductions</th>
-		  <td><?php echo htmlentities($employee->numDeductions); ?></td>
+		  <td><?php echo htmlentities($employee->current->numDeductions); ?></td>
 		</tr>
 		<tr>
 		  <th>Rank</th>
-		  <td><?php echo htmlentities($employee->rank->name); ?></td>
+		  <td><?php echo htmlentities($employee->current->rank->name); ?></td>
 		</tr>
 		<tr>
 		  <th>Departments</th>
@@ -82,7 +82,7 @@ EOT;
 		</tr>
 		<tr>
 		  <th>Yearly Salary</th>
-		  <td><?php echo htmlentities(sprintf("\$ %.2f", $employee->salary)); ?></td>
+		  <td><?php echo htmlentities(sprintf("\$ %.2f", $employee->current->salary)); ?></td>
 		</tr>
 	</table>
 <?php

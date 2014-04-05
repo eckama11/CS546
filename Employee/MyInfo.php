@@ -5,9 +5,23 @@
     if (!isset($loginSession))
         doUnauthenticatedRedirect();
 
-    $emp = $loginSession->authenticatedEmployee;
+    $employeeId = @$_GET['id'];
+    if ($employeeId != null) {
+        if (!$loginSession->isAdministrator)
+            doUnauthorizedRedirect();
+
+        try {
+            $employee = $db->readEmployee($employeeId);
+        } catch (Exception $ex) {
+            handleDBException($ex);
+            return;
+        }
+    } else {
+        $employee = $loginSession->authenticatedEmployee;
+        $employeeId = $employee->id;
+    }
 ?>
 <div class="container">
-	<legend>Employee information for <?php echo htmlentities($emp->name); ?></legend>
-    <?php showEmployeeInfo( $emp ); ?>
+	<legend>Employee information for <?php echo htmlentities($employee->name); ?></legend>
+    <?php showEmployeeInfo( $employee ); ?>
 </div>

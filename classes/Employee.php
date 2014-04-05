@@ -10,10 +10,8 @@ class Employee
     private $_password;
     private $_name;
     private $_address;
-    private $_rank;
     private $_taxId;
-    private $_numDeductions;
-    private $_salary;
+    private $_current;
 
     /**
      * Constructs a new Employee object.
@@ -24,14 +22,13 @@ class Employee
      * @param   string  $password       TODO: Password should probably not be required... Not the most secure.
      * @param   string  $name
      * @param   string  $address
-     * @param   Rank    $rank
      * @param   string  $taxId
-     * @param   int     $numDeductions
-     * @param   float   $salary
+     * @param   EmployeeHistory $current
      */
     public function __construct(
             $id, $activeFlag, $username, $password,
-            $name, $address, Rank $rank, $taxId, $numDeductions, $salary
+            $name, $address, $taxId,
+            EmployeeHistory $current
         )
     {
         if (!is_numeric($id))
@@ -43,10 +40,8 @@ class Employee
         $this->password = $password;
         $this->name = $name;
         $this->address = $address;
-        $this->rank = $rank;
         $this->taxId = $taxId;
-        $this->numDeductions = $numDeductions;
-        $this->salary = $salary;
+        $this->current = $current;
     } // __construct
     
     protected function getId() {
@@ -112,16 +107,6 @@ class Employee
         $this->_address = $newAddress;
     } // setAddress
 
-    protected function getRank() {
-        return $this->_rank;
-    } // getRank
-    
-    protected function setRank(Rank $newRank) {
-		if ($this->salary != null && $this->salary < $newRank->baseSalary) 
-        	throw new Exception("Salary must be above rank minimum salary");
-        $this->_rank = $newRank;
-    } // setRank
-
     protected function getTaxId() {
         return $this->_taxId;
     } // getTaxId
@@ -133,31 +118,16 @@ class Employee
         $this->_taxId = $newTaxId;
     } // setTaxId
 
-    protected function getNumDeductions() {
-        return $this->_numDeductions;
-    } // getNumDeductions
-    
-    protected function setNumDeductions($newNumDeductions) {
-        if (!is_numeric($newNumDeductions) || ($newNumDeductions < 0))
-            throw new Exception("NumDeductions must be an integer greater or equal to 0");
-        $this->_numDeductions = (int) $newNumDeductions;
-    } // setNumDeductions
+    protected function getCurrent() {
+        return $this->_current;
+    } // getCurrent
 
-    protected function getSalary() {
-        return $this->_salary;
-    } // getSalary
-    
-    protected function setSalary($newSalary) {
-        if (!is_numeric($newSalary) || ($newSalary < 0))
-            throw new Exception("Salary must be a number greater or equal to 0");
-        if ($this->rank != null && $newSalary < $this->rank->baseSalary) 
-        	throw new Exception("Salary must be above rank minimum salary");
-        $this->_salary = (double) $newSalary;
-    } // setSalary
+    protected function setCurrent(EmployeeHistory $newCurrent) {
+        $this->_current = $newCurrent;
+    } // setCurrent
 
     public function __toString() {
-        return __CLASS__ ."(id=$this->id, activeFlag=$this->activeFlag, username=$this->username, password=$this->password,
-            name=$this->name, address=$this->address, rank=$this->rank, taxId=$this->taxId, numDeductions=$this->numDeductions, salary=$this->salary)";
+        return __CLASS__ ."(id=$this->id, activeFlag=$this->activeFlag, username=$this->username, password=$this->password, name=$this->name, address=$this->address, taxId=$this->taxId)";
     } // __toString
 
 } // class Employee

@@ -12,8 +12,11 @@ $page = @$_POST['page'];
 
 try {
     $session = $db->createLoginSession($username, $password);
+
     session_id($session->sessionId);
-    session_start();
+
+    if (!@session_start())
+        throw new Exception("Unable to create new session");
 
     $rv = (Object)[ "redirect" => getLoginRedirect($session, $page) ];
 } catch (Exception $ex) {

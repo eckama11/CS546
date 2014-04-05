@@ -16,16 +16,13 @@
 
             if (!$emp->activeFlag)
                 throw new Exception("Inactive employees cannot be updated.");
-        }
 
-        $ranks = $db->readRanks();
-
-        if ($emp != null) {
             $empDepts = $db->readDepartmentsForEmployee($emp->id);
             $empDepts = array_flip(array_map(function($dept) { return $dept->id; }, $empDepts));
         } else
             $empDepts = [];
 
+        $ranks = $db->readRanks();
         $depts = $db->readDepartments();
     } catch (Exception $ex) {
         handleDBException($ex);
@@ -77,6 +74,8 @@
 			showError("The salary cannot be less than the base salary assigned to the selected rank: "+ $(selRank).text());
 			return false;
         }
+
+// TODO: Add more verification for salary updates!
 
 		$("#employeeDiv").hide();
 		$("#spinner").show();
@@ -133,20 +132,6 @@
             <input type="hidden" name="id" value="<?php echo htmlentities($employeeId); ?>"/>
 
 			<div id="my-tab-content" class="tab-content">
-<?php if ($emp == null) { ?>
-				<div class="form-group">
-					<label class="control-label">Username</label>
-					<input type="text" class="form-control" name="username" id="username" placeholder="Enter Username"/>
-                </div>
-				<div class="form-group">
-					<label class="control-label">Password</label>
-					<input type="password" class="form-control" name="password1" id="password1" placeholder="Enter password"/>
-                </div>
-				<div class="form-group">
-					<label class="control-label">Verify Password</label>
-					<input type="password" class="form-control" name="password2" id="password2" placeholder="Verify password"/>
-                </div>
-<?php } ?>
 				<div class="form-group">
 					<label class="control-label">Name</label>
 					<input type="text" class="form-control" name="name" id="name" placeholder="Enter name" value="<?php empProperty($emp, 'name'); ?>"/>
@@ -158,10 +143,6 @@
 				<div class="form-group">
 					<label class="control-label">Tax ID</label>
 					<input type="text" class="form-control" name="taxid" id="taxid" placeholder="Enter Soc Sec #" value="<?php empProperty($emp, 'taxId'); ?>"/>
-				</div>
-				<div class="form-group">
-					<label class="control-label">Number of Deductions</label>
-					<input type="text" class="form-control" name="numDeductions" id="numDeductions" placeholder="Enter a number" value="<?php empProperty($emp, 'numDeductions'); ?>">
 				</div>
 				<div class="form-group">
 					<label class="control-label">Departments</label>
@@ -176,30 +157,93 @@
                         ?>
 					</select>
 				</div>
+                <hr/>
+<?php if ($emp == null) { ?>
 				<div class="form-group">
-					<label class="control-label">Rank</label>
-					<select class="form-control" name="rank" id="rank">
-						<?php
-                            echo '<option disabled '. ($emp == null ? ' selected' : '') .'>Select One</option>';
-
-                            $empRankId = ($emp != null) ? $emp->rank->id : null;
-							foreach ($ranks as $rank) {
-                                echo '<option value="'. htmlentities($rank->id) .'"';
-
-                                if ($rank->id == $empRankId)
-                                    echo 'selected';
-
-                                echo ' rank-base-salary="'. htmlentities($rank->baseSalary) .'">'.
-                                    htmlentities($rank->name) . ' ($'. number_format($rank->baseSalary, 2) .')'.
-                                    '</option>';
-                            } // foreach
-                        ?>
-					</select>
-				</div>
+					<label class="control-label">Username</label>
+					<input type="text" class="form-control" name="username" id="username" placeholder="Enter Username"/>
+                </div>
 				<div class="form-group">
-					<label class="control-label">Yearly Salary</label>
-					<input type="text" class="form-control" name="salary" id="salary" placeholder="Enter a salary" value="<?php empProperty($emp, 'salary'); ?>">
+					<label class="control-label">Password</label>
+					<input type="password" class="form-control" name="password1" id="password1" placeholder="Enter password"/>
+                </div>
+				<div class="form-group">
+					<label class="control-label">Verify Password</label>
+					<input type="password" class="form-control" name="password2" id="password2" placeholder="Verify password"/>
+                </div>
+				<div class="form-group">
+					<label class="control-label">Start Date</label>
+                    <div class="input-group">
+                        <input data-provide="datepicker" class="form-control" type="text" name="startDate" id="startDate" placeholder="Enter employment start date" />
+                        <span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
+                    </div>
+                </div>
+                <hr/>
+                <div>
+<?php } else { ?>
+				<div class="form-group">
+                    <label><input type="checkbox" name="updatePay" value="1" onclick="$('#currentPayDiv,#updatePayDiv').toggle();"/> Update Employee Pay</label>
 				</div>
+                <div id="currentPayDiv">
+                    <div class="form-group">
+                        <label class="control-label">Number of Deductions</label>
+                        <p class="form-control" disabled><?php
+                            echo htmlentities($emp->current->numDeductions);
+                        ?></p>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Rank</label>
+                        <p class="form-control" disabled><?php
+                            $rank = $emp->current->rank;
+                            echo htmlentities($rank->name) . ' ($'. number_format($rank->baseSalary, 2) .')';
+                        ?></p>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Yearly Salary</label>
+                        <p class="form-control" disabled><?php
+                            echo htmlentities($emp->current->salary);
+                        ?></p>
+                    </div>
+                </div>
+                <div id="updatePayDiv" style="display:none">
+                    <div class="form-group">
+                        <label class="control-label">Pay Update Effective Date</label>
+                        <div class="input-group">
+                            <input data-provide="datepicker" class="form-control" type="text" name="startDate" id="startDate" placeholder="Enter effective date"/>
+
+                            <span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+<?php } ?>
+                    <div class="form-group">
+                        <label class="control-label">Number of Deductions</label>
+                        <input type="text" class="form-control" name="numDeductions" id="numDeductions" placeholder="Enter a number" value="<?php if ($emp) echo htmlentities($emp->current->numDeductions); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Rank</label>
+                        <select class="form-control" name="rank" id="rank">
+                            <?php
+                                echo '<option disabled '. ($emp == null ? ' selected' : '') .'>Select One</option>';
+
+                                $empRankId = ($emp != null) ? $emp->current->rank->id : null;
+                                foreach ($ranks as $rank) {
+                                    echo '<option value="'. htmlentities($rank->id) .'"';
+
+                                    if ($rank->id == $empRankId)
+                                        echo 'selected';
+
+                                    echo ' rank-base-salary="'. htmlentities($rank->baseSalary) .'">'.
+                                        htmlentities($rank->name) . ' ($'. number_format($rank->baseSalary, 2) .')'.
+                                        '</option>';
+                                } // foreach
+                            ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Yearly Salary</label>
+                        <input type="text" class="form-control" name="salary" id="salary" placeholder="Enter a salary" value="<?php if ($emp)  echo htmlentities($emp->current->salary); ?>">
+                    </div>
+                </div>
 				<button type="submit" class="btn btn-default"><?php
                     if ($emp != null)
                         echo 'Update Employee';
