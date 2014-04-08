@@ -16,7 +16,8 @@
     // Array of [ targetPage, Displayed ]
     $forMap = [
         'activation'	=> [ 'Admin/Activation',    'Deactivate/Activate' ],
-        'modify'     	=> [ 'Admin/EditEmployee',  'Modify' ],
+        'modifyInfo'  	=> [ 'Admin/EditEmployee',  'Modify Info' ],
+        'modifySalary' 	=> [ 'Admin/EditEmployeeSalary', 'Modify Salary' ],
         'password'   	=> [ 'Admin/ChangeEmpPass', 'Change Password' ],
         'paystubs'  	=> [ 'Employee/MyPay',      'View Pay Stubs' ],
         'info'  	    => [ 'Employee/MyInfo',     'View Info' ]
@@ -72,7 +73,7 @@
 			echo   '<td>'. htmlentities($emp->address) .'</td>';
 			echo   '<td>'. htmlentities($emp->taxId) .'</td>';
 			if ($for == "activation") {
-				echo   '<td><span class="'.($emp->activeFlag ? 'active">Active' : 'inactive">Inactive').'</span></td>';	
+				echo   '<td><span class="'.($emp->activeFlag ? 'upayActive">Active' : 'upayInactive">Inactive').'</span></td>';	
 			}
 			echo '</tr>';
 		}

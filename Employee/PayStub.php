@@ -46,7 +46,7 @@
         <tr>
             <TD><?php echo htmlentities($paystub->name); ?></TD>
 			<TD><?php echo nl2br(htmlentities($paystub->address)); ?></TD>
-			<TD><?php echo ($paystub->numDeductions); ?></TD>
+			<TD class="numeric"><?php echo ($paystub->numDeductions); ?></TD>
         </tr>
         <tr>
             <th>Rank</th>
@@ -91,23 +91,23 @@ EOT;
         </tr>
 		<tr>
 			<th>Earnings</th>
-			<td class="currency">$ <?php echo number_format($paystub->salary, 2); ?></td>
-			<td class="currency">$ <?php echo number_format($paystub->salaryYTD, 2); ?></td>
+			<td class="numeric">$ <?php echo number_format($paystub->salary, 2); ?></td>
+			<td class="numeric">$ <?php echo number_format($paystub->salaryYTD, 2); ?></td>
         </tr>
 		<tr>
 			<th>Deductions</th>
-			<td class="currency">$ <?php echo number_format($paystub->deductions, 2); ?></td>
-			<td class="currency">$ <?php echo number_format($paystub->deductionsYTD, 2); ?></td>
+			<td class="numeric">$ <?php echo number_format($paystub->deductions, 2); ?></td>
+			<td class="numeric">$ <?php echo number_format($paystub->deductionsYTD, 2); ?></td>
         </tr>
 		<tr>
 			<th>Tax Withheld</th>
-			<td class="currency">$ <?php echo number_format($paystub->taxWithheld, 2); ?></td>
-			<td class="currency">$ <?php echo number_format($paystub->taxWithheldYTD, 2); ?></td>
+			<td class="numeric">$ <?php echo number_format($paystub->taxWithheld, 2); ?></td>
+			<td class="numeric">$ <?php echo number_format($paystub->taxWithheldYTD, 2); ?></td>
         </tr>
 		<tr>
 			<th>Net Pay</th>
-			<th class="currency">$ <?php echo number_format($paystub->salary - $paystub->taxWithheld, 2); ?></th>
-			<th class="currency">$ <?php echo number_format($paystub->salaryYTD - $paystub->taxWithheldYTD, 2); ?></th>
+			<th class="numeric">$ <?php echo number_format($paystub->salary - $paystub->taxWithheld, 2); ?></th>
+			<th class="numeric">$ <?php echo number_format($paystub->salaryYTD - $paystub->taxWithheldYTD, 2); ?></th>
         </tr>
 	</TABLE>
 </div>

@@ -24,7 +24,7 @@ ob_start();
 <script>
 function requiredField(elem, errorMsg) {
     var rv = elem.val();
-    if (rv == "") {
+    if ((rv == "") || (rv == null)) {
         elem.tooltip("destroy")
             .addClass("error")
             .data("title", errorMsg)
@@ -41,7 +41,7 @@ function showError(message) {
     $("#message").text(message);
     var messageAlert = $("#messageAlert");
     messageAlert.css("z-index", "30000");
-    messageAlert.show().delay(3000).fadeOut("slow");
+    messageAlert.show().delay(5000).fadeOut("slow");
 }
 </script>
 	</head>
@@ -83,7 +83,8 @@ function showError(message) {
           					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Employee <b class="caret"></b></a>
           					<ul class="dropdown-menu" role="menu">
             					<li><a href="page.php/Admin/EditEmployee">Add Employee</a></li>
-            					<li><a href="page.php/Admin/SelectEmployee?for=modify">Modify Employee</a></li>
+            					<li><a href="page.php/Admin/SelectEmployee?for=modifyInfo">Modify Employee Info</a></li>
+            					<li><a href="page.php/Admin/SelectEmployee?for=modifySalary">Modify Employee Salary</a></li>
             					<li><a href="page.php/Admin/SelectEmployee?for=activation">Activate/Deactivate Employee</a></li>
             					<li><a href="page.php/Admin/SelectEmployee?for=password">Change Employee Passwords</a></li>
                                 <li class="divider"></li>

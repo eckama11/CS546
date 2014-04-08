@@ -28,6 +28,7 @@ class PayStub
      *
      * @param   int             $id
      * @param   Date            $payPeriodStartDate
+     * @param   Date            $payPeriodEndDate
      * @param   Employee        $employee
      * @param   string          $name
      * @param   string          $address
@@ -45,20 +46,26 @@ class PayStub
      * @param   double          $deductionsYTD
      */
     public function __construct(
-        $id, DateTime $payPeriodStartDate, Employee $employee,
-        $name, $address, $rank, $employeeType, $taxId, $departments,
-        $salary, $numDeductions, $taxWithheld, $taxRate,
+        $id, DateTime $payPeriodStartDate, DateTime $payPeriodEndDate,
+        Employee $employee, $name, $address, $rank, $employeeType, $taxId,
+        $departments, $salary, $numDeductions, $taxWithheld, $taxRate,
         $deductions, $salaryYTD, $taxWithheldYTD, $deductionsYTD
     ) {
         if (!is_numeric($id))
             throw new Exception("The \$id parameter must be an integer");
         $this->_id = (int) $id;
 
-        $this->_payPeriodStartDate = $payPeriodStartDate;
+        $this->_payPeriodStartDate = (clone $payPeriodStartDate);
+        $this->_payPeriodStartDate->setTime(0, 0, 0);
 
+        $this->_payPeriodEndDate = (clone $payPeriodEndDate);
+        $this->_payPeriodEndDate->setTime(23, 59, 59);
+
+/*
         $payPeriodEndDate = (clone $payPeriodStartDate);
         $payPeriodEndDate->add(new DateInterval('P1M'))->sub(new DateInterval('P1D'));
         $this->_payPeriodEndDate = $payPeriodEndDate;
+*/
 
         $this->_employee = $employee;
 
@@ -210,7 +217,7 @@ class PayStub
     } // getDeductionsYTD()
 
     public function __toString() {
-        return __CLASS__ ."(id=$this->id, payPeriodStartDate=". $this->payPeriodStartDate->format("Y-m-d H:i:sP") .", payPeriodEndDate=". $this->payPeriodEndDate->format("Y-m-d H:i:sP") .", employee=$this->employee, name=$this->name, address=$this->address, rank=$this->rank, employeeType=$this->employeeType, taxId=$this->taxId, departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate, deductions=$this->deductions, salaryYTD=$this->salaryYTD, taxWithheldYTD=$this->taxWithheldYTD, deductionsYTD=$this->deductionsYTD)";
+        return __CLASS__ ."(id=$this->id, payPeriodStartDate=". $this->payPeriodStartDate->format("Y-m-d") .", payPeriodEndDate=". $this->payPeriodEndDate->format("Y-m-d") .", employee=$this->employee, name=$this->name, address=$this->address, rank=$this->rank, employeeType=$this->employeeType, taxId=$this->taxId, departments=". implode(',', $this->departments) .", salary=$this->salary, numDeductions=$this->numDeductions, taxWithheld=$this->taxWithheld, taxRate=$this->taxRate, deductions=$this->deductions, salaryYTD=$this->salaryYTD, taxWithheldYTD=$this->taxWithheldYTD, deductionsYTD=$this->deductionsYTD)";
     } // __toString
 
 } // class PayStub

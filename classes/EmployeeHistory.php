@@ -8,6 +8,7 @@ class EmployeeHistory
     private $_startDate;
     private $_endDate;
     private $_lastPayPeriodEndDate;
+    private $_departments;
     private $_rank;
     private $_numDeductions;
     private $_salary;
@@ -19,12 +20,13 @@ class EmployeeHistory
      * @param   DateTime      $startDate    First date that this history entry is effective.
      * @param   DateTime|null $endDate      Last date (inclusive) that this history entry is effective
      * @param   DateTime|null $lastPayPeriodEndDate End date of the last pay period that this history entry has been used for.
+     * @param   Array[Department] $departments
      * @param   Rank          $rank
      * @param   int           $numDeductions
      * @param   float         $salary
      */
     public function __construct(
-            $id, DateTime $startDate, $endDate, $lastPayPeriodEndDate, Rank $rank, $numDeductions, $salary
+            $id, DateTime $startDate, $endDate, $lastPayPeriodEndDate, $departments, Rank $rank, $numDeductions, $salary
         )
     {
         if (!is_numeric($id))
@@ -34,6 +36,7 @@ class EmployeeHistory
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->lastPayPeriodEndDate = $lastPayPeriodEndDate;
+        $this->departments = $departments;
         $this->rank = $rank;
         $this->numDeductions = $numDeductions;
         $this->salary = $salary;
@@ -85,6 +88,26 @@ class EmployeeHistory
 
         $this->_lastPayPeriodEndDate = $newEndDate;
     } // setLastPayPeriodEndDate
+
+    protected function getDepartments() {
+        return $this->_departments;
+    } // getDepartments
+
+    protected function setDepartments( $newDepartments ) {
+        if (!is_array($newDepartments) ||
+            array_filter(
+                $newDepartments,
+                function($item) {
+                    return !($item instanceof Department);
+                }
+              )
+           )
+        {
+            throw new Exception("The departments must be assigned an array of Department instances.");
+        }
+
+        $this->_departments = $newDepartments;
+    } // setDepartments
 
     protected function getRank() {
         return $this->_rank;

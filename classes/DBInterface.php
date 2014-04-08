@@ -778,15 +778,18 @@ class DBInterface {
 
         $rv = [];
         while ($row = $stmt->fetchObject()) {
+            $startDate = new DateTime( $row->startDate );
+
             $rv[] = new EmployeeHistory(
                 $row->id,
-                new DateTime( $row->startDate ),
+                $startDate,
                 ($row->endDate
                     ? new DateTime( $row->endDate )
                     : null),
                 ($row->lastPayPeriodEndDate
                     ? new DateTime ( $row->lastPayPeriodEndDate )
                     : null),
+                $this->readDepartmentsForEmployeeHistory( $row->id ),
                 $this->readRank( $row->rank ),
                 $row->numDeductions,
                 $row->salary
@@ -815,7 +818,7 @@ class DBInterface {
                 );
 
             if (!$stmt)
-                throw new Exception($this->formatErrorMessage(null, "Unable to employee query"));
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee query"));
         }
 
         $success = $stmt->execute(Array( $id ));
@@ -908,7 +911,6 @@ class DBInterface {
                             ":activeFlag, :username, :password, :name, :address, :taxId ".
                         ")"
                 );
-
 
             if (!$stmtInsert)
                 throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee insert"));
@@ -1126,11 +1128,15 @@ class DBInterface {
         else
             $newId = $this->dbh->lastInsertId();
 
+        // Create/update the department associations
+        $this->writeDepartmentsForEmployeeHistory($newId, $entry->departments);
+
         return new EmployeeHistory(
                 $newId,
                 $entry->startDate,
                 $entry->endDate,
                 $entry->lastPayPeriodEndDate,
+                $entry->departments,
                 $entry->rank,
                 $entry->numDeductions,
                 $entry->salary
@@ -1138,22 +1144,46 @@ class DBInterface {
     } // writeEmployeeHistory( $employeeId, EmployeeHistory $entry )
 
    /**
-     * Reads all of the departments associated with an employee.
-     * @param   int $employeeId The ID of the employee to retrieve the departments for.
+     * Reads all of the departments associated with an employee on a given date.
+     *
+     * @param   DateTime|int $dateOrHistoryId  The date to retrieve the departments for, or the ID of the EmployeeHistory entry to retrieve departments for.
+     * @param   int $employeeId The ID of the employee to retrieve the departments for.  Must be specified if $dateOrHistoryId contains a date, and must be omitted or null otherwise.
+     *
      * @return  Array[Department]   Array of the departments for the employee.
      */
-    public function readDepartmentsForEmployee( $employeeId ) {
-        if (!is_numeric($employeeId))
-            throw new Exception("Parameter \$employeeId must be an integer");
-        $employeeId = (int) $employeeId;
+    public function readDepartmentsForEmployeeHistory( $dateOrHistoryId, $employeeId = null ) {
+        $date = null;
+        $historyId = null;
+        if ($dateOrHistoryId instanceof DateTime) {
+            $date = $dateOrHistoryId;
+
+            if (!is_numeric($employeeId))
+                throw new Exception("Parameter \$employeeId must be an integer");
+            $employeeId = (int) $employeeId;
+        } else {
+            if (!is_numeric($dateOrHistoryId))
+                throw new Exception("Parameter \$dateOrHistoryId must be an integer or an instance of DateTime");
+            $historyId = (int) $dateOrHistoryId;
+
+            if ($employeeId != null)
+                throw new Exception("The \$employeeId parameter cannot be specified if a history ID is provided");
+        }
 
         static $stmt;
         if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT d.id, d.name ".
-                        "FROM employeeDepartmentAssociation a ".
+                        "FROM employeeHistory h ".
+                        "INNER JOIN employeeDepartmentAssociation a ".
+                            "ON a.employeeHistory = h.id ".
                         "INNER JOIN department d ON d.id = a.department ".
-                        "WHERE employee=? ".
+                        "WHERE  ".
+                            "(h.id = :historyId) ".
+                            "OR (".
+                                "(h.employee = :employeeId) AND ".
+                                "(h.startDate <= :date) AND ".
+                                "((h.endDate IS NULL) OR (h.endDate >= :date)) ".
+                            ") ".
                         "ORDER BY d.name"
                 );
 
@@ -1161,7 +1191,11 @@ class DBInterface {
                 throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee departments query"));
         }
 
-        $success = $stmt->execute(Array( $employeeId ));
+        $success = $stmt->execute(Array(
+                            ':employeeId' => $employeeId,
+                            ':date' => ($date ? $date->format("Y-m-d") : null),
+                            ':historyId' => $historyId
+                        ));
         if ($success === false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for employee departments"));
 
@@ -1171,38 +1205,43 @@ class DBInterface {
         } // while
 
         return $rv;
-    } // readDepartmentsForEmployee
+    } // readDepartmentsForEmployeeHistory
 
    /**
      * Reads all of the Employees associated with a Department.
      * @param   int $departmentId The ID of the Department to retrieve the Employees for.
      * @param   EmployeeType $employeeType Type of employees to return.  If not specified,
      *                     all employees associated with the department will be returned.
+     * @param   DateTime    $forDate    The date to return assignments for.  If not provided, the
+     *                                  current date will be used.
      * @return  Array[Employee]   Array of the Employees for a Department.
      */
-    public function readEmployeesForDepartment( $departmentId, EmployeeType $employeeType = null ) {
+    public function readEmployeesForDepartment( $departmentId, EmployeeType $employeeType = null, DateTime $forDate = null ) {
         if (!is_numeric($departmentId))
             throw new Exception("Parameter \$departmentId must be an integer");
         $departmentId = (int) $departmentId;
 
+        if ($forDate === null)
+            $forDate = new DateTime();
+
         static $stmt;
         if ($stmt == null) {
             $stmt = $this->dbh->prepare(
-                    "SELECT a.employee ".
+                    "SELECT h.employee ".
                         "FROM ( ".
-                            "SELECT :date as theDate, :employeeType as employeeType, :departmentId as departmentId ".
+                            "SELECT :date as forDate, :employeeType as employeeType, :departmentId as departmentId ".
                         ") s ".
                         "INNER JOIN employeeDepartmentAssociation a ".
-                            "ON a.department=s.departmentId ".
-                        "INNER JOIN employee e ".
-                            "ON e.id = a.employee ".
+                            "ON a.department = s.departmentId ".
                         "INNER JOIN employeeHistory h ".
-                            "ON h.employee = a.employee ".
-                                "AND h.startDate <= s.theDate ".
-                                "AND (h.endDate >= s.theDate OR h.endDate IS NULL) ".
+                            "ON h.id = a.employeeHistory ".
+                                "AND h.startDate <= s.forDate ".
+                                "AND (h.endDate >= s.forDate OR h.endDate IS NULL) ".
                         "INNER JOIN rank r ".
                             "ON r.id = h.rank ".
                                 "AND (s.employeeType IS NULL OR r.employeeType = s.employeeType) ".
+                        "INNER JOIN employee e ".
+                            "ON e.id = h.employee ".
                         "ORDER BY e.name"
                 );
 
@@ -1211,7 +1250,7 @@ class DBInterface {
         }
 
         $success = $stmt->execute(Array(
-                ':date' => (new DateTime())->format("Y-m-d"),
+                ':date' => $forDate->format("Y-m-d"),
                 ':employeeType' => $employeeType->name,
                 ':departmentId' => $departmentId,
             ));
@@ -1228,13 +1267,14 @@ class DBInterface {
 
     /**
      * Writes EmployeeDepartmentAssociation records to the database.
-     * @param   Employee   $employee    The employee to update the departments for.
+     * @param   int   $employeeHistoryId    The employee history record id to update the departments for.
      * @param   Array[Department]   $departments    The list of departments to associate the employee with.
      * @return
      */
-    public function writeDepartmentsForEmployee( Employee $employee, $departments ) {
-        if ($employee->id == 0)
-            throw new Exception("The id property of the employee cannot be 0.");
+    public function writeDepartmentsForEmployeeHistory( $employeeHistoryId, $departments ) {
+        if (!is_numeric($employeeHistoryId))
+            throw new Exception("Parameter \$employeeHistoryId must be an integer");
+        $employeeHistoryId = (int) $employeeHistoryId;
 
         if (!is_array($departments))
             throw new Exception("The departments parameter must be an array.");
@@ -1252,9 +1292,9 @@ class DBInterface {
         if ($insertStmt == null) {
             $insertStmt = $this->dbh->prepare(
                     "INSERT INTO employeeDepartmentAssociation ( ".
-                            "employee, department ".
+                            "employeeHistory, department ".
                         ") VALUES ( ".
-                            ":employee, :department ".
+                            ":employeeHistoryId, :department ".
                         ")"
                 );
 
@@ -1264,7 +1304,7 @@ class DBInterface {
 
             $deleteStmt = $this->dbh->prepare(
                     "DELETE FROM employeeDepartmentAssociation ".
-                        "WHERE employee = :employee"
+                        "WHERE employeeHistory = :employeeHistoryId"
                 );
 
             if (!$deleteStmt)
@@ -1273,21 +1313,21 @@ class DBInterface {
 
         // Remove existing association records for the employee
         $success = $deleteStmt->execute(Array(
-                ':employee' => $employee->id
+                ':employeeHistoryId' => $employeeHistoryId
             ));
         if ($success == false)
-            throw new Exception($this->formatErrorMessage($deleteStmt, "Unable to delete existing employeeDepartmentAssociation records for employee ". $employee->id));
+            throw new Exception($this->formatErrorMessage($deleteStmt, "Unable to delete existing employeeDepartmentAssociation records"));
 
         // Create new association records for the employee
         foreach ($departments as $dept) {
             $success = $insertStmt->execute(Array(
-                    ':employee' => $employee->id,
+                    ':employeeHistoryId' => $employeeHistoryId,
                     ':department' => $dept->id
                 ));
             if ($success == false)
                 throw new Exception($this->formatErrorMessage($insertStmt, "Unable to create employeeDepartmentAssociation record in database"));
         } // foreach
-    } // writeDepartmentsForEmployee
+    } // writeDepartmentsForEmployeeHistory
 
     /**
      * Generates new pay stubs for employees who have not yet had pay stubs generated for the current month.
@@ -1346,7 +1386,7 @@ class DBInterface {
 
             $effectiveTaxRate = (($monthlySalary > 0) ? $tax->tax / $monthlySalary : 0);
 
-            $departments = $this->readDepartmentsForEmployee( $employee->id );
+            $departments = $this->readDepartmentsForEmployeeHistory( $payPeriodStartDate, $employee->id );
             $departments = array_map(function($dept) { return $this->departmentToPaystubDepartment($dept); }, $departments);
 
             // Read previous pay stub for YTD information
@@ -1364,7 +1404,7 @@ class DBInterface {
             }
 
             $paystub = new PayStub(
-                    0, $payPeriodStartDate, $employee, 
+                    0, $payPeriodStartDate, $payPeriodEndDate, $employee, 
                     $employee->name, $employee->address, $employee->current->rank, $employee->current->rank->employeeType, $employee->taxId,
                     $departments, $monthlySalary,
                     $employee->current->numDeductions,

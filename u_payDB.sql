@@ -56,11 +56,11 @@ CREATE TABLE employeeHistory(
 );
 
 CREATE TABLE employeeDepartmentAssociation(
-    employee INT NOT NULL,
+    employeeHistory INT NOT NULL,
     department INT NOT NULL,
-    FOREIGN KEY (employee) REFERENCES employee(id),
+    FOREIGN KEY (employeeHistory) REFERENCES employeeHistory(id),
     FOREIGN KEY (department) REFERENCES department(id),
-    PRIMARY KEY (employee, department)
+    PRIMARY KEY (employeeHistory, department)
 );
 
 CREATE TABLE loginSession(
@@ -73,6 +73,7 @@ CREATE TABLE loginSession(
 CREATE TABLE paystub(
     id INT NOT NULL AUTO_INCREMENT,
     payPeriodStartDate DATE NOT NULL,
+    payPeriodEndDate DATE NOT NULL,
     employee INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
@@ -237,7 +238,7 @@ INSERT INTO employeeHistory (
     (3, CURDATE(), 6, 2, 125000.00);
 
 INSERT INTO employeeDepartmentAssociation (
-	employee, department
+	employeeHistory, department
   ) VALUES
     ( 1, 1 ),
     ( 2, 9 ),

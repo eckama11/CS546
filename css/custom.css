@@ -3,9 +3,9 @@ body{background-color: #F7F7F6; color:black;}
 .center{float: none; margin-left: auto; margin-right: auto;}
 .padded {padding: 70px;}
 .error { border: 1px solid #b94a48!important; background-color: #fee!important; }
-.active { color: green; font-weight: bold; }
-.inactive { color: red; font-weight: bold; }
-.currency { text-align: right; }
+.upayActive { color: green; font-weight: bold; }
+.upayInactive { color: red; font-weight: bold; }
+.numeric { text-align: right; }
 
 .form-control { color: black; }
 .form-control[disabled] { background-color: #ccc; }

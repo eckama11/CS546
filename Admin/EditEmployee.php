@@ -16,14 +16,10 @@
 
             if (!$emp->activeFlag)
                 throw new Exception("Inactive employees cannot be updated.");
-
-            $empDepts = $db->readDepartmentsForEmployee($emp->id);
-            $empDepts = array_flip(array_map(function($dept) { return $dept->id; }, $empDepts));
-        } else
-            $empDepts = [];
-
-        $ranks = $db->readRanks();
-        $depts = $db->readDepartments();
+        } else {
+            $ranks = $db->readRanks();
+            $depts = $db->readDepartments();
+        }
     } catch (Exception $ex) {
         handleDBException($ex);
         return;
@@ -37,21 +33,34 @@
 
 <script>
 	function editEmployee(form) {
-        var rankInput = form.elements.rank;
-        var selRank = rankInput.options[rankInput.selectedIndex];
-        var baseSalary = Number(selRank.getAttribute('rank-base-salary'));
-
 		var name = requiredField($(form.elements.name), "You must enter employee's name.");
 		var address = requiredField($(form.elements.address), "You must enter employee's address.");
-		var rank = requiredField($(rankInput), "You must enter employee's rank");
-		var departments = requiredField($(form.elements["departments[]"]), "You must select at least one department for employee");
 		var taxid = requiredField($(form.elements.taxid), "You must enter employee's tax id");
-		var numDeductions = requiredField($(form.elements.numDeductions), "You must enter employee's number of deductions");
-		var salary = Number(requiredField($(form.elements.salary), "You must enter employee's salary"));
-<?php if ($emp == null) { ?>
+
+<?php
+    // Verify fields that are only asked for new employees
+    if ($emp == null) {
+?>
 		var username = requiredField($(form.elements.username), "You must enter employee's username.");
 		var password1 = requiredField($(form.elements.password1), "You must enter employee's password.");
 		var password2 = requiredField($(form.elements.password2), "You must verify employee's password.");
+
+        var startDate = requiredField($(form.elements.startDate), "You must provide a starting date");
+        startDate = (startDate != "" ? new Date(startDate) : "");
+
+		var departments = requiredField($(form.elements["departments[]"]), "You must select at least one department for employee");
+        var rankInput = form.elements.rank;
+        var selRank = rankInput.options[rankInput.selectedIndex];
+        var baseSalary = Number(selRank.getAttribute('rank-base-salary'));
+        var rank = requiredField($(rankInput), "You must enter employee's rank");
+        var numDeductions = requiredField($(form.elements.numDeductions), "You must enter employee's number of deductions");
+        var salary = Number(requiredField($(form.elements.salary), "You must enter employee's salary"));
+
+        if ((username == "") || (password1 == "") || (password2 == "")) {
+			showError("You must enter all form information.");
+            return false;
+        }
+
         if (password1 != password2) {
             showError("The employee's password and verify password do not match.");
             return false;
@@ -61,21 +70,22 @@
             showError("The employee's password must be at least 8 characters long");
             return false;
         }
-<?php } ?>
 
-		if ((name == "") || (address == "") || (rank == null) || (departments == null) ||
-		    (taxid == "") || (numDeductions == "") || (salary == ""))
-        {
-			showError("You must enter all form information to add employee.");
-			return false;
-		}
-
-        if (salary < baseSalary) {
-			showError("The salary cannot be less than the base salary assigned to the selected rank: "+ $(selRank).text());
-			return false;
+        if ((startDate == "") || (numDeductions == "") || (salary == "") || (rank == null) || (departments == null)) {
+            showError("You must enter all form information.");
+            return false;
         }
 
-// TODO: Add more verification for salary updates!
+        if (salary < baseSalary) {
+            showError("The salary cannot be less than the base salary assigned to the selected rank: "+ $(selRank).text());
+            return false;
+        }
+<?php } ?>
+
+		if ((name == "") || (address == "") || (taxid == "")) {
+			showError("You must enter all form information.");
+			return false;
+		}
 
 		$("#employeeDiv").hide();
 		$("#spinner").show();
@@ -131,127 +141,79 @@
 		<form role="form" onsubmit="return editEmployee(this);">
             <input type="hidden" name="id" value="<?php echo htmlentities($employeeId); ?>"/>
 
-			<div id="my-tab-content" class="tab-content">
-				<div class="form-group">
-					<label class="control-label">Name</label>
-					<input type="text" class="form-control" name="name" id="name" placeholder="Enter name" value="<?php empProperty($emp, 'name'); ?>"/>
-				</div>
-				<div class="form-group">
-					<label class="control-label">Address</label></br>
-					<textarea class="form-control" rows="5" name="address" id="address" placeholder="Enter Address"><?php empProperty($emp, 'address'); ?></textarea>
-				</div>
-				<div class="form-group">
-					<label class="control-label">Tax ID</label>
-					<input type="text" class="form-control" name="taxid" id="taxid" placeholder="Enter Soc Sec #" value="<?php empProperty($emp, 'taxId'); ?>"/>
-				</div>
-				<div class="form-group">
-					<label class="control-label">Departments</label>
-					<select multiple class="form-control" name="departments[]" id="departments">
-						<?php
-							foreach ($depts as $dept) {
-								echo '<option value="'. htmlentities($dept->id) .'"';
-                                if (array_key_exists($dept->id, $empDepts))
-                                    echo 'selected';
-                                echo '>'. htmlentities($dept->name) .'</option>';
-							}
-                        ?>
-					</select>
-				</div>
-                <hr/>
+            <div class="form-group">
+                <label class="control-label">Name</label>
+                <input type="text" class="form-control" name="name" id="name" placeholder="Enter name" value="<?php empProperty($emp, 'name'); ?>"/>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Address</label></br>
+                <textarea class="form-control" rows="5" name="address" id="address" placeholder="Enter Address"><?php empProperty($emp, 'address'); ?></textarea>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Tax ID</label>
+                <input type="text" class="form-control" name="taxid" id="taxid" placeholder="Enter Soc Sec #" value="<?php empProperty($emp, 'taxId'); ?>"/>
+            </div>
 <?php if ($emp == null) { ?>
-				<div class="form-group">
-					<label class="control-label">Username</label>
-					<input type="text" class="form-control" name="username" id="username" placeholder="Enter Username"/>
+            <hr/>
+            <div class="form-group">
+                <label class="control-label">Username</label>
+                <input type="text" class="form-control" name="username" id="username" placeholder="Enter Username"/>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Password</label>
+                <input type="password" class="form-control" name="password1" id="password1" placeholder="Enter password"/>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Verify Password</label>
+                <input type="password" class="form-control" name="password2" id="password2" placeholder="Verify password"/>
+            </div>
+            <hr/>
+            <div class="form-group">
+                <label class="control-label">Start Date</label>
+                <div class="input-group">
+                    <input data-provide="datepicker" class="form-control" type="text" name="startDate" id="startDate" placeholder="Enter employment start date" />
+                    <span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
                 </div>
-				<div class="form-group">
-					<label class="control-label">Password</label>
-					<input type="password" class="form-control" name="password1" id="password1" placeholder="Enter password"/>
-                </div>
-				<div class="form-group">
-					<label class="control-label">Verify Password</label>
-					<input type="password" class="form-control" name="password2" id="password2" placeholder="Verify password"/>
-                </div>
-				<div class="form-group">
-					<label class="control-label">Start Date</label>
-                    <div class="input-group">
-                        <input data-provide="datepicker" class="form-control" type="text" name="startDate" id="startDate" placeholder="Enter employment start date" />
-                        <span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
-                    </div>
-                </div>
-                <hr/>
-                <div>
-<?php } else { ?>
-				<div class="form-group">
-                    <label><input type="checkbox" name="updatePay" value="1" onclick="$('#currentPayDiv,#updatePayDiv').toggle();"/> Update Employee Pay</label>
-				</div>
-                <div id="currentPayDiv">
-                    <div class="form-group">
-                        <label class="control-label">Number of Deductions</label>
-                        <p class="form-control" disabled><?php
-                            echo htmlentities($emp->current->numDeductions);
-                        ?></p>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Rank</label>
-                        <p class="form-control" disabled><?php
-                            $rank = $emp->current->rank;
-                            echo htmlentities($rank->name) . ' ($'. number_format($rank->baseSalary, 2) .')';
-                        ?></p>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Yearly Salary</label>
-                        <p class="form-control" disabled><?php
-                            echo htmlentities($emp->current->salary);
-                        ?></p>
-                    </div>
-                </div>
-                <div id="updatePayDiv" style="display:none">
-                    <div class="form-group">
-                        <label class="control-label">Pay Update Effective Date</label>
-                        <div class="input-group">
-                            <input data-provide="datepicker" class="form-control" type="text" name="startDate" id="startDate" placeholder="Enter effective date"/>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Departments</label>
+                <select multiple class="form-control" name="departments[]" id="departments"><?php
+                    foreach ($depts as $dept) {
+                        echo '<option value="'. htmlentities($dept->id) .'">'. htmlentities($dept->name) .'</option>';
+                    }
+                ?></select>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Number of Deductions</label>
+                <input type="text" class="form-control" name="numDeductions" id="numDeductions" placeholder="Enter a number" />
+            </div>
+            <div class="form-group">
+                <label class="control-label">Rank</label>
+                <select class="form-control" name="rank" id="rank">
+                    <?php
+                        echo '<option disabled selected>Select One</option>';
 
-                            <span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
-                        </div>
-                    </div>
+                        foreach ($ranks as $rank) {
+                            echo '<option value="'. htmlentities($rank->id) .'" '.
+                                'rank-base-salary="'. htmlentities($rank->baseSalary) .'">'.
+                                htmlentities($rank->name) . ' ($'. number_format($rank->baseSalary, 2) .')'.
+                                '</option>';
+                        } // foreach
+                    ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Yearly Salary</label>
+                <input type="text" class="form-control" name="salary" id="salary" placeholder="Enter a salary" />
+            </div>
 <?php } ?>
-                    <div class="form-group">
-                        <label class="control-label">Number of Deductions</label>
-                        <input type="text" class="form-control" name="numDeductions" id="numDeductions" placeholder="Enter a number" value="<?php if ($emp) echo htmlentities($emp->current->numDeductions); ?>">
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Rank</label>
-                        <select class="form-control" name="rank" id="rank">
-                            <?php
-                                echo '<option disabled '. ($emp == null ? ' selected' : '') .'>Select One</option>';
-
-                                $empRankId = ($emp != null) ? $emp->current->rank->id : null;
-                                foreach ($ranks as $rank) {
-                                    echo '<option value="'. htmlentities($rank->id) .'"';
-
-                                    if ($rank->id == $empRankId)
-                                        echo 'selected';
-
-                                    echo ' rank-base-salary="'. htmlentities($rank->baseSalary) .'">'.
-                                        htmlentities($rank->name) . ' ($'. number_format($rank->baseSalary, 2) .')'.
-                                        '</option>';
-                                } // foreach
-                            ?>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Yearly Salary</label>
-                        <input type="text" class="form-control" name="salary" id="salary" placeholder="Enter a salary" value="<?php if ($emp)  echo htmlentities($emp->current->salary); ?>">
-                    </div>
-                </div>
-				<button type="submit" class="btn btn-default"><?php
-                    if ($emp != null)
-                        echo 'Update Employee';
-                    else
-                        echo 'Add Employee';
-                ?></button>
-				<br></br>
-			</div>
+            <button type="submit" class="btn btn-default"><?php
+                if ($emp != null)
+                    echo 'Update Employee';
+                else
+                    echo 'Add Employee';
+            ?></button>
+            <br></br>
 		</form>
 	</div>
 </div> 
