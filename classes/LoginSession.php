@@ -28,7 +28,7 @@ class LoginSession
     } // getAuthenticatedEmployee
 
     protected function getIsAdministrator() {
-    	if (!$this->authenticatedEmployee->activeFlag) {
+    	if (!$this->authenticatedEmployee->isActive) {
     		return false;
     	}
         return $this->authenticatedEmployee->current->rank->employeeType->isAdministrator;

@@ -2,7 +2,6 @@
 require_once(dirname(__FILE__)."/../common.php");
 
 $id = @$_POST['id'];
-$activeFlag = true;
 $name = @$_POST['name'];
 $address = @$_POST['address'];
 $taxId = @$_POST['taxid'];
@@ -54,16 +53,12 @@ try {
         $startDate = new DateTime($startDate);
         $current = new EmployeeHistory(0, $startDate, null, null, $departments, $rank, $numDeductions, $salary);
     } else {
-        // Read existing employee when updating for activeFlag, username & password
+        // Read existing employee when updating for username & password
         //   fields, which cannot be updated by this service
         $emp = $db->readEmployee($id);
 
-        $activeFlag = $emp->activeFlag;
         $username = $emp->username;
         $password1 = $emp->password;
-
-        if (!$activeFlag)
-            throw new Exception("Inactive employees cannot be updated.");
 
         $current = $emp->current;
     }
@@ -75,7 +70,7 @@ try {
 
     // Create/update the employee record
     $emp = new Employee(
-                $id, $activeFlag, $username, $password1,
+                $id, $username, $password1,
                 $name, $address, $taxId,
                 $current
             );

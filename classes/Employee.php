@@ -5,7 +5,6 @@ class Employee
 {
 
     private $_id;
-    private $_activeFlag = true;
     private $_username;
     private $_password;
     private $_name;
@@ -17,7 +16,6 @@ class Employee
      * Constructs a new Employee object.
      *
      * @param   int     $id
-     * @param   boolean $activeFlag
      * @param   string  $username
      * @param   string  $password       TODO: Password should probably not be required... Not the most secure.
      * @param   string  $name
@@ -26,16 +24,14 @@ class Employee
      * @param   EmployeeHistory $current
      */
     public function __construct(
-            $id, $activeFlag, $username, $password,
-            $name, $address, $taxId,
-            EmployeeHistory $current
+            $id, $username, $password, $name, $address, $taxId,
+            EmployeeHistory $current = null
         )
     {
         if (!is_numeric($id))
             throw new Exception("The \$id parameter must be an integer");
         $this->_id = (int) $id;
 
-        $this->activeFlag = $activeFlag;
         $this->username = $username;
         $this->password = $password;
         $this->name = $name;
@@ -47,22 +43,6 @@ class Employee
     protected function getId() {
         return $this->_id;
     } // getId
-
-    protected function getActiveFlag() {
-        return $this->_activeFlag;
-    } // getActiveFlag
-
-    protected function setActiveFlag($newActiveFlag) {
-        if ($newActiveFlag == "true")
-            $newActiveFlag = true;
-        else if (($newActiveFlag == "false") || ($newActiveFlag == null))
-            $newActiveFlag = false;
-
-        if (!is_bool($newActiveFlag) && !is_numeric($newActiveFlag))
-            throw new Exception("The activeFlag must be set to a boolean value.");
-
-        $this->_activeFlag = ($newActiveFlag && true);
-    } // setActiveFlag
 
     protected function getUsername() {
         return $this->_username;
@@ -122,12 +102,16 @@ class Employee
         return $this->_current;
     } // getCurrent
 
-    protected function setCurrent(EmployeeHistory $newCurrent) {
+    protected function setCurrent(EmployeeHistory $newCurrent = null) {
         $this->_current = $newCurrent;
     } // setCurrent
 
+    protected function getIsActive() {
+        return ($this->current ? $this->current->isActive : false);
+    } // getIsActive()
+
     public function __toString() {
-        return __CLASS__ ."(id=$this->id, activeFlag=$this->activeFlag, username=$this->username, password=$this->password, name=$this->name, address=$this->address, taxId=$this->taxId)";
+        return __CLASS__ ."(id=$this->id, username=$this->username, password=$this->password, name=$this->name, address=$this->address, taxId=$this->taxId, current=$this->current)";
     } // __toString
 
 } // class Employee

@@ -29,7 +29,6 @@ CREATE TABLE department(
 
 CREATE TABLE employee(
     id INT NOT NULL AUTO_INCREMENT,
-    activeFlag TINYINT(1) NOT NULL,
     username VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -222,20 +221,20 @@ INSERT INTO rank (
 
 -- Populate some the pre-defined system admin user and some employees
 INSERT INTO employee (
-    activeFlag, username, password, name, address, taxId
+    username, password, name, address, taxId
   ) VALUES
-    ( 1, 'admin', 'admin', 'Administrator', 'No Address', 'Untaxable' ),
-    ( 1, 'joe', 'password', 'Joe Josephson', '123 Main Street
+    ( 'admin', 'admin', 'Administrator', 'No Address', 'Untaxable' ),
+    ( 'joe', 'password', 'Joe Josephson', '123 Main Street
 Smalltown, WI 55555', '999-88-7777' ),
-    ( 1, 'linda', 'password', 'Linda Linders', 'W1234 Highway 12
+    ( 'linda', 'password', 'Linda Linders', 'W1234 Highway 12
 Westville, WI 55556', '111-22-3333' );
 
 INSERT INTO employeeHistory (
     employee, startDate, rank, numDeductions, salary
   ) VALUES
-    (1, CURDATE(), 1, 0, 0.00),
-    (2, CURDATE(), 5, 3, 125000.00),
-    (3, CURDATE(), 6, 2, 125000.00);
+    (1, DATE_SUB(CURDATE(), INTERVAL 1 YEAR), 1, 0, 0.00),
+    (2, DATE_SUB(CURDATE(), INTERVAL 3 MONTH), 5, 3, 125000.00),
+    (3, DATE_SUB(CURDATE(), INTERVAL 1 MONTH), 6, 2, 125000.00);
 
 INSERT INTO employeeDepartmentAssociation (
 	employeeHistory, department

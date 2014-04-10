@@ -51,9 +51,9 @@ function showEmployeeInfo( $employee, $historyLimit = null ) {
 		  <td><?php echo htmlentities($employee->username); ?></td>
 		</tr>
 		<tr>
-		  <th>Status</th>
+		  <th>Current Status</th>
 		  <td><?php
-            echo ($employee->activeFlag
+            echo ($employee->isActive
                 ? 'Active'
                 : '<span class="upayInactive">Inactive</span>'
               );
@@ -76,6 +76,7 @@ function showEmployeeInfo( $employee, $historyLimit = null ) {
         <tr>
             <th>Start Date</th>
             <th>End Date</th>
+            <th>Last Pay Period End Date</th>
             <th>Number of<br/>Deductions</th>
             <th>Rank</th>
             <th>Yearly<br/>Salary</th>
@@ -87,9 +88,7 @@ function showEmployeeInfo( $employee, $historyLimit = null ) {
         $entry = $entry[0];
 ?>
 		<tr<?php
-            if (($today >= $entry->startDate) &&
-                (($entry->endDate == null) || ($today <= $entry->endDate)))
-            {
+            if ($entry->isActive) {
                 echo ' class="upayActive"';
             }
           ?>>
@@ -97,6 +96,10 @@ function showEmployeeInfo( $employee, $historyLimit = null ) {
           <td><?php
             if ($entry->endDate && (!$forAuthenticatedEmployee || ($today > $entry->endDate)))
                 echo htmlentities($entry->endDate->format("Y-m-d"));
+          ?></td>
+          <td><?php
+            if ($entry->lastPayPeriodEndDate)
+                echo htmlentities($entry->lastPayPeriodEndDate->format("Y-m-d"));
           ?></td>
 		  <td class="numeric"><?php echo htmlentities($entry->numDeductions); ?></td>
 		  <td><?php echo htmlentities($entry->rank->name); ?></td>

@@ -16,12 +16,9 @@ try {
     if (!isset($loginSession) || !$loginSession->isAdministrator)
         throw new Exception("You do not have sufficient access to perform this action");
 
-    // Read existing employee when updating for activeFlag, username & password
+    // Read existing employee when updating for username & password
     //   fields, which cannot be updated by this service
     $emp = $db->readEmployee($id);
-
-    if (!$activeFlag)
-        throw new Exception("Inactive employees cannot be updated.");
 
     $departments = array_map(function($deptId) { return $GLOBALS['db']->readDepartment($deptId); }, $departments);
 
@@ -39,7 +36,7 @@ try {
 /*
     // Create/update the employee record
     $emp = new Employee(
-                $id, $activeFlag, $username, $password1,
+                $id, $username, $password1,
                 $name, $address, $taxId,
                 $current
             );

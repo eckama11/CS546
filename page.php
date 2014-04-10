@@ -85,8 +85,7 @@ function showError(message) {
             					<li><a href="page.php/Admin/EditEmployee">Add Employee</a></li>
             					<li><a href="page.php/Admin/SelectEmployee?for=modifyInfo">Modify Employee Info</a></li>
             					<li><a href="page.php/Admin/SelectEmployee?for=modifySalary">Modify Employee Salary</a></li>
-            					<li><a href="page.php/Admin/SelectEmployee?for=activation">Activate/Deactivate Employee</a></li>
-            					<li><a href="page.php/Admin/SelectEmployee?for=password">Change Employee Passwords</a></li>
+            					<li><a href="page.php/Admin/SelectEmployee?for=password">Change Employee Password</a></li>
                                 <li class="divider"></li>
             					<li><a href="page.php/Admin/Generate">Generate Pay Stubs</a></li>
           					</ul>

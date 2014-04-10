@@ -15,9 +15,6 @@
 
     try {
         $emp = $db->readEmployee($employeeId);
-
-        if (!$emp->activeFlag)
-            throw new Exception("Inactive employees cannot be updated.");
     } catch (Exception $ex) {
         handleDBException($ex);
         return;

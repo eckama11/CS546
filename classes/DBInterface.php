@@ -447,6 +447,7 @@ class DBInterface {
 
     private static $payStubColumns = Array(
                 "payPeriodStartDate",
+                "payPeriodEndDate",
                 "employee",
                 "name",
                 "address",
@@ -467,6 +468,7 @@ class DBInterface {
         return new PayStub(
                     $row->id,
                     new DateTime( $row->payPeriodStartDate ),
+                    new DateTime( $row->payPeriodEndDate ),
                     $this->readEmployee( $row->employee ),
                     $row->name,
                     $row->address,
@@ -533,8 +535,8 @@ class DBInterface {
                     "INSERT INTO paystub ( ".
                             implode(", ", self::$payStubColumns) .
                         ") VALUES ( ".
-                            ":payPeriodStartDate, :employeeId, :name, :address, ".
-                            ":rank, :employeeType, :taxId, :salary, :numDeductions, ".
+                            ":payPeriodStartDate, :payPeriodEndDate, :employeeId, :name, ".
+                            ":address, :rank, :employeeType, :taxId, :salary, :numDeductions, ".
                             ":taxWithheld, :taxRate, :deductions, :salaryYTD, ".
                             ":taxWithheldYTD, :deductionsYTD ".
                         ")"
@@ -546,6 +548,7 @@ class DBInterface {
 
         $success = $stmt->execute(Array(
                 ':payPeriodStartDate' => $paystub->payPeriodStartDate->format("Y-m-d"),
+                ':payPeriodEndDate' => $paystub->payPeriodEndDate->format("Y-m-d"),
                 ':employeeId' => $paystub->employee->id,
                 ':name' => $paystub->name,
                 ':address' => $paystub->address,
@@ -562,7 +565,7 @@ class DBInterface {
                 ':deductionsYTD' => $paystub->deductionsYTD
             ));
         if ($success == false)
-            throw new Exception($this->formatErrorMessage($stmt, "Unable to create paystub record in database"));
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to create pay stub record in database"));
 
         $newId = $this->dbh->lastInsertId();
 
@@ -571,6 +574,7 @@ class DBInterface {
         return new PayStub(
                 $newId,
                 $paystub->payPeriodStartDate,
+                $paystub->payPeriodEndDate,
                 $paystub->employee,
                 $paystub->name,
                 $paystub->address,
@@ -620,7 +624,7 @@ class DBInterface {
                         "FROM paystub ".
                         "WHERE employee = :employeeId ".
                             "AND payPeriodStartDate >= :afterDate ".
-                            "AND LAST_DAY(payPeriodStartDate) < :beforeDate ".
+                            "AND payPeriodEndDate < :beforeDate ".
                         "ORDER BY payPeriodStartDate ASC"
                 );
 
@@ -714,7 +718,8 @@ class DBInterface {
      * @param   int         $employeeId The ID of the employee to retrieve history for.
      * @param   DateTime    $startDate  If provided, the starting date to filter by.  Only
      *                                  records with an end date greater than or equal to the
-     *                                  date provided will be returned.
+     *                                  date provided or with no end date specified will be
+     *                                  returned.
      * @param   DateTime    $endDate    If provided, the ending date to filter by.  Only records
      *                                  with a start date less than or equal to the provided date
      *                                  will be returned.
@@ -801,18 +806,27 @@ class DBInterface {
 
     /**
      * Reads an Employee from the database.
+     *
      * @param   int $id The ID of the employee to retrieve.
+     * @param   DateTime|null $effectiveDate The date for which to determine the value for the
+     *              current property.  If a DateTime is given, current will be set to the
+     *              EmployeeHistory record that is active for the specified date, or null if no
+     *              such record exists.  If not specified, defaults to the current date.
+     *
      * @return  Employee    An instance of Employee.
      */
-    public function readEmployee( $id ) {
+    public function readEmployee( $id, DateTime $effectiveDate = null ) {
         if (!is_numeric($id))
             throw new Exception("Parameter \$id must be an integer");
         $id = (int) $id;
 
+        if ($effectiveDate === null)
+            $effectiveDate = new DateTime();
+
         static $stmt;
         if ($stmt == null) {
             $stmt = $this->dbh->prepare(
-                    "SELECT id, activeFlag, username, password, name, address, taxId ".
+                    "SELECT id, username, password, name, address, taxId ".
                         "FROM employee ".
                         "WHERE id = ?"
                 );
@@ -829,14 +843,14 @@ class DBInterface {
         if ($row === false)
             throw new Exception("No such employee: $id");
 		
-        $current = $this->readEmployeeHistory( $row->id, null, null, 1 );
+        $current = $this->readEmployeeHistory( $row->id, $effectiveDate, $effectiveDate, 1 );
         if (count($current) == 0)
-            throw new Exception("No history found for employee: $row->id");
-        $current = $current[0];
+            $current = null;
+        else
+            $current = $current[0];
 
         return new Employee(
                 $row->id,
-                $row->activeFlag,
                 $row->username,
                 $row->password,
                 $row->name,
@@ -848,16 +862,26 @@ class DBInterface {
 
     /**
      * Reads a list of all employees from the database.
-     * @param   Boolean $activeFlag Whether to retrieve active employees (true) or inactive employees (false)
+     *
+     * @param   DateTime|null|false $effectiveDate Determines which employees are returned.  If a
+     *                  DateTime is given, only employees that are active for that date are returned.
+     *                  If null or not specified, all employees are returned, and if false, return
+     *                  inactive employees only.
+     *
      * @return  Array[Employee] Array of Employee instances.
      */
-    public function readEmployees($activeFlag = true) {
+    public function readEmployees($effectiveDate = null) {
         static $stmt;
         if ($stmt == null) {
             $stmt = $this->dbh->prepare(
-                    "SELECT id, activeFlag, username, password, name, address, taxId ".
-                        "FROM employee ".
-                        "WHERE activeFlag=:activeFlag ".
+                    "SELECT e.id, e.username, e.password, e.name, e.address, e.taxId ".
+                        "FROM employee e ".
+                        "LEFT JOIN employeeHistory h ".
+                            "ON h.employee = e.id ".
+                                "AND h.startDate <= :effectiveDate ".
+                                "AND (h.endDate IS NULL OR h.endDate >= :effectiveDate) ".
+                        "WHERE :returnAll = 1 ".
+                            "OR CASE WHEN (h.id IS NOT NULL) THEN 1 ELSE 0 END = :activeFlag ".
                         "ORDER BY name"
                 );
 
@@ -865,22 +889,35 @@ class DBInterface {
                 throw new Exception($this->formatErrorMessage(null, "Unable to prepare employees query"));
         }
 
+        $returnAll = false;
+        $activeFlag = true;
+        if ($effectiveDate === null) {
+            $returnAll = true;
+            $effectiveDate = new DateTime();
+        } else if ($effectiveDate === false) {
+            $effectiveDate = new DateTime('9999-12-31 23:59:59');
+            $activeFlag = false;
+        } else if (!($effectiveDate instanceof DateTime))
+            throw new Exception("The \$effectiveDate parameter must be either null, false, or a DateTime instance.");
+
         $success = $stmt->execute(Array(
-                ':activeFlag' => $activeFlag
+                ':effectiveDate' => $effectiveDate->format('Y-m-d'),
+                ':activeFlag' => ($activeFlag ? 1 : 0),
+                ':returnAll' => ($returnAll ? 1 : 0),
             ));
         if ($success === false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for employee records"));
 
         $rv = Array();
         while ($row = $stmt->fetchObject()) {
-            $current = $this->readEmployeeHistory( $row->id, null, null, 1 );
+            $current = $this->readEmployeeHistory( $row->id, $effectiveDate, $effectiveDate, 1 );
             if (count($current) == 0)
-                throw new Exception("No history found for employee: $row->id");
-            $current = $current[0];
+                $current = null;
+            else
+                $current = $current[0];
 
             $rv[] = new Employee(
                     $row->id,
-                    $row->activeFlag,
                     $row->username,
                     $row->password,
                     $row->name,
@@ -906,9 +943,9 @@ class DBInterface {
         if ($stmtInsert == null) {
             $stmtInsert = $this->dbh->prepare(
                     "INSERT INTO employee ( ".
-                            "activeFlag, username, password, name, address, taxId ".
+                            "username, password, name, address, taxId ".
                         ") VALUES ( ".
-                            ":activeFlag, :username, :password, :name, :address, :taxId ".
+                            ":username, :password, :name, :address, :taxId ".
                         ")"
                 );
 
@@ -917,7 +954,6 @@ class DBInterface {
 
             $stmtUpdate = $this->dbh->prepare(
                     "UPDATE employee SET ".
-                            "activeFlag = :activeFlag, ".
                             "username = :username, ".
                             "password = :password, ".
                             "name = :name, ".
@@ -930,11 +966,7 @@ class DBInterface {
                 throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee update"));
         }
 
-        if (!$employee->activeFlag && ($employee->current->endDate == null))
-            throw new Exception("Cannot make employee inactive without specifying end date");
-
         $params = Array(
-                ':activeFlag' => ($employee->activeFlag ? 1 : 0),
                 ':username' => $employee->username,
                 ':password' => $employee->password,
                 ':name' => $employee->name,
@@ -963,7 +995,6 @@ class DBInterface {
 
         return new Employee(
                 $newId,
-                $employee->activeFlag,
                 $employee->username,
                 $employee->password,
                 $employee->name,
@@ -989,36 +1020,10 @@ class DBInterface {
     } // _employeeHistoryToParams
 
     /**
-     * Writes and EmployeeHistory entry for an employee.
+     * Writes an EmployeeHistory entry for an employee.
      *
-     * The most recent employee history record will be updated if:
-     *
-     * - Only one history record exists, and the lastPayPeriodEndDate value on the existing entry
-     *   is null, in which case any of the properties may be updated.
-     *
-     * - The startDate of the new entry matches the start date of the history record
-     *   AND EITHER
-     *     1) the lastPayPeriodEndDate value on the history record is null, in which case any of
-     *        the other properties may be updated (except of course the startDate).
-     *   OR
-     *     2) the lastPayPeriodEndDate is not less than the lastPayPeriodEndDate value on the
-     *        history record.  In this case, only the lastPayPeriodEndDate and endDate properties
-     *        may be updated.
-     *
-     * - the startDate of the new entry is greater than the lastPayPeriodEndDate value on the
-     *   most recent history record (In this case, the existing record will have its endDate set,
-     *   and a new record is also added)
-     *
-     * If no history records exist, or none of the above conditions are met a new record will
-     * be created.  Unless the startDate of the new entry is not greater than the most
-     * recent lastPayPeriodEndDate, in which case an exception is thrown.
-     *
-     * If at least on history record exists, and its lastPayPeriodEndDate is not null,
-     * an exception will be thrown if the lastPayPeriodEndDate on the new entry is less than
-     * the existing lastPayPeriodEndDate.
-     *
-     * @param {int} $employeeId 
-     * @param {EmployeeHistory} $entry 
+     * @param {int} $employeeId     The ID of the employee to write the record for.
+     * @param {EmployeeHistory} $entry The EmployeeHistory entry to write.
      *
      * @return  Returns a new EmployeeHistory instance (with a new id if a new record was created).
      */
@@ -1055,64 +1060,51 @@ class DBInterface {
         }
 
         if (!is_numeric($employeeId))
-            throw new Exception("Parameter \$employeeId must be an integer");
+            throw new Exception("Parameter \$employeeId must be an integer when inserting a new history record.");
         $employeeId = (int) $employeeId;
 
-        // Read up to 2 existing history records if they exist
-        $update = false;
-        $history = $this->readEmployeeHistory( $employeeId, null, null, 2 );
-        if (count($history) > 0) {
-            $current = $history[0];
+        // Validate the new properties by reading the existing state from the DB
+        $history = $this->readEmployeeHistory( $employeeId, $entry->startDate, $entry->endDate );
 
-            if (($current->lastPayPeriodEndDate !== null) &&
-                ($entry->lastPayPeriodEndDate < $current->lastPayPeriodEndDate))
-            {
-                throw new Exception("The new lastPayPeriodEndDate cannot be less than ". $current->lastPayPeriodEndDate->format("Y-m-d"));
-            }
+        $verifyDepartments = function($listA, $listB) {
+            if (count($listA) != count($listB))
+                return false;
+// TODO: Bugfix/debug this?
+            $mapper = function($item) { return $item->id; };
+            $listA = array_map($mapper, $listA);
+            $listB = array_map($mapper, $listB);
+            return count(array_intersect($listA, $listB)) != count($listA);
+        };
 
-            if ($entry->startDate == $current->startDate) {
-                $update = ($current->lastPayPeriodEndDate === null) ||
-                    (
-                        ($entry->rank == $current->rank) &&
-                        ($entry->numDeductions == $current->numDeductions) &&
-                        ($entry->salary == $current->salary)
-                    );
-            } else if ($entry->startDate > $current->startDate) {
-                if ($entry->lastPayPeriodEndDate !== null) {
-                    if (($current->lastPayPeriodEndDate === null) ||
-                        ($entry->lastPayPeriodEndDate < $current->lastPayPeriodEndDate))
-                    {
-                        throw new Exception("The new lastPayPeriodEndDate is invalid");
-                    }
+        foreach ($history as $e) {
+            if ($entry->id == $e->id) {
+                if ($e->lastPayPeriodEndDate) {
+                    // May only modify the endDate or lastPayPeriodEndDate
+                    $err = null;
+                    if ($entry->startDate != $e->startDate)
+                        $err = "startDate";
+                    else if ($entry->rank->id != $e->rank->id)
+                        $err = "rank";
+                    else if ($entry->numDeductions != $e->numDeductions)
+                        $err = "numDeductions";
+                    else if ($entry->salary != $e->salary)
+                        $err = "salary";
+                    else if (!$verifyDepartments($entry->departments, $e->departments))
+                        $err = "departments";
+
+                    if ($err)
+                        throw new Exception("Modification of '$err' property is not supported when last payPeriodEndDate is set.");
                 }
-
-                if ($current->endDate === null) {
-                    // Update existing record to set end date to day before new start date
-
-                    $params = $this->_employeeHistoryToParams($current);
-                    $params[':id'] = $current->id;
-                    $endDate = (clone $entry->startDate);
-                    $params[':endDate'] = $endDate->sub(new DateInterval('P1D'))->format("Y-m-d");
-                    
-                    $success = $stmtUpdate->execute($params);
-                    if ($success == false)
-                        throw new Exception($this->formatErrorMessage($stmtUpdate, "Unable to update employee history record in database"));
-                } else if ($entry->startDate <= $current->endDate)
-                    throw new Exception("The new startDate must be greater than the prior endDate");
             } else {
-                if (count($history) == 1) {
-                    // May update IFF no lastPayPeriodEndDate on existing record
-                    $update = ($current->lastPayPeriodEndDate === null);
-                } else
-                    throw new Exception("The new startDate must be greater than the prior endDate");
+                throw new Exception("Employee history ". ($entry->id ? "update" : "insert") ." conflicts with an existing entry.");
             }
-        }
+        } // foreach
 
         $params = $this->_employeeHistoryToParams($entry);
 
-        if ($update) {
+        if ($entry->id) {
             $stmt = $stmtUpdate;
-            $params[':id'] = $current->id;
+            $params[':id'] = $entry->id;
         } else {
             $stmt = $stmtInsert;
             $params[':employee'] = $employeeId;
@@ -1121,10 +1113,10 @@ class DBInterface {
         $success = $stmt->execute($params);
 
         if ($success == false)
-            throw new Exception($this->formatErrorMessage($stmt, "Unable to ". ($update ? "update" : "insert") ." employee history record in database"));
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to ". ($entry->id ? "update" : "insert") ." employee history record in database"));
 
-        if ($update)
-            $newId = $current->id;
+        if ($entry->id)
+            $newId = $entry->id;
         else
             $newId = $this->dbh->lastInsertId();
 
@@ -1361,11 +1353,18 @@ class DBInterface {
                     "SELECT e.id ".
                         "FROM employee e ".
                         "WHERE NOT EXISTS (".
-                            "SELECT * ".
-                                "FROM paystub p ".
-                                "WHERE p.employee = e.id ".
-                                    "AND p.payPeriodStartDate >= :payPeriodStartDate ".
-                        ")"
+                                "SELECT * ".
+                                    "FROM paystub p ".
+                                    "WHERE p.employee = e.id ".
+                                        "AND p.payPeriodStartDate >= :payPeriodStartDate ".
+                            ") ".
+                            "AND EXISTS ( ".
+                                "SELECT * ".
+                                    "FROM employeeHistory h ".
+                                    "WHERE h.employee = e.id ".
+                                        "AND h.startDate <= :payPeriodStartDate ".
+                                        "AND ((h.endDate IS NULL) OR (h.endDate > :payPeriodEndDate)) ".
+                            ")"
                 );
 
             if (!$stmt)
@@ -1373,7 +1372,8 @@ class DBInterface {
         }
 
         $success = $stmt->execute(Array(
-                        ':payPeriodStartDate' => $payPeriodStartDate->format("Y-m-d")
+                        ':payPeriodStartDate' => $payPeriodStartDate->format("Y-m-d"),
+                        ':payPeriodEndDate' => $payPeriodEndDate->format("Y-m-d")
                     ));
         if ($success == false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query employees who need pay stubs generated"));
@@ -1381,16 +1381,23 @@ class DBInterface {
         $numGenerated = 0;
         while ($row = $stmt->fetchObject()) {
             $employee = $this->readEmployee( $row->id );
-            $monthlySalary = $employee->current->salary / 12;
-            $tax = $this->computeTax($monthlySalary, $employee->current->numDeductions);
+            $history = $this->readEmployeeHistory( $row->id, $payPeriodStartDate, $payPeriodEndDate );
 
-            $effectiveTaxRate = (($monthlySalary > 0) ? $tax->tax / $monthlySalary : 0);
+            $tax = $this->computeTax($payPeriodStartDate, $payPeriodEndDate, null, null);
+            foreach ($history as $entry) {
+                $tax = $this->computeTax($payPeriodStartDate, $payPeriodEndDate, $entry, $tax);
+
+                $entry->lastPayPeriodEndDate = $payPeriodEndDate;
+                $this->writeEmployeeHistory( $employee->id, $entry );
+            } // foreach
+
+            $effectiveTaxRate = (($tax->salary > 0) ? $tax->tax / $tax->salary : 0);
 
             $departments = $this->readDepartmentsForEmployeeHistory( $payPeriodStartDate, $employee->id );
             $departments = array_map(function($dept) { return $this->departmentToPaystubDepartment($dept); }, $departments);
 
             // Read previous pay stub for YTD information
-            $salaryYTD = $monthlySalary;
+            $salaryYTD = $tax->salary;
             $taxWithheldYTD = $tax->tax;
             $deductionsYTD = $tax->deductions;
 
@@ -1404,12 +1411,24 @@ class DBInterface {
             }
 
             $paystub = new PayStub(
-                    0, $payPeriodStartDate, $payPeriodEndDate, $employee, 
-                    $employee->name, $employee->address, $employee->current->rank, $employee->current->rank->employeeType, $employee->taxId,
-                    $departments, $monthlySalary,
+                    0,
+                    $payPeriodStartDate,
+                    $payPeriodEndDate,
+                    $employee, 
+                    $employee->name,
+                    $employee->address,
+                    $employee->current->rank,
+                    $employee->current->rank->employeeType,
+                    $employee->taxId,
+                    $departments,
+                    $tax->salary,
                     $employee->current->numDeductions,
-                    $tax->tax, $effectiveTaxRate, $tax->deductions,
-                    $salaryYTD, $taxWithheldYTD, $deductionsYTD
+                    $tax->tax,
+                    $effectiveTaxRate,
+                    $tax->deductions,
+                    $salaryYTD,
+                    $taxWithheldYTD,
+                    $deductionsYTD
                 );
 
             $this->writePaystub( $paystub );
@@ -1425,18 +1444,52 @@ class DBInterface {
     } // generatePayStubs
 
     /**
-     * Computesthe tax owed for a given monthly salart and number of deductions.
-     * @param   double  $salary         The monthloy salary earned.
-     * @param   int     $numDeductions  The number of deductions claimed.
-     * @return  double  The tax owed.
+     * Computes the tax owed for a given monthly salary and number of deductions.
+     *
+     * @param   DateTime        $startDate  The starting date of the pay period to compute the tax
+     *                                      for.  The greater of the $entry->startDate and this date
+     *                                      will be used for the actual computation.
+     * @param   DateTime        $endDate    The ending date of the pay period to compute the tax
+     *                                      for.  The lesser of the $entry->endDate and this date
+     *                                      will be used for the actual computation.
+     * @param   EmployeeHistory $entry      An employee history entry to compute the tax for
+     * @param   Object          $prevTax    A previous result object from this function (for cumulative totals).
+     *
+     * @return  Object  An object with the following properties:
+     *                  {
+     *                      "salary"
+     *                      "tax"
+     *                      "taxableSalary"
+     *                      "deductions"
+     *                  }
      */
-    protected function computeTax($salary, $numDeductions) {
+    protected function computeTax(DateTime $startDate, DateTime $endDate, EmployeeHistory $entry = null, $prevTax = null) {
+        if ($entry == null) {
+            return (Object)[
+                    'salary' => 0,
+                    'tax' => 0,
+                    'taxableSalary' => 0,
+                    'deductions' => 0
+                ];
+        }
+
+        if ($startDate < $entry->startDate)
+            $startDate = $entry->startDate;
+
+        if ($entry->endDate && ($endDate > $entry->endDate))
+            $endDate = $entry->endDate;
+
+        $daysInRange = $endDate->diff($startDate)->format("%d");
+        $portionOfYear = $daysInRange / 365;
+
+        $salary = $entry->salary * $portionOfYear;
+
         // Annual deduction amounts
         $standardDeduction = 5000;
         $perDeductionAllowance = 1000;
 
         // Compute the taxable income
-        $deductions = ($standardDeduction + $numDeductions * $perDeductionAllowance) / 12;
+        $deductions = ($standardDeduction + $entry->numDeductions * $perDeductionAllowance) * $portionOfYear;
         $deductions = min($deductions, $salary);
         $taxableSalary = max($salary - $deductions, 0);
 
@@ -1447,7 +1500,7 @@ class DBInterface {
         $lastMinSalary = null;
         $taxRate = null;
         foreach ($taxRates as $rate) {
-            $minSalary = $rate->minimumSalary / 12;
+            $minSalary = $rate->minimumSalary * $portionOfYear;
             if (($minSalary <= $taxableSalary) && (($minSalary > $lastMinSalary) || ($lastMinSalary == null))) {
                 $lastMinSalary = $minSalary;
                 $taxRate = $rate;
@@ -1459,12 +1512,16 @@ class DBInterface {
 
         $taxOwed = $taxRate->taxRate * $taxableSalary;
 
+        if (!$prevTax)
+            $prevTax = $this->computeTax($startDate, $endDate, null, null);
+
         return (Object)[
-				'tax' => $taxOwed,
-				'taxableSalary' => $taxableSalary,
-				'deductions' => $deductions
+                'salary' => $salary + $prevTax->salary,
+				'tax' => $taxOwed + $prevTax->tax,
+				'taxableSalary' => $taxableSalary + $prevTax->taxableSalary,
+				'deductions' => $deductions + $prevTax->deductions
 			];
-    } // computeTax($salary, $numDeductions)
+    } // computeTax
 
     /**
      * Reads a Project from the database.

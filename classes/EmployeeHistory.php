@@ -35,11 +35,13 @@ class EmployeeHistory
 
         $this->startDate = $startDate;
         $this->endDate = $endDate;
-        $this->lastPayPeriodEndDate = $lastPayPeriodEndDate;
         $this->departments = $departments;
         $this->rank = $rank;
         $this->numDeductions = $numDeductions;
         $this->salary = $salary;
+
+        // Must be set last
+        $this->lastPayPeriodEndDate = $lastPayPeriodEndDate;
     } // __construct
 
     protected function getId() {
@@ -53,6 +55,12 @@ class EmployeeHistory
     protected function setStartDate(DateTime $newStartDate) {
         if ($newStartDate == null)
             throw new Exception("The startDate cannot be null");
+
+        if ($this->lastPayPeriodEndDate)
+            throw new Exception("The startDate cannot be modified if the lastPayPeriodEndDate is set");
+
+        if ($this->endDate && ($newStartDate > $this->endDate))
+            throw new Exception("The startDate cannot be greater than the endDate");
 
         $this->_startDate = $newStartDate;
     } // setStartDate
@@ -68,6 +76,11 @@ class EmployeeHistory
 
             if ($newEndDate < $this->startDate)
                 throw new Exception("The endDate cannot be less than the startDate");
+
+            // The endDate cannot be set to a date before the last pay period end date,
+            //  however, the last pay period end date can be set later than the end date...
+            if ($this->lastPayPeriodEndDate && ($newEndDate <= $this->lastPayPeriodEndDate))
+                throw new Exception("The endDate must be greater than the lastPayPeriodEndDate");
         }
 
         $this->_endDate = $newEndDate;
@@ -94,6 +107,9 @@ class EmployeeHistory
     } // getDepartments
 
     protected function setDepartments( $newDepartments ) {
+        if ($this->lastPayPeriodEndDate)
+            throw new Exception("The departments cannot be modified if the lastPayPeriodEndDate is set");
+
         if (!is_array($newDepartments) ||
             array_filter(
                 $newDepartments,
@@ -114,6 +130,9 @@ class EmployeeHistory
     } // getRank
     
     protected function setRank(Rank $newRank) {
+        if ($this->lastPayPeriodEndDate)
+            throw new Exception("The rank cannot be modified if the lastPayPeriodEndDate is set");
+
         if ($newRank == null)
             throw new Exception("The rank cannot be null");
 
@@ -128,8 +147,12 @@ class EmployeeHistory
     } // getNumDeductions
     
     protected function setNumDeductions($newNumDeductions) {
+        if ($this->lastPayPeriodEndDate)
+            throw new Exception("The numDeductions cannot be modified if the lastPayPeriodEndDate is set");
+
         if (!is_numeric($newNumDeductions) || ($newNumDeductions < 0))
             throw new Exception("NumDeductions must be an integer greater or equal to 0");
+
         $this->_numDeductions = (int) $newNumDeductions;
     } // setNumDeductions
 
@@ -138,12 +161,23 @@ class EmployeeHistory
     } // getSalary
     
     protected function setSalary($newSalary) {
+        if ($this->lastPayPeriodEndDate)
+            throw new Exception("The salary cannot be modified if the lastPayPeriodEndDate is set");
+
         if (!is_numeric($newSalary) || ($newSalary < 0))
             throw new Exception("Salary must be a number greater or equal to 0");
+
         if ($this->rank != null && $newSalary < $this->rank->baseSalary) 
         	throw new Exception("Salary must be above rank minimum salary");
+
         $this->_salary = (double) $newSalary;
     } // setSalary
+
+    protected function getIsActive() {
+        $today = (new DateTime())->setTime(0, 0, 0);
+        return ($today >= $this->startDate) &&
+                (($this->endDate == null) || ($today <= $this->endDate));
+    } // getIsActive()
 
     public function __toString() {
         return __CLASS__ ."(id=$this->id, startDate=$this->startDate, endDate=$this->endDate, rank=$this->rank, numDeductions=$this->numDeductions, salary=$this->salary)";

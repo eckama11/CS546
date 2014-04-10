@@ -15,7 +15,6 @@
 
     // Array of [ targetPage, Displayed ]
     $forMap = [
-        'activation'	=> [ 'Admin/Activation',    'Deactivate/Activate' ],
         'modifyInfo'  	=> [ 'Admin/EditEmployee',  'Modify Info' ],
         'modifySalary' 	=> [ 'Admin/EditEmployeeSalary', 'Modify Salary' ],
         'password'   	=> [ 'Admin/ChangeEmpPass', 'Change Password' ],
@@ -32,9 +31,7 @@
     $title = $item[1];
 
     try {
-        $employees = ($db->readEmployees(true));
-        if ($for == "activation")
-        	$employees = array_Merge($employees, $db->readEmployees(false));
+        $employees = $db->readEmployees();
     } catch (Exception $ex) {
         handleDBException($ex);
         return;
@@ -58,11 +55,7 @@
       <th>Name</th>
       <th>Address</th>
       <th>Tax ID</th>
-      <?php 
-      	if ($for== "activation") {
-      		echo '<th>Status</th>';
-      	}
-      ?>
+      <th>Current Status</th>
     </tr></thead>
     <tbody>
 <?php
@@ -72,9 +65,7 @@
 			echo   '<td>'. htmlentities($emp->name) .'</td>';
 			echo   '<td>'. htmlentities($emp->address) .'</td>';
 			echo   '<td>'. htmlentities($emp->taxId) .'</td>';
-			if ($for == "activation") {
-				echo   '<td><span class="'.($emp->activeFlag ? 'upayActive">Active' : 'upayInactive">Inactive').'</span></td>';	
-			}
+            echo   '<td><span class="'.($emp->isActive ? 'upayActive">Active' : 'upayInactive">Inactive').'</span></td>';	
 			echo '</tr>';
 		}
     } 

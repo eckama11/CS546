@@ -21,9 +21,6 @@ try {
     // Update the employee
     $employee = $db->readEmployee($employeeId);
 
-    if (!$employee->activeFlag)
-        throw new Exception("Inactive employees cannot be updated.");
-
     $employee->password = $newPassword1;
     $db->writeEmployee($employee);
 

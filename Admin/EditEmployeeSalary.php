@@ -13,9 +13,6 @@
         $employeeId = (int) $employeeId;
         $emp = $db->readEmployee($employeeId);
 
-        if (!$emp->activeFlag)
-            throw new Exception("Inactive employees cannot be updated.");
-
         $empDepts = $db->readDepartmentsForEmployeeHistory($emp->current->id);
         $empDepts = array_flip(array_map(function($dept) { return $dept->id; }, $empDepts));
 
@@ -44,12 +41,24 @@
         var baseSalary = Number(selRank.getAttribute('rank-base-salary'));
         var rank = requiredField($(rankInput), "You must enter employee's rank");
         var numDeductions = requiredField($(form.elements.numDeductions), "You must enter employee's number of deductions");
-        var salary = Number(requiredField($(form.elements.salary), "You must enter employee's salary"));
+        var salary = requiredField($(form.elements.salary), "You must enter employee's salary");
 
         if ((startDate == "") || (numDeductions == "") || (salary == "") || (rank == null) || (departments == null)) {
             showError("You must enter all form information.");
             return false;
         }
+
+        if (isNaN(numDeductions) || (numDeductions < 0)) {
+            showError("Invalid value specified for number of deductions");
+            return false;
+        }
+        numDeductions = Number(numDeductions);
+
+        if (isNaN(salary) || (salary < 0)) {
+            showError("Invalid value specified for salary");
+            return false;
+        }
+        salary = Number(salary);
 
         if (salary < baseSalary) {
             showError("The salary cannot be less than the base salary assigned to the selected rank: "+ $(selRank).text());
