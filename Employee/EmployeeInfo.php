@@ -19,22 +19,30 @@ function showEmployeeInfo( $employee, $historyLimit = null ) {
 
         $history = $db->readEmployeeHistory($employee->id, null, $endDate, $historyLimit);
 
-        $result = [];
         foreach ($history as $entry) {
-            $departments = $entry->departments;
-
-            for ($i = count($departments) - 1; $i >= 0; --$i) {
-                $managers = $db->readEmployeesForDepartment($departments[$i]->id, EmployeeType::Manager());
-                $managers = array_map(function($mgr) { return $mgr->name; }, $managers);
-                $departments[$i] = (Object)[ 'name' => $departments[$i]->name, 'managers' => $managers ];
-            } // for
-
-            $result[] = [
-                    $entry,
-                    $departments
-                ];
+            foreach ($entry->departments as $dept) {
+                $effDate = $entry->endDate;
+                if ($effDate == null) $effDate = new DateTime();
+                $dept->managers = $db->readEmployeesForDepartment($dept->id, EmployeeType::Manager(), $effDate);
+                $dept->managers = array_map(function($mgr) { return $mgr->name; }, $dept->managers);
+            } // foreach
         } // foreach
-        $history = $result;
+
+?>
+<script>
+    define(
+        'EmployeeInfoData',
+        ['models/EmployeeHistoryCollection', 'models/RankCollection', 'models/DepartmentCollection'],
+        function(EmployeeHistoryCollection, RankCollection, DepartmentCollection) {
+            return {
+                //employeeId : <?= $employee->id ?>,
+                history : new EmployeeHistoryCollection(<?= json_encode($history) ?>),
+                //ranks : new RankCollection(<?= json_encode($db->readRanks()) ?>),
+                //departments : new DepartmentCollection(<?= json_encode($db->readDepartments()) ?>)
+            };
+        });
+</script>
+<?php
     } catch (Exception $ex) {
         handleDBException($ex);
         return;
@@ -72,6 +80,26 @@ function showEmployeeInfo( $employee, $historyLimit = null ) {
     // Display the requested amount of history entries
 ?>
     <h4>Salary History</h4>
+    <table id="EmployeeSalaryHistory" class="table table-striped table-bordered table-condensed"></table>
+
+<script>
+
+var salaryHistoryView;
+
+require([
+    "views/EmployeeSalaryHistoryView",
+    "EmployeeInfoData"
+], function(EmployeeSalaryHistoryView, data) {
+    registerBuildUI(function($) {
+        salaryHistoryView = new EmployeeSalaryHistoryView({
+                                el : $("#EmployeeSalaryHistory"),
+                                collection : data.history
+                            }).render();
+    });
+});
+
+</script>
+<!--
 	<table class="table table-striped table-bordered table-condensed">
         <tr>
             <th>Start Date</th>
@@ -134,4 +162,5 @@ EOT;
 <?php
     }
     echo "</table>\n";
+?> --> <?php
 } // showEmployeeInfo

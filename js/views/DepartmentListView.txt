@@ -1,0 +1,27 @@
+<table>
+	<thead>
+		<tr style="border-bottom:1px solid black">
+			<th>Name</th>
+			<th>&nbsp;&nbsp;&nbsp;</th>
+			<th>Manager</th>
+		</tr>
+	</thead>
+	<tbody>
+<%
+for (var i = 0; i < departments.length; ++i) {
+	var dept = departments.at(i);
+
+	var managers = dept.get('managers');
+	if (managers && managers.length)
+		managers = managers.join(', ');
+	else
+		managers = 'No Manager Assigned';
+%>
+		<tr>
+			<td><%- dept.get('name') %></td>
+			<td></td>
+			<td><%- managers %></td>
+		</tr>
+<% } %>
+	</tbody>
+</table>

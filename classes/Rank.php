@@ -2,6 +2,7 @@
 
 class Rank
     extends GetterSetter
+    implements JsonSerializable
 {
 
     private $_id;
@@ -35,6 +36,15 @@ class Rank
         $this->_baseSalary = $baseSalary;
         $this->_employeeType = $employeeType;
     } // __construct
+
+    public function jsonSerialize() {
+        $rv = new StdClass();
+        $rv->id = $this->id;
+        $rv->name = $this->name;
+        $rv->baseSalary = $this->baseSalary;
+        $rv->employeeType = (string) $this->employeeType;
+        return $rv;
+    } // jsonSerialize
 
     protected function getId() {
         return $this->_id;

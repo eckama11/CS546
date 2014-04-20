@@ -1069,11 +1069,10 @@ class DBInterface {
         $verifyDepartments = function($listA, $listB) {
             if (count($listA) != count($listB))
                 return false;
-// TODO: Bugfix/debug this?
             $mapper = function($item) { return $item->id; };
             $listA = array_map($mapper, $listA);
             $listB = array_map($mapper, $listB);
-            return count(array_intersect($listA, $listB)) != count($listA);
+            return count(array_intersect($listA, $listB)) == count($listA);
         };
 
         foreach ($history as $e) {

@@ -547,9 +547,18 @@
 				windowHeight = $window.height(),
 				scrollTop = $window.scrollTop();
 
-			var zIndex = parseInt(this.element.parents().filter(function(){
-					return $(this).css('z-index') !== 'auto';
-				}).first().css('z-index'))+10;
+            var maxZIndex = -1;
+            this.element.parents().each(function(){
+                    var $el = $(this);
+                    var zIndex = $el.css('z-index');
+					if (zIndex !== 'auto') {
+                        zIndex = parseInt(zIndex);
+                        if (zIndex > maxZIndex)
+                            maxZIndex = zIndex;
+                    }
+				});
+			var zIndex = maxZIndex + 10;
+
 			var offset = this.component ? this.component.parent().offset() : this.element.offset();
 			var height = this.component ? this.component.outerHeight(true) : this.element.outerHeight(false);
 			var width = this.component ? this.component.outerWidth(true) : this.element.outerWidth(false);

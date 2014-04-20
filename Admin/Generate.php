@@ -76,36 +76,6 @@ function nextMonth() {
     updatePayPeriodDisplay(1);
 } // nextMonth
 
-var monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ];
-
-function formatDate(fmt, date) {
-    return fmt.replace(/[YmdF]/g, function(match, offset, str) {
-            var rv = match;
-
-            switch (match) {
-            case "Y":
-                rv = date.getUTCFullYear();
-                break;
-            case "m":
-                rv = date.getUTCMonth() + 1;
-                if (rv < 10) rv = "0"+ rv;
-                break;
-            case "d":
-                rv = date.getUTCDate();
-                if (rv < 10) rv = "0"+ rv;
-                break;
-            case "F":
-                rv = monthNames[date.getUTCMonth()];
-                break;
-            }
-
-            return rv;
-        });
-} // formatDate
-
 function updatePayPeriodDisplay(addMonths) {
     var formElem = $('#generateForm input[name="payPeriodStartDate"]');
 
@@ -114,14 +84,14 @@ function updatePayPeriodDisplay(addMonths) {
 
     var endDate = new Date(date.getUTCFullYear(), date.getUTCMonth() + 1, 0);
 
-    $("#payPeriod").text(formatDate("F, Y", date));
-    $("#payPeriodStartDate").text(formatDate("Y-m-d", date));
-    $("#payPeriodEndDate").text(formatDate("Y-m-d", endDate));
+    $("#payPeriod").text(formatDate(date, "F, Y"));
+    $("#payPeriodStartDate").text(formatDate(date, "Y-m-d"));
+    $("#payPeriodEndDate").text(formatDate(endDate, "Y-m-d"));
 
     var numDays = endDate.getUTCDate() - date.getUTCDate() + 1;
     $("#payPeriodDuration").text(numDays);
 
-    formElem.val(formatDate("Y-m-d", date));
+    formElem.val(formatDate(date, "Y-m-d"));
 } // updatePayPeriodDisplay
 </script>
 

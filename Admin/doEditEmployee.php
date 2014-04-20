@@ -5,11 +5,11 @@ $id = @$_POST['id'];
 $name = @$_POST['name'];
 $address = @$_POST['address'];
 $taxId = @$_POST['taxid'];
+$username = @$_POST['username'];
 
 $addNew = !$id;
 
 if ($addNew) {
-    $username = @$_POST['username'];
     $password1 = @$_POST['password1'];
     $password2 = @$_POST['password2'];
     $departments = @$_POST['departments'];
@@ -26,11 +26,11 @@ try {
     if (!isset($loginSession) || !$loginSession->isAdministrator)
         throw new Exception("You do not have sufficient access to perform this action");
 
-    if ($addNew) {
-        // Verify the username is unique
-        if ($db->isUsernameInUse($username))
-            throw new Exception("The username '$username' is already assigned to another employee");
+    // Verify the username is unique
+    if ($db->isUsernameInUse($username))
+        throw new Exception("The username '$username' is already assigned to another employee");
 
+    if ($addNew) {
         // Verify the password is valid
         if ($password1 != $password2)
             throw new Exception("The password and verify password do not match");
@@ -53,11 +53,10 @@ try {
         $startDate = new DateTime($startDate);
         $current = new EmployeeHistory(0, $startDate, null, null, $departments, $rank, $numDeductions, $salary);
     } else {
-        // Read existing employee when updating for username & password
-        //   fields, which cannot be updated by this service
+        // Read existing employee when updating for password
+        //   field, which cannot be updated by this service
         $emp = $db->readEmployee($id);
 
-        $username = $emp->username;
         $password1 = $emp->password;
 
         $current = $emp->current;

@@ -21,22 +21,8 @@ ob_start();
 		<link rel="stylesheet" href="css/bootstrap.min.css" />
 		<link rel="stylesheet" href="css/bootstrap-datepicker.css" />
 		<link rel="stylesheet" href="css/custom.css" />
+        <script data-main="js/main" src="js/require.js"></script>
 <script>
-function requiredField(elem, errorMsg) {
-    var rv = elem.val();
-    if ((rv == "") || (rv == null)) {
-        elem.tooltip("destroy")
-            .addClass("error")
-            .data("title", errorMsg)
-            .tooltip();
-    } else {
-        elem.tooltip("destroy")
-            .removeClass("error")
-            .data("title", "");
-    }
-    return rv;
-}
-
 function showError(message) {
     $("#message").text(message);
     var messageAlert = $("#messageAlert");
@@ -99,12 +85,10 @@ function showError(message) {
 
         <div id="messageAlert" class="alert alert-danger" style="display:none;position:fixed;left:20px;right:20px">
             <span id="message"></span>
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
         </div>
+
 <?php	require_once($page); ?>
-		<!-- JavaScript -->
-		<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
-		<script src="js/bootstrap.js"></script>
-		<script src="js/bootstrap-datepicker.js"></script>
 	</body>
 </html>
 <?php

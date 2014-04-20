@@ -13,9 +13,21 @@
         if ($employeeId != null) {
             $employeeId = (int) $employeeId;
             $emp = $db->readEmployee($employeeId);
+            ?><script>define('EditEmployeeData', [], function() { return undefined; })</script><?php
         } else {
-            $ranks = $db->readRanks();
-            $depts = $db->readDepartments();
+?>
+<script>
+    define(
+        'EditEmployeeData',
+        ['models/RankCollection', 'models/DepartmentCollection'],
+        function(RankCollection, DepartmentCollection) {
+            return {
+                departments : new DepartmentCollection(<?= json_encode($db->readDepartments()) ?>),
+                ranks : new RankCollection(<?= json_encode($db->readRanks()) ?>)
+            };
+        });
+</script>
+<?php
         }
     } catch (Exception $ex) {
         handleDBException($ex);
@@ -33,12 +45,12 @@
 		var name = requiredField($(form.elements.name), "You must enter employee's name.");
 		var address = requiredField($(form.elements.address), "You must enter employee's address.");
 		var taxid = requiredField($(form.elements.taxid), "You must enter employee's tax id");
+		var username = requiredField($(form.elements.username), "You must enter employee's username.");
 
 <?php
     // Verify fields that are only asked for new employees
     if ($emp == null) {
 ?>
-		var username = requiredField($(form.elements.username), "You must enter employee's username.");
 		var password1 = requiredField($(form.elements.password1), "You must enter employee's password.");
 		var password2 = requiredField($(form.elements.password2), "You must verify employee's password.");
 
@@ -53,7 +65,7 @@
         var numDeductions = requiredField($(form.elements.numDeductions), "You must enter employee's number of deductions");
         var salary = requiredField($(form.elements.salary), "You must enter employee's salary");
 
-        if ((username == "") || (password1 == "") || (password2 == "")) {
+        if ((password1 == "") || (password2 == "")) {
 			showError("You must enter all form information.");
             return false;
         }
@@ -91,7 +103,7 @@
         }
 <?php } ?>
 
-		if ((name == "") || (address == "") || (taxid == "")) {
+		if ((name == "") || (address == "") || (taxid == "") || (username == "")) {
 			showError("You must enter all form information.");
 			return false;
 		}
@@ -128,8 +140,8 @@
 </script>  
          
 <div class="container col-md-6 col-md-offset-3">
-    <div id="spinner" class="col-md-2 col-md-offset-5" style="padding-bottom:10px;text-align:center;display:none">
-        <div style="color:black;padding-bottom:32px;"><?php
+    <div id="spinner" class="col-md-2 col-md-offset-5" style="padding-bottom:10px;text-align:center">
+        <div style="color:black;padding-bottom:32px;display:none"><?php
             if ($emp != null)
                 echo 'Updating Employee...';
             else
@@ -140,7 +152,7 @@
     <div id="successDiv" style="padding:10px; outline:10px solid black; display:none">
         Employee has been successfully <?php echo ($emp == null) ? 'added' : 'updated'; ?>.
     </div>
-	<div id="employeeDiv" class="row" >
+	<div id="employeeDiv" class="row" style="display:none">
 		<legend><?php
             if ($emp != null)
                 echo 'Update Employee';
@@ -162,12 +174,12 @@
                 <label class="control-label">Tax ID</label>
                 <input type="text" class="form-control" name="taxid" id="taxid" placeholder="Enter Soc Sec #" value="<?php empProperty($emp, 'taxId'); ?>"/>
             </div>
-<?php if ($emp == null) { ?>
             <hr/>
             <div class="form-group">
                 <label class="control-label">Username</label>
-                <input type="text" class="form-control" name="username" id="username" placeholder="Enter Username"/>
+                <input type="text" class="form-control" name="username" id="username" placeholder="Enter Username" value="<?php empProperty($emp, 'username'); ?>"/>
             </div>
+<?php if ($emp == null) { ?>
             <div class="form-group">
                 <label class="control-label">Password</label>
                 <input type="password" class="form-control" name="password1" id="password1" placeholder="Enter password"/>
@@ -186,11 +198,7 @@
             </div>
             <div class="form-group">
                 <label class="control-label">Departments</label>
-                <select multiple class="form-control" name="departments[]" id="departments"><?php
-                    foreach ($depts as $dept) {
-                        echo '<option value="'. htmlentities($dept->id) .'">'. htmlentities($dept->name) .'</option>';
-                    }
-                ?></select>
+                <div class="departmentSelector"></div>
             </div>
             <div class="form-group">
                 <label class="control-label">Number of Deductions</label>
@@ -198,18 +206,7 @@
             </div>
             <div class="form-group">
                 <label class="control-label">Rank</label>
-                <select class="form-control" name="rank" id="rank">
-                    <?php
-                        echo '<option disabled selected>Select One</option>';
-
-                        foreach ($ranks as $rank) {
-                            echo '<option value="'. htmlentities($rank->id) .'" '.
-                                'rank-base-salary="'. htmlentities($rank->baseSalary) .'">'.
-                                htmlentities($rank->name) . ' ($'. number_format($rank->baseSalary, 2) .')'.
-                                '</option>';
-                        } // foreach
-                    ?>
-                </select>
+                <div class="rankSelector"></div>
             </div>
             <div class="form-group">
                 <label class="control-label">Yearly Salary</label>
@@ -225,4 +222,45 @@
             <br></br>
 		</form>
 	</div>
-</div> 
+</div>
+<script>
+
+var views = {};
+
+require(["main"], function() {
+    require([
+        "views/DepartmentSelectorView",
+        "views/RankSelectorView",
+        "EditEmployeeData",
+        "bootstrap-datepicker"
+    ], function(DepartmentSelectorView, RankSelectorView, data) {
+        registerBuildUI(function($) {
+            // Create UI elements if needed
+            var $depts = $(".departmentSelector");
+            if ($depts.length) {
+                views.departmentSelector = new DepartmentSelectorView({
+                                el : $depts,
+                                collection : data.departments,
+                                name : "departments"
+                            }).render();
+
+                views.rankSelector = new RankSelectorView({
+                        el : $(".rankSelector"),
+                        name : "rank",
+                        collection : data.ranks
+                    }).render();
+            }
+
+            // Init date picker and display UI
+            $('[data-provide="datepicker"]').datepicker();
+
+            var spinner = $("#spinner");
+            spinner.hide();
+            $("div", spinner).css({ display : "block" });
+
+            $("#employeeDiv").show();
+        });
+    });
+});
+
+</script>

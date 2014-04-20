@@ -9,3 +9,57 @@ body{background-color: #F7F7F6; color:black;}
 
 .form-control { color: black; }
 .form-control[disabled] { background-color: #ccc; }
+
+.modal {
+    background-color: transparent;
+}
+
+.modal-content {
+    border-radius: 12px;
+    background-color: white;
+}
+
+.modal-header {
+    border-radius: 10px 10px 0 0;
+    color: white;
+    background-color: #3a6624;
+}
+
+.modal-body {
+}
+
+.modal-footer {
+    margin-top: 0px;
+    border-radius: 0 0 10px 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background-color: #538935;
+}
+
+.DepartmentSelectorView > div:nth-child(2) {
+    height: 100px;
+    overflow-y: scroll;
+    padding: 5px;
+}
+
+.DepartmentSelectorView > div:nth-child(2) > label {
+    display: block;
+    margin: 0;
+    padding: 2px;
+    padding-left: 6px;
+}
+
+.DepartmentSelectorView > div:nth-child(2) > label.selected {
+    background-color: #eee;
+}
+
+.DepartmentSelectorView > div:nth-child(1) {
+}
+
+.DepartmentSelectorView > div:nth-child(3) {
+    font-weight: bold;
+    overflow-x: hidden;
+    white-space: nowrap;
+}
+
+

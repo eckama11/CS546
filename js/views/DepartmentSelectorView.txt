@@ -1,0 +1,13 @@
+<div>No selection</div>
+<div class="form-control">
+<%
+if (collection) {
+	collection.each(function(dept) {
+%>
+	<label><input <% if (name) { %>name="<%- name %>[]"<% } %> type="checkbox" value="<%- dept.get('id') %>"/>&nbsp;<%- dept.get('name') %></label>
+<%
+	})
+}
+%>
+</div>
+<div>&nbsp;</div>

@@ -1,0 +1,27 @@
+<thead>
+	<tr>
+		<th>Start Date</th>
+		<th>End Date</th>
+		<th>Last Pay Period End Date</th>
+		<th>Number of<br/>Deductions</th>
+		<th>Rank</th>
+		<th>Yearly<br/>Salary</th>
+		<th>Departments</th>
+	</tr>
+</thead>
+<tbody>
+<%
+  for (var i = 0; i < history.length; ++i) {
+	var entry = history.at(i);
+%>
+	<tr history-id='<%- entry.id %>'<% if (entry.isActive()) print(' class="upayActive"'); %>>
+		<td><%- formatDate(entry.get('startDate'), dateFormat) %></td>
+		<td><%- formatDate(entry.get('endDate'), dateFormat) %></td>
+		<td><%- formatDate(entry.get('lastPayPeriodEndDate'), dateFormat) %></td>
+		<td class='numeric'><%- entry.get('numDeductions') %></td>
+		<td><%- entry.get('rank').get('name') %></td>
+		<td class='numeric'>$&nbsp;<%- formatNumber(entry.get('salary'), 2) %></td>
+		<td class='departments'></td>
+	</tr>
+<% } %>
+</tbody>

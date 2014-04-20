@@ -1,0 +1,55 @@
+<form>
+    <input type="hidden" name="employeeId" value="<%- employeeId %>"/>
+    <input type="hidden" name="historyId" value="<%- model.get("id") %>"/>
+
+	<div>
+		<div class="form-group" style="width:48%;display:inline-block">
+			<label class="control-label">Start Date</label>
+			<div class="input-group">
+				<input data-provide="datepicker" class="form-control" type="text" name="startDate" placeholder="Enter start date" value="<%- formatDate(model.get("startDate"), "m/d/Y") %>"/>
+				<span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
+			</div>
+		</div>
+
+		<div class="form-group" style="width:48%;display:inline-block; float:right">
+			<label class="control-label">End Date</label>
+			<div class="input-group">
+				<input data-provide="datepicker" class="form-control" type="text" name="endDate" placeholder="Enter end date" value="<%- formatDate(model.get("endDate"), "m/d/Y") %>"/>
+				<span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
+			</div>
+		</div>
+	</div>
+
+	<div class="form-group">
+		<label class="control-label">Departments</label>
+		<div class="departmentSelector"></div>
+	</div>
+
+	<div class="form-group">
+		<label class="control-label">Rank</label>
+		<div class="rankSelector"></div>
+	</div>
+
+	<div>
+		<div class="form-group" style="width:48%;display:inline-block">
+			<label class="control-label">Yearly Salary</label>
+			<input type="text" class="form-control" name="salary" id="salary" placeholder="Enter a salary" value="<%- model.get("salary") %>">
+		</div>
+
+		<div class="form-group" style="width:48%;display:inline-block; float:right">
+			<label class="control-label">Number of Deductions</label>
+			<input type="text" class="form-control" name="numDeductions" placeholder="Enter a number" value="<%- model.get("numDeductions") %>">
+		</div>
+	</div>
+</form>
+<div class="spinner" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:30000;display:none">
+	<div style="width:100%;height:100%;background-color:grey;opacity:0.8;position:absolute"></div>
+	<div style="display:table;width:100%;height:100%;position:absolute;left:0;top:0">
+        <div style="display:table-cell;text-align:center;vertical-align:middle;">
+            <div style="display:inline-block;border-radius:10px;padding:10px;background-color:white;">
+                <div style="color:black;padding-bottom:32px">Updating Employee Salary...</div>
+                <img src="spinner.gif"/>
+            </div>
+        </div>
+    </div>
+</div>

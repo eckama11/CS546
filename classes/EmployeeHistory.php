@@ -2,6 +2,7 @@
 
 class EmployeeHistory
     extends GetterSetter
+    implements JsonSerializable
 {
 
     private $_id;
@@ -43,6 +44,19 @@ class EmployeeHistory
         // Must be set last
         $this->lastPayPeriodEndDate = $lastPayPeriodEndDate;
     } // __construct
+
+    public function jsonSerialize() {
+        $rv = new StdClass();
+        $rv->id = $this->id;
+        $rv->startDate = $this->startDate->format("Y-m-d");
+        $rv->endDate = ($this->endDate ? $this->endDate->format("Y-m-d") : null);
+        $rv->lastPayPeriodEndDate = ($this->lastPayPeriodEndDate ? $this->lastPayPeriodEndDate->format("Y-m-d") : null);
+        $rv->departments = $this->departments;
+        $rv->rank = $this->rank;
+        $rv->numDeductions = $this->numDeductions;
+        $rv->salary = $this->salary;
+        return $rv;
+    } // jsonSerialize
 
     protected function getId() {
         return $this->_id;
