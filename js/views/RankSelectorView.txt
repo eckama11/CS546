@@ -1,5 +1,5 @@
-<select class="form-control" <% if (name) { %>name="<%- name %>[]"<% } %>>
-	<option disabled>Select One</option>
+<select class="form-control" <% if (name) { %>name="<%- name %>"<% } %>>
+	<option disabled<% if (selectedValue == null) print(' selected'); %>>Select One</option>
 <%
 if (collection) {
 	collection.each(function(rank) {

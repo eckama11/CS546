@@ -42,6 +42,8 @@ define([
             this.setEmployeeId(options.employeeId);
 
             this.setModel(options.model);
+
+            this.on("invalid", this._handleInvalidInput, this);
         },
 
         setEmployeeId : function(employeeId) {
@@ -124,6 +126,8 @@ define([
                 this.rankSelector.setSelectedValue(rank);
             }
 
+            this._resetTooltips();
+
             return this;
         },
 
@@ -135,25 +139,38 @@ define([
             this.$("> .spinner").hide();
         },
 
-        save : function(options) {
-            function requiredField() {
-                var rv = elem.val();
-                if ((rv == "") || (rv == null)) {
-                    elem.tooltip("destroy")
-                        .addClass("error")
-                        .data("title", errorMsg)
-                        .tooltip();
-                } else {
-                    elem.tooltip("destroy")
-                        .removeClass("error")
-                        .data("title", "");
-                }
-                return rv;
+        _resetTooltips : function() {
+            var form = this.$('form').get(0);
+            function removeTooltip(elem) {
+                elem.tooltip("destroy")
+                    .removeClass("error")
+                    .data("title", "");
             }
+            removeTooltip($(form.elements['rank']));
+            removeTooltip(this.departmentSelector.$('div.form-control'));
+        },
 
+        _handleInvalidInput : function(validationError, model) {
+            var form = this.$('form').get(0);
+            for (var i = validationError.length - 1; i >= 0; --i) {
+                var err = validationError[i];
+                console.log(err);
+                
+                var elem = (err.attribute == 'departments'
+                    ? this.departmentSelector.$('div.form-control')
+                    : $(form.elements[err.attribute]));
+
+                elem.tooltip("destroy")
+                    .addClass("error")
+                    .data("title", err.message)
+                    .tooltip();
+            }
+        },
+
+        save : function(options) {
             if (!this.model.isValid()) {
                 // Errors occurred
-                this.trigger("invalid", this.model.validateError, this.model);
+                this.trigger("invalid", this.model.validationError, this.model);
                 return false;
             }
 

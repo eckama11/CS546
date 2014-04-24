@@ -36,20 +36,20 @@ body{background-color: #F7F7F6; color:black;}
     background-color: #538935;
 }
 
-.DepartmentSelectorView > div:nth-child(2) {
+.DepartmentSelectorView div.form-control {
     height: 100px;
     overflow-y: scroll;
     padding: 5px;
 }
 
-.DepartmentSelectorView > div:nth-child(2) > label {
+.DepartmentSelectorView div.form-control > label {
     display: block;
     margin: 0;
     padding: 2px;
     padding-left: 6px;
 }
 
-.DepartmentSelectorView > div:nth-child(2) > label.selected {
+.DepartmentSelectorView div.form-control > label.selected {
     background-color: #eee;
 }
 

@@ -97,6 +97,7 @@ define([
                 this.message = message;
                 this.attribute = attribute;
             }
+            ValidateError.prototype.toString = function() { return "ValidateError: ["+ this.attribute +"] "+ this.message }
 
             var errs = [];
 
@@ -140,11 +141,12 @@ define([
 
             if (isNaN(attributes.salary) || (attributes.salary < 0))
                 errs.push(new ValidateError("Invalid value specified for salary", "salary"));
-            else
+            else {
                 attributes.salary = Number(attributes.salary);
 
-            if (attributes.salary < attributes.rank.get("baseSalary")) {
-                errs.push(new ValidateError("The salary cannot be less than the base salary assigned to the selected rank: "+ attributes.rank, "salary"));
+                if ((attributes.rank instanceof Rank) && (attributes.salary < attributes.rank.get("baseSalary"))) {
+                    errs.push(new ValidateError("The salary cannot be less than the base salary assigned to the selected rank: "+ attributes.rank, "salary"));
+                }
             }
 
             if (errs.length)

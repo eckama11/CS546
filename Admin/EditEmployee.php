@@ -57,7 +57,19 @@
         var startDate = requiredField($(form.elements.startDate), "You must provide a starting date");
         startDate = (startDate != "" ? new Date(startDate) : "");
 
-		var departments = requiredField($(form.elements["departments[]"]), "You must select at least one department for employee");
+        var departments = views.departmentSelector.getSelectedValues();
+        var elem = views.departmentSelector.$('div.form-control');
+        if (departments.length == 0) {
+            elem.tooltip("destroy")
+            .addClass("error")
+            .data("title", "You must select at least one department for employee")
+            .tooltip();
+        } else {
+            elem.tooltip("destroy")
+            .removeClass("error")
+            .data("title", "");
+        }
+
         var rankInput = form.elements.rank;
         var selRank = rankInput.options[rankInput.selectedIndex];
         var baseSalary = Number(selRank.getAttribute('rank-base-salary'));

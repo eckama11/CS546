@@ -1,5 +1,5 @@
 <div>No selection</div>
-<div class="form-control">
+<span><div class="form-control">
 <%
 if (collection) {
 	collection.each(function(dept) {
@@ -9,5 +9,5 @@ if (collection) {
 	})
 }
 %>
-</div>
+</div></span>
 <div>&nbsp;</div>

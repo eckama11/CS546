@@ -80,6 +80,9 @@ function showEmployeeInfo( $employee, $historyLimit = null ) {
     // Display the requested amount of history entries
 ?>
     <h4>Salary History</h4>
+    <div id="spinner" class="container" style="padding-bottom:10px;text-align:center">
+        <img src="spinner.gif">
+    </div>
     <table id="EmployeeSalaryHistory" class="table table-striped table-bordered table-condensed"></table>
 
 <script>
@@ -95,72 +98,11 @@ require([
                                 el : $("#EmployeeSalaryHistory"),
                                 collection : data.history
                             }).render();
+        $("#spinner").hide();
     });
 });
 
 </script>
-<!--
-	<table class="table table-striped table-bordered table-condensed">
-        <tr>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Last Pay Period End Date</th>
-            <th>Number of<br/>Deductions</th>
-            <th>Rank</th>
-            <th>Yearly<br/>Salary</th>
-            <th>Departments</th>
-        </tr>
+
 <?php
-    foreach ($history as $entry) {
-        $departments = $entry[1];
-        $entry = $entry[0];
-?>
-		<tr<?php
-            if ($entry->isActive) {
-                echo ' class="upayActive"';
-            }
-          ?>>
-          <td><?php echo htmlentities($entry->startDate->format("Y-m-d")); ?></td>
-          <td><?php
-            if ($entry->endDate && (!$forAuthenticatedEmployee || ($today > $entry->endDate)))
-                echo htmlentities($entry->endDate->format("Y-m-d"));
-          ?></td>
-          <td><?php
-            if ($entry->lastPayPeriodEndDate)
-                echo htmlentities($entry->lastPayPeriodEndDate->format("Y-m-d"));
-          ?></td>
-		  <td class="numeric"><?php echo htmlentities($entry->numDeductions); ?></td>
-		  <td><?php echo htmlentities($entry->rank->name); ?></td>
-		  <td class="numeric"><?php echo htmlentities(sprintf("\$ %.2f", $entry->salary)); ?></td>
-		  <td><?php
-            echo <<<EOT
-            <table style="width:100%">
-                <thead>
-                    <tr style="border-bottom:1px solid black">
-                        <th>Name</th>
-                        <th>Manager</th>
-                    </tr>
-                </thead>
-                <tbody>
-EOT;
-
-            foreach ($departments as $dept) {
-                if (count($dept->managers) > 0)
-                    $managers = implode(", ", $dept->managers);
-                else
-                    $managers = 'No Manager Assigned';
-
-                echo '<tr>'.
-                        '<td>'. htmlentities($dept->name) .'</td>'.
-                        '<td>'. htmlentities($managers) .'</td>'.
-                     '</tr>';
-            } // foreach
-
-            echo '</tbody></table>';
-          ?></td>
-		</tr>
-<?php
-    }
-    echo "</table>\n";
-?> --> <?php
 } // showEmployeeInfo

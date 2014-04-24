@@ -60,6 +60,9 @@
 		<legend>Update Employee Salary for <?php echo htmlentities($emp->name); ?></legend>
 
         <table id="EmployeeSalaryHistory" class="table table-striped table-bordered table-condensed table-hover"></table>
+        
+        <button type="button" class="btn btn-default" onclick="addHistoryEntry()">Add</button>
+        
         <script>
             var views = {}; // In global scope for debugging/console access to the views
 
@@ -129,6 +132,8 @@
                         }
                     });
 
+                views.salaryHistoryModal.on("invalid", function() { console.log("invalid stuff!"); });
+
                 views.salaryHistory = new EmployeeSalaryHistoryView({
                         el : $("#EmployeeSalaryHistory"),
                         collection : data.history,
@@ -146,6 +151,13 @@
                                 }
                         }
                     }).render();
+            }
+
+            function addHistoryEntry() {
+                var EmployeeHistory = require("models/EmployeeHistory");
+                var entry = new EmployeeHistory({ startDate : new Date() });
+                views.editHistoryView.setModel(entry);
+                views.salaryHistoryModal.show();
             }
         </script>
 
