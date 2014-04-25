@@ -26,15 +26,25 @@ try {
     if (!$startDate)
         throw new Exception("You must provide a start date");
     $startDate = new DateTime($startDate);
+    $startDate->setTime(0, 0, 0);
 
-    if ($endDate)
+    if ($endDate) {
         $endDate = new DateTime($endDate);
-    else
+        $endDate->setTime(0, 0, 0);
+    } else
         $endDate = null;
 
-    if ($historyId)
+    if ($historyId) {
         $current = $db->readEmployeeHistory($historyId, $employeeId);
-    else
+
+        if ($endDate &&
+            $current->lastPayPeriodEndDate &&
+            ($endDate != $current->endDate) &&
+            ($endDate < $current->lastPayPeriodEndDate)
+        ) {
+            throw new Exception("The end date cannot be set earlier than the last pay period end date");
+        }
+    } else
         $historyId = 0;
 
     $entry = new EmployeeHistory(

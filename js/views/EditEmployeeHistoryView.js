@@ -235,10 +235,12 @@ define([
                     val = $.trim(val);
                     if (val == "") val = null;
 
-                    if ((name == 'startDate') || (name == 'endDate')) {
-                        val = new Date(val);
-                    } else if (name == 'rank') {
-                        val = this.ranks.get(val);
+                    if (val != null) {
+                        if ((name == 'startDate') || (name == 'endDate')) {
+                            val = new Date(val);
+                        } else if (name == 'rank') {
+                            val = this.ranks.get(val);
+                        }
                     }
                 }
 

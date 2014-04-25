@@ -105,7 +105,7 @@ function formatDate(date, fmt) {
                 if (rv < 10) rv = "0"+ rv;
                 break;
             case "F":
-                rv = monthNames[date.getUTCMonth()];
+                rv = formatDate.monthNames[date.getUTCMonth()];
                 break;
             }
 
