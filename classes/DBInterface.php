@@ -715,9 +715,14 @@ class DBInterface {
     /**
      * Reads employee history data.
      *
-     * @param   int         $employeeId The ID of the employee to retrieve history for.
-     * @param   DateTime    $startDate  If provided, the starting date to filter by.  Only
-     *                                  records with an end date greater than or equal to the
+     * @param   int         $historyId  The ID of a EmployeeHistoryrecord to retrieve.  If this
+     *                                  parameter is not null, the $startDate, $endDate, and $limit
+     *                                  parameters must be null.
+     * @param   int         $employeeId The ID of the employee to retrieve history for.  If
+     *                                  $historyId is also specified, the $employeeId must match
+     *                                  the employee on the specified history record.
+     * @param   DateTime    $startDate  When provided, the starting date to filter by.
+     *                                  Only records with an end date greater than or equal to the
      *                                  date provided or with no end date specified will be
      *                                  returned.
      * @param   DateTime    $endDate    If provided, the ending date to filter by.  Only records
@@ -726,18 +731,31 @@ class DBInterface {
      * @param   int         $limit      The number of records to return, most recent first.  If not
      *                                  specified or null, no limit is applied.
      *
-     * @return  
+     * @return  A single EmployeeHistory instance when $historyId is specified, otherwise,
+     *          an array of EmployeeHistory instances that match the specified parameters.
      */
     public function readEmployeeHistory(
-                        $employeeId,
+                        $historyId,
+                        $employeeId = null,
                         DateTime $startDate = null,
                         DateTime $endDate = null,
                         $limit = null
                     )
     {
-        if (!is_numeric($employeeId))
-            throw new Exception("Parameter \$employeeId must be an integer");
-        $employeeId = (int) $employeeId;
+        if ($historyId != null) {
+            if (!is_numeric($historyId))
+                throw new Exception("Parameter \$historyId must be an integer");
+            $historyId = (int) $historyId;
+
+            if (($startDate != null) || ($endDate != null) || ($limit != null))
+                throw new Exception("Parameter \$historyId must be null if any other arguments are non-null.");
+        }
+
+        if ($employeeId != null) {
+            if (!is_numeric($employeeId))
+                throw new Exception("Parameter \$employeeId must be an integer");
+            $employeeId = (int) $employeeId;
+        }
 
         if ($limit !== null) {
             if (!is_numeric($limit) || ($limit <= 0))
@@ -751,9 +769,12 @@ class DBInterface {
             $stmt = $this->dbh->prepare(
                     "SELECT id, startDate, endDate, lastPayPeriodEndDate, rank, numDeductions, salary ".
                         "FROM employeeHistory ".
-                        "WHERE employee = :employeeId ".
-                            "AND startDate <= :endDate ".
-                            "AND (endDate >= :startDate OR endDate IS NULL) ".
+                        "WHERE (id = :historyId AND (employee = :employeeId OR :employeeId IS NULL)) ".
+                            "OR (".
+                                "employee = :employeeId ".
+                                "AND startDate <= :endDate ".
+                                "AND (endDate >= :startDate OR endDate IS NULL) ".
+                            ") ".
                         "ORDER BY startDate DESC ".
                         "LIMIT :limit"
                 );
@@ -762,17 +783,20 @@ class DBInterface {
                 throw new Exception($this->formatErrorMessage(null, "Unable to prepare employee history query"));
         }
 
-        if ($startDate == null)
-            $startDate = new DateTime('1900-01-01');
-        $startDate = $startDate->format("Y-m-d");
+        if ($historyId == null) {
+            if ($startDate == null)
+                $startDate = new DateTime('1900-01-01');
+            $startDate = $startDate->format("Y-m-d");
 
-        if ($endDate == null)
-            $endDate = new DateTime('9999-12-31');
-        $endDate = $endDate->format("Y-m-d");
+            if ($endDate == null)
+                $endDate = new DateTime('9999-12-31');
+            $endDate = $endDate->format("Y-m-d");
+        }
 
         // bindParam must be used here because :limit param must be bound as an int
         // to function properly
         $stmt->bindParam(':employeeId', $employeeId, PDO::PARAM_INT);
+        $stmt->bindParam(':historyId', $historyId);
         $stmt->bindParam(':startDate', $startDate);
         $stmt->bindParam(':endDate', $endDate);
         $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
@@ -800,6 +824,12 @@ class DBInterface {
                 $row->salary
             );
         } // while
+
+        if ($historyId != null) {
+            if (count($rv) != 1)
+                throw new Exception("No such employee history: $historyId");
+            $rv = $rv[0];
+        }
 
         return $rv;
     } // readEmployeeHistory
@@ -843,7 +873,7 @@ class DBInterface {
         if ($row === false)
             throw new Exception("No such employee: $id");
 		
-        $current = $this->readEmployeeHistory( $row->id, $effectiveDate, $effectiveDate, 1 );
+        $current = $this->readEmployeeHistory( null, $row->id, $effectiveDate, $effectiveDate, 1 );
         if (count($current) == 0)
             $current = null;
         else
@@ -910,7 +940,7 @@ class DBInterface {
 
         $rv = Array();
         while ($row = $stmt->fetchObject()) {
-            $current = $this->readEmployeeHistory( $row->id, $effectiveDate, $effectiveDate, 1 );
+            $current = $this->readEmployeeHistory( null, $row->id, $effectiveDate, $effectiveDate, 1 );
             if (count($current) == 0)
                 $current = null;
             else
@@ -1064,7 +1094,7 @@ class DBInterface {
         $employeeId = (int) $employeeId;
 
         // Validate the new properties by reading the existing state from the DB
-        $history = $this->readEmployeeHistory( $employeeId, $entry->startDate, $entry->endDate );
+        $history = $this->readEmployeeHistory( null, $employeeId, $entry->startDate, $entry->endDate );
 
         $verifyDepartments = function($listA, $listB) {
             if (count($listA) != count($listB))
@@ -1380,7 +1410,7 @@ class DBInterface {
         $numGenerated = 0;
         while ($row = $stmt->fetchObject()) {
             $employee = $this->readEmployee( $row->id );
-            $history = $this->readEmployeeHistory( $row->id, $payPeriodStartDate, $payPeriodEndDate );
+            $history = $this->readEmployeeHistory( null, $row->id, $payPeriodStartDate, $payPeriodEndDate );
 
             $tax = $this->computeTax($payPeriodStartDate, $payPeriodEndDate, null, null);
             foreach ($history as $entry) {

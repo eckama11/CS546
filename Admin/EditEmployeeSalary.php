@@ -13,7 +13,7 @@
         $employeeId = (int) $employeeId;
         $emp = $db->readEmployee($employeeId);
 
-        $history = $db->readEmployeeHistory($employeeId, null, null);
+        $history = $db->readEmployeeHistory(null, $employeeId, null, null);
 
 /*
 // Retrieves managers for each department in the history
@@ -88,18 +88,23 @@
                             error : function(model, data, options) {
                                     console.log("Error!", model, data, options);
 
-                                    showError(data.status +" "+ data.errorThrown);
+                                    showError(data.error);
 
                                     // Re-enable the dialog
                                     views.salaryHistoryModal.$(".btn-primary,.btn-default").removeAttr("disabled");
                                     views.salaryHistoryModal.$(".close").show();
                                 },
                             sync : function(model, data, options) {
-                                    console.log("Sync OK?", model, data, options);
-                                    views.salaryHistoryModal.close();
                                     // Re-enable the dialog
                                     views.salaryHistoryModal.$(".btn-primary,.btn-default").removeAttr("disabled");
                                     views.salaryHistoryModal.$(".close").show();
+
+                                    // Close the dialog and refresh the history
+                                    views.salaryHistoryModal.close();
+
+                                    views.salaryHistory.collection.add(model, {merge:true});
+                                    views.salaryHistory.collection.sort();
+                                    views.salaryHistory.render();
                                 },
                             change : function(view) {
                                     views.salaryHistoryModal.$(".btn-primary").removeAttr("disabled");
@@ -111,8 +116,6 @@
                         contentView : views.editHistoryView.render(),
                         events : {
                             "click .btn-primary" : function(e) {
-                                    // TODO: Need to validate the form, save & close the dialog on success
-                                    console.log("The primary button was clicked!");
                                     views.editHistoryView.save();
                                 },
                             "hide.bs.modal" : function(e) {

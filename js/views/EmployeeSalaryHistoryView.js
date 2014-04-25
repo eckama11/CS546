@@ -31,6 +31,14 @@ define([
                 if (!(this.collection instanceof EmployeeHistoryCollection))
                     throw new Error("The collection must be an EmployeeHistoryCollection");
 
+                if (!this.collection.comparator)
+                    this.collection.comparator =
+                        function(a, b) {
+                            a = a.get('startDate');
+                            b = b.get('startDate');
+                            return (a == b ? 0 : (a < b ? 1 : -1));
+                        }
+
                 this.collection.on("add remove change reset sort", this.render);
             }
         },

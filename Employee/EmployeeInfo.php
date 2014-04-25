@@ -17,7 +17,7 @@ function showEmployeeInfo( $employee, $historyLimit = null ) {
             ? new DateTime()
             : null);
 
-        $history = $db->readEmployeeHistory($employee->id, null, $endDate, $historyLimit);
+        $history = $db->readEmployeeHistory(null, $employee->id, null, $endDate, $historyLimit);
 
         foreach ($history as $entry) {
             foreach ($entry->departments as $dept) {

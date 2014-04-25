@@ -146,7 +146,11 @@ define([
                     .removeClass("error")
                     .data("title", "");
             }
-            removeTooltip($(form.elements['rank']));
+            for (var i = form.elements.length - 1; i >= 0; --i) {
+                var elem = form.elements[i];
+                if (elem.name != 'departments[]')
+                    removeTooltip($(elem));
+            }
             removeTooltip(this.departmentSelector.$('div.form-control'));
         },
 
@@ -168,6 +172,8 @@ define([
         },
 
         save : function(options) {
+            this.model.set("employeeId", this.employeeId);
+            this._resetTooltips();
             if (!this.model.isValid()) {
                 // Errors occurred
                 this.trigger("invalid", this.model.validationError, this.model);
@@ -188,6 +194,8 @@ define([
                     if (data.error != null) {
                         self.trigger('error', self.model, data, options);
                     } else {
+                        self.model.set('id', data.id);
+                        self.model.changed = {};
                         self.trigger("sync", self.model, data, options);
                     }
                 })
@@ -198,6 +206,7 @@ define([
                         'error',
                         self.model,
                         {
+                            error : jqXHR.status +" "+ textStatus +"\n"+ jqXHR.textContent,
                             status : jqXHR.status,
                             textStatus : textStatus,
                             errorThrown : errorThrown,
@@ -214,20 +223,23 @@ define([
         },
 
         _handleChangeEvent : function(e) {
-            if (e.target.form == this.$("> form").get(0)) {
+            if (e.target.form == this.$("form").get(0)) {
                 var name = e.target.name;
-                var elem = e.target.form[name];
                 name = name.replace(/\[\]$/, "");
 
-                var $el = $(e.target);
-                var val = $el.val();
-
-                if ((name == 'startDate') || (name == 'endDate')) {
-                    val = new Date(val);
-                } else if (name == 'rank') {
-                    val = this.ranks.get(val);
-                } else if (name == 'departments') {
+                var val;
+                if (name == 'departments') {
                     val = this.departmentSelector.getSelectedDepartments();
+                } else {
+                    val = $(e.target).val();
+                    val = $.trim(val);
+                    if (val == "") val = null;
+
+                    if ((name == 'startDate') || (name == 'endDate')) {
+                        val = new Date(val);
+                    } else if (name == 'rank') {
+                        val = this.ranks.get(val);
+                    }
                 }
 
                 this.model.set(name, val, { silent : true });

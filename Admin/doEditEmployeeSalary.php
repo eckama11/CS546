@@ -2,7 +2,7 @@
 require_once(dirname(__FILE__)."/../common.php");
 
 $employeeId = @$_POST['employeeId'];
-$historyId = @$_POST['historyId'];
+$historyId = @$_POST['id'];
 $startDate = @$_POST['startDate'];
 $endDate = @$_POST['endDate'];
 $departments = @$_POST['departments'];
@@ -29,25 +29,28 @@ try {
 
     if ($endDate)
         $endDate = new DateTime($endDate);
+    else
+        $endDate = null;
 
-    $entry = $db->readEmployeeHistory();
-    $current = new EmployeeHistory(0, $startDate, $endDate, null, $departments, $rank, $numDeductions, $salary);
+    if ($historyId)
+        $current = $db->readEmployeeHistory($historyId, $employeeId);
+    else
+        $historyId = 0;
 
-//    $emp = $db->readEmployee($employeeId);
-
-
-    throw new Exception("TODO: Finish me!");
-/*
-    // Create/update the employee record
-    $emp = new Employee(
-                $employeeId, $username, $password1,
-                $name, $address, $taxId,
-                $current
+    $entry = new EmployeeHistory(
+                $historyId,
+                $startDate,
+                $endDate,
+                ($historyId ? $current->lastPayPeriodEndDate : null),
+                $departments,
+                $rank,
+                $numDeductions,
+                $salary
             );
 
-    $emp = $db->writeEmployee($emp);
-*/
+    $entry = $db->writeEmployeeHistory($employeeId, $entry);
 
+    $rv->id = $entry->id;
     $rv->success = true;
 } catch (Exception $ex) {
     $rv->error = $ex->getMessage();

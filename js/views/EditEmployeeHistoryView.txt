@@ -1,7 +1,4 @@
 <form>
-    <input type="hidden" name="employeeId" value="<%- employeeId %>"/>
-    <input type="hidden" name="historyId" value="<%- model.get("id") %>"/>
-
 	<div>
 		<div class="form-group" style="width:48%;display:inline-block">
 			<label class="control-label">Start Date</label>

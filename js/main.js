@@ -16,7 +16,7 @@ requirejs.config({
         },
 
         "bootstrap-datepicker" : {
-            deps : [ "bootstrap", "jquery" ],
+            deps : [ "jquery", "bootstrap" ],
             exports : "$.fn.datepicker"
         }
     }

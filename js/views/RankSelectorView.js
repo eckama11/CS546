@@ -60,8 +60,11 @@ define([
         setSelectedValue : function(value) {
             this.selectedValue = value;
             if (this.$selectEl) {
-                this.$selectEl.val(this.selectedValue);
-                this.selectedValue = this.$selectEl.val();
+                if (this.selectedValue) {
+                    this.$selectEl.val(this.selectedValue);
+                    this.selectedValue = this.$selectEl.val();
+                } else
+                    this.$selectEl.get(0).selectedIndex = 0;
             }
             return this;
         },

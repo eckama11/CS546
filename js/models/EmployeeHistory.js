@@ -68,6 +68,9 @@ define([
 
         toJSON: function(options) {
             var rv = _.clone(this.attributes);
+            if (rv.startDate) rv.startDate = formatDate(rv.startDate, "Y-m-d");
+            if (rv.endDate) rv.endDate = formatDate(rv.endDate, "Y-m-d");
+            if (rv.lastPayPeriodEndDate) rv.lastPayPeriodEndDate = formatDate(rv.lastPayPeriodEndDate, "Y-m-d");
             rv.departments = (
                 rv.departments && rv.departments instanceof DepartmentCollection
                 ? rv.departments.map(function(d) { return d.id; })
