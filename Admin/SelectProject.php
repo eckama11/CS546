@@ -13,8 +13,9 @@
 
     // Array of [ targetPage, Displayed ]
     $forMap = [
-        'info'     	    => [ 'Admin/ProjectInfo',  'View Info' ],
-        'modify'     	=> [ 'Admin/EditProject',  'Modify' ],
+        'info'     	        => [ 'Admin/ProjectInfo',  'View Info' ],
+        'modifyInfo'    	=> [ 'Admin/EditProject',  'Modify Info' ],
+        'modifyEmployees'   => [ 'Admin/EditProjectEmployees', 'Modify Employees' ],
     ];
 
     $for = @$_GET['for'];

@@ -53,6 +53,8 @@ function showError(message) {
             					<li><a href="page.php/Admin/SelectEmployee?for=info">View Employee Info</a></li>
             					<li><a href="page.php/Admin/SelectEmployee?for=paystubs">View Pay Stubs</a></li>
                                 <li class="divider"></li>
+            					<li><a href="page.php/Admin/SelectProject?for=info">View Project Report</a></li>
+                                <li class="divider"></li>
             					<li><a href="page.php/Admin/TaxTable">Tax Table</a></li>
             					<li><a href="page.php/Admin/Ranks">Ranks</a></li>
             					<li><a href="page.php/Admin/Departments">Departments</a></li>
@@ -62,7 +64,8 @@ function showError(message) {
           					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Project <b class="caret"></b></a>
           					<ul class="dropdown-menu" role="menu">
             					<li><a href="page.php/Admin/EditProject">Add Project</a></li>
-            					<li><a href="page.php/Admin/SelectProject?for=modify">Modify Project</a></li>
+            					<li><a href="page.php/Admin/SelectProject?for=modifyInfo">Modify Project Info</a></li>
+            					<li><a href="page.php/Admin/SelectProject?for=modifyEmployees">Modify Project Employees</a></li>
           					</ul>
                         </li>
 						<li class="dropdown">
