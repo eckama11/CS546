@@ -76,6 +76,7 @@ try {
 
     $emp = $db->writeEmployee($emp);
 
+    $rv->id = $emp->id;
     $rv->success = true;
 } catch (Exception $ex) {
     $rv->error = $ex->getMessage();

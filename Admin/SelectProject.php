@@ -8,13 +8,13 @@
         doUnauthorizedRedirect();
         
 // Admin/SelectProject?for=
+//  info
 //  modify
 
     // Array of [ targetPage, Displayed ]
     $forMap = [
+        'info'     	    => [ 'Admin/ProjectInfo',  'View Info' ],
         'modify'     	=> [ 'Admin/EditProject',  'Modify' ],
-//        'password'   	=> [ 'Admin/ChangeEmpPass', 'Change Password' ],
-//        'paystubs'  	=> [ 'Employee/MyPay',      'View Pay Stubs' ]
     ];
 
     $for = @$_GET['for'];
@@ -48,15 +48,16 @@
     <table class="table table-striped table-hover table-bordered table-condensed">
     <thead><tr>
       <th>Name</th>
-      <th></th>
+      <th>Start Date</th>
+      <th>End Date</th>
     </tr></thead>
     <tbody>
 <?php
     foreach ($projects as $proj) {
-			echo '<tr onclick="selectEmployee(this)" proj-id="'. $proj->id .'">';
+			echo '<tr onclick="selectProject(this)" proj-id="'. $proj->id .'">';
 			echo   '<td>'. htmlentities($proj->name) .'</td>';
-//			echo   '<td>'. htmlentities($proj->) .'</td>';
-//			echo   '<td>'. htmlentities($proj->) .'</td>';
+			echo   '<td>'. htmlentities($proj->startDate->format("Y-m-d")) .'</td>';
+			echo   '<td>'. ($proj->endDate ? htmlentities($proj->endDate->format("Y-m-d")) : '') .'</td>';
 			echo '</tr>';
     } 
 ?>

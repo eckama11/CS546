@@ -2,7 +2,7 @@
 	<tr>
 		<th>Start Date</th>
 		<th>End Date</th>
-		<th>Last Pay Period End Date</th>
+		<th>Last Pay<br/>Period End Date</th>
 		<th>Number of<br/>Deductions</th>
 		<th>Rank</th>
 		<th>Yearly<br/>Salary</th>

@@ -28,9 +28,32 @@
 
 <script>
 	function editProject(form) {
-		var name = requiredField($(form.elements.name), "You must enter project's name.");
+		var name = requiredField($(form.elements.name), "You must enter project's name");
+        var description = $(form.elements.description).val();
+		var startDate = requiredField($(form.elements.startDate), "You must enter a starting date");
+		var endDate = $(form.elements.endDate).val();
+		var otherCosts = requiredField($(form.elements.otherCosts), "You must enter the other montly costs");
 
-// TODO: Additional validation here...
+        if ((name == "") || (startDate == "") || (otherCosts == "")) {
+            showError("You must enter all form information.");
+            return false;
+        }
+
+        if (isNaN(otherCosts) || (otherCosts < 0)) {
+            showError("Invalid value specified for other monthly costs");
+            return false;
+        }
+        otherCosts = Number(otherCosts);
+
+        startDate = new Date(startDate);
+
+        if (endDate)
+            endDate = new Date(endDate);
+
+        if (endDate && (startDate > endDate)) {
+            showError("The start date cannot be after the end date");
+            return false;
+        }
 
 		$("#projectDiv").hide();
 		$("#spinner").show();
@@ -83,7 +106,7 @@
             else
                 echo 'Add Project';
         ?></legend>
-		<form role="form" onsubmit="return editEmployee(this);">
+		<form role="form" onsubmit="return editProject(this);">
             <input type="hidden" name="id" value="<?php echo htmlentities($projectId); ?>"/>
 
             <div class="form-group">
@@ -99,9 +122,9 @@
             <div class="form-group">
                 <label class="control-label">Project Duration</label>
                 <div class="input-group">
-                    <input data-provide="datepicker" class="form-control" type="text" name="startDate" id="startDate" placeholder="Enter project start date" value="<?php echo htmlentities($project ? $project->startDate->format("Y-m-d") : null); ?>"/>
+                    <input data-provide="datepicker" class="form-control" type="text" name="startDate" id="startDate" placeholder="Enter project start date" value="<?php echo htmlentities($project ? $project->startDate->format("m/d/Y") : null); ?>"/>
                     <span class="input-group-addon">to</span>
-                    <input data-provide="datepicker" class="form-control" type="text" name="endDate" id="endDate" placeholder="Enter project end date" value="<?php echo htmlentities($project ? $project->endDate->format("Y-m-d") : null); ?>"/>
+                    <input data-provide="datepicker" class="form-control" type="text" name="endDate" id="endDate" placeholder="Enter project end date" value="<?php echo htmlentities($project ? $project->endDate->format("m/d/Y") : null); ?>"/>
                 </div>
             </div>
 
@@ -109,7 +132,7 @@
             <div class="form-group">
                 <label class="control-label">End Date</label>
                 <div class="input-group">
-                    <input data-provide="datepicker" class="form-control" type="text" name="endDate" id="endDate" placeholder="Enter project end date" value="<?php echo htmlentities($project ? $project->endDate->format("Y-m-d") : null); ?>"/>
+                    <input data-provide="datepicker" class="form-control" type="text" name="endDate" id="endDate" placeholder="Enter project end date" value="<?php echo htmlentities($project ? $project->endDate->format("m/d/Y") : null); ?>"/>
                     <span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
                 </div>
             </div>
@@ -130,3 +153,16 @@
         </form>
     </div>
 </div>
+<script>
+require(["main"], function() {
+    require([
+        "bootstrap-datepicker"
+    ], function() {
+        registerBuildUI(function($) {
+            // Init date pickers
+            $('[data-provide="datepicker"]').datepicker();
+        });
+    });
+});
+
+</script>

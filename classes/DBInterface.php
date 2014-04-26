@@ -1391,8 +1391,8 @@ class DBInterface {
                                 "SELECT * ".
                                     "FROM employeeHistory h ".
                                     "WHERE h.employee = e.id ".
-                                        "AND h.startDate <= :payPeriodStartDate ".
-                                        "AND ((h.endDate IS NULL) OR (h.endDate > :payPeriodEndDate)) ".
+                                        "AND h.startDate <= :payPeriodEndDate ".
+                                        "AND ((h.endDate IS NULL) OR (h.endDate >= :payPeriodStartDate)) ".
                             ")"
                 );
 
@@ -1666,8 +1666,8 @@ class DBInterface {
         }
 
         $params = Array(
-                ':startDate' => $project->startDate,
-                ':endDate' => $project->endDate,
+                ':startDate' => $project->startDate->format('Y-m-d'),
+                ':endDate' => ($project->endDate ? $project->endDate->format('Y-m-d') : null),
                 ':name' => $project->name,
                 ':description' => $project->description,
                 ':otherCosts' => $project->otherCosts
@@ -1701,11 +1701,13 @@ class DBInterface {
     } // writeProject
 
     public function readDepartmentsForProject($projectId) {
-        //XXX
+// TODO:XXX: Finish me!!!
+        return [];
     } // readDepartmentsForProject
 
     public function readEmployeesForProject($projectId) {
-        //XXX
+// TODO:XXX: Finish me!!!
+        return [];
     } // readEmployeesForProject
     
 } // DBInterface
