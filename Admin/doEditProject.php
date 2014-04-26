@@ -7,6 +7,9 @@ $description = trim(@$_POST['description']);
 $startDate = @$_POST['startDate'];
 $endDate = @$_POST['endDate'];
 $otherCosts = @$_POST['otherCosts'];
+$departments = @$_POST['departments'];
+if (!$departments)
+    $departments = [];
 
 $rv = (Object)[];
 try {
@@ -16,6 +19,10 @@ try {
     if (!strlen($name))
         throw new Exception("You must provide a project name");
 
+    // Verify the project name is unique
+    if ($db->isProjectNameInUse($name))
+        throw new Exception("The name '$name' is already assigned to another project");
+
     if (!strlen($description))
         $description = null;
 
@@ -23,10 +30,13 @@ try {
         throw new Exception("You must provide a start date");
     $startDate = new DateTime($startDate);
 
-    if ($endDate)
-        $endDate = new DateTime($endDate);
-    else
-        $endDate = null;
+    if (!$endDate)
+        throw new Exception("You must provide an end date");
+    $endDate = new DateTime($endDate);
+
+    $departments = array_map(function($deptId) { return $GLOBALS['db']->readDepartment($deptId); }, $departments);
+    if (count($departments) == 0)
+        throw new Exception("You must select at least one department for employee");
 
     if (!$id)
         $id = 0;
@@ -34,6 +44,8 @@ try {
     $project = new Project($id, $startDate, $endDate, $name, $description, $otherCosts);
 
     $project = $db->writeProject($project);
+
+    $db->writeDepartmentsForProject($project->id, $departments);
 
     $rv->id = $project->id;
     $rv->success = true;

@@ -92,7 +92,7 @@
             return false;
         }
 
-        if ((startDate == "") || (numDeductions == "") || (salary == "") || (rank == null) || (departments == null)) {
+        if ((startDate == "") || (numDeductions == "") || (salary == "") || (rank == null) || (departments.length == 0)) {
             showError("You must enter all form information.");
             return false;
         }

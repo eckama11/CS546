@@ -1290,7 +1290,6 @@ class DBInterface {
      * Writes EmployeeDepartmentAssociation records to the database.
      * @param   int   $employeeHistoryId    The employee history record id to update the departments for.
      * @param   Array[Department]   $departments    The list of departments to associate the employee with.
-     * @return
      */
     public function writeDepartmentsForEmployeeHistory( $employeeHistoryId, $departments ) {
         if (!is_numeric($employeeHistoryId))
@@ -1298,11 +1297,11 @@ class DBInterface {
         $employeeHistoryId = (int) $employeeHistoryId;
 
         if (!is_array($departments))
-            throw new Exception("The departments parameter must be an array.");
+            throw new Exception("The \$departments parameter must be an array.");
 
         foreach ($departments as $dept) {
             if (!($dept instanceof Department))
-                throw new Exception("Every element in the departments parameter must be an instance of Department.");
+                throw new Exception("Every element in the \$departments parameter must be an instance of Department.");
 
             if ($dept->id == 0)
                 throw new Exception("The id property of a department cannot be 0.");
@@ -1553,6 +1552,36 @@ class DBInterface {
     } // computeTax
 
     /**
+     * Tests whether a specific name is in currently assigned to an project or not.
+     *
+     * @param   String  $name   The name to test for.
+     *
+     * @return  Boolean    True if the name is assigned to an existing project, false if not.
+     */
+    public function isProjectNameInUse( $name ) {
+        static $stmt;
+        if ($stmt == null) {
+            $stmt = $this->dbh->prepare(
+                  "SELECT id ".
+                    "FROM project ".
+                    "WHERE name=:name"
+                );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project name query"));
+        }
+
+        $success = $stmt->execute(Array(
+                ':name' => $name
+            ));
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for project name"));
+
+        $row = $stmt->fetchObject();
+        return ($row !== false);
+    } // isProjectNameInUse
+
+    /**
      * Reads a Project from the database.
      * @param   int     $id The ID of the project to retrieve.
      * @return  Project An instance of Project.
@@ -1700,14 +1729,117 @@ class DBInterface {
             );
     } // writeProject
 
+   /**
+     * Reads all of the departments associated with a project.
+     *
+     * @param   int $projectId  The ID of the PRoject entry to retrieve departments for.
+     *
+     * @return  Array[Department]   Array of the departments for the project.
+     */
     public function readDepartmentsForProject($projectId) {
-// TODO:XXX: Finish me!!!
-        return [];
+        if (!is_numeric($projectId))
+            throw new Exception("Parameter \$projectId must be an integer");
+        $projectId = (int) $projectId;
+
+        static $stmt;
+        if ($stmt == null) {
+            $stmt = $this->dbh->prepare(
+                    "SELECT d.id, d.name ".
+                        "FROM projectDepartmentAssociation a ".
+                        "INNER JOIN department d ON d.id = a.department ".
+                        "WHERE  ".
+                            "a.project = :projectId ".
+                        "ORDER BY d.name"
+                );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project departments query"));
+        }
+
+        $success = $stmt->execute(Array(
+                            ':projectId' => $projectId
+                        ));
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for project departments"));
+
+        $rv = Array();
+        while ($row = $stmt->fetchObject()) {
+            $rv[] = new Department( $row->id, $row->name );
+        } // while
+
+        return $rv;
     } // readDepartmentsForProject
+
+    /**
+     * Writes ProjectDepartmentAssociation records to the database.
+     * @param   int   $projectId    The project record id to update the departments for.
+     * @param   Array[Department]   $departments    The list of departments to associate the project with.
+     */
+    public function writeDepartmentsForProject($projectId, $departments) {
+        if (!is_numeric($projectId))
+            throw new Exception("Parameter \$projectId must be an integer");
+        $projectId = (int) $projectId;
+
+        if (!is_array($departments))
+            throw new Exception("The \$departments parameter must be an array.");
+
+        foreach ($departments as $dept) {
+            if (!($dept instanceof Department))
+                throw new Exception("Every element in the \$departments parameter must be an instance of Department.");
+
+            if ($dept->id == 0)
+                throw new Exception("The id property of a department cannot be 0.");
+        } // foreach
+
+        static $insertStmt;
+        static $deleteStmt;
+        if ($insertStmt == null) {
+            $insertStmt = $this->dbh->prepare(
+                    "INSERT INTO projectDepartmentAssociation ( ".
+                            "project, department ".
+                        ") VALUES ( ".
+                            ":projectId, :department ".
+                        ")"
+                );
+
+
+            if (!$insertStmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project department insert"));
+
+            $deleteStmt = $this->dbh->prepare(
+                    "DELETE FROM projectDepartmentAssociation ".
+                        "WHERE project = :projectId"
+                );
+
+            if (!$deleteStmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project department delete"));
+        }
+
+        // Remove existing association records for the project
+        $success = $deleteStmt->execute(Array(
+                ':projectId' => $projectId
+            ));
+        if ($success == false)
+            throw new Exception($this->formatErrorMessage($deleteStmt, "Unable to delete existing projectDepartmentAssociation records"));
+
+        // Create new association records for the project
+        foreach ($departments as $dept) {
+            $success = $insertStmt->execute(Array(
+                    ':projectId' => $projectId,
+                    ':department' => $dept->id
+                ));
+            if ($success == false)
+                throw new Exception($this->formatErrorMessage($insertStmt, "Unable to create projectDepartmentAssociation record in database"));
+        } // foreach
+    } // writeDepartmentsForProject
 
     public function readEmployeesForProject($projectId) {
 // TODO:XXX: Finish me!!!
         return [];
     } // readEmployeesForProject
-    
+
+    public function writeEmployeesForProject($projectId, $employees) {
+// TODO:XXX: Finish me!!!
+    } // writeEmployeesForProject
+
 } // DBInterface

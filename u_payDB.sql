@@ -109,6 +109,7 @@ CREATE TABLE project(
     description TEXT,
     otherCosts DECIMAL(9,2) UNSIGNED NOT NULL,
     PRIMARY KEY (id),
+    UNIQUE KEY (name),
     INDEX (startDate)
 );
 

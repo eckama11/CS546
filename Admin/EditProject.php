@@ -15,11 +15,22 @@
             $project = $db->readProject($projectId);
 
             $projectDepts = $db->readDepartmentsForProject($project->id);
-            $projectDepts = array_flip(array_map(function($dept) { return $dept->id; }, $projectDepts));
+            $projectDepts = array_map(function($dept) { return $dept->id; }, $projectDepts);
         } else
             $projectDepts = [];
-
-        $depts = $db->readDepartments();
+?>
+<script>
+    define(
+        'EditProjectData',
+        ['models/DepartmentCollection'],
+        function(DepartmentCollection) {
+            return {
+                departments : new DepartmentCollection(<?= json_encode($db->readDepartments()) ?>),
+                projectDepartments : <?= json_encode($projectDepts) ?>
+            };
+        });
+</script>
+<?php
     } catch (Exception $ex) {
         handleDBException($ex);
         return;
@@ -29,12 +40,25 @@
 <script>
 	function editProject(form) {
 		var name = requiredField($(form.elements.name), "You must enter project's name");
-        var description = $(form.elements.description).val();
+        var description = requiredField($(form.elements.description), "You must enter a description for the project");
 		var startDate = requiredField($(form.elements.startDate), "You must enter a starting date");
-		var endDate = $(form.elements.endDate).val();
+		var endDate = requiredField($(form.elements.endDate), "You must enter an end date");
 		var otherCosts = requiredField($(form.elements.otherCosts), "You must enter the other montly costs");
 
-        if ((name == "") || (startDate == "") || (otherCosts == "")) {
+        var departments = views.departmentSelector.getSelectedValues();
+        var elem = views.departmentSelector.$('div.form-control');
+        if (departments.length == 0) {
+            elem.tooltip("destroy")
+            .addClass("error")
+            .data("title", "You must select at least one department for project")
+            .tooltip();
+        } else {
+            elem.tooltip("destroy")
+            .removeClass("error")
+            .data("title", "");
+        }
+
+        if ((name == "") || (startDate == "") || (endDate == "") || (otherCosts == "") || (departments.length == 0)) {
             showError("You must enter all form information.");
             return false;
         }
@@ -43,13 +67,9 @@
             showError("Invalid value specified for other monthly costs");
             return false;
         }
-        otherCosts = Number(otherCosts);
 
         startDate = new Date(startDate);
-
-        if (endDate)
-            endDate = new Date(endDate);
-
+        endDate = new Date(endDate);
         if (endDate && (startDate > endDate)) {
             showError("The start date cannot be after the end date");
             return false;
@@ -87,8 +107,8 @@
 </script>
 
 <div class="container col-md-6 col-md-offset-3">
-    <div id="spinner" class="col-md-2 col-md-offset-5" style="padding-bottom:10px;text-align:center;display:none">
-        <div style="color:black;padding-bottom:32px;"><?php
+    <div id="spinner" class="col-md-2 col-md-offset-5" style="padding-bottom:10px;text-align:center">
+        <div style="color:black;padding-bottom:32px;;display:none"><?php
             if ($project != null)
                 echo 'Updating Project...';
             else
@@ -99,7 +119,7 @@
     <div id="successDiv" style="padding:10px; outline:10px solid black; display:none">
         Project has been successfully <?php echo ($project == null) ? 'added' : 'updated'; ?>.
     </div>
-	<div id="projectDiv" class="row" >
+	<div id="projectDiv" class="row" style="display:none">
 		<legend><?php
             if ($project != null)
                 echo 'Update Project';
@@ -128,19 +148,14 @@
                 </div>
             </div>
 
-<!--
-            <div class="form-group">
-                <label class="control-label">End Date</label>
-                <div class="input-group">
-                    <input data-provide="datepicker" class="form-control" type="text" name="endDate" id="endDate" placeholder="Enter project end date" value="<?php echo htmlentities($project ? $project->endDate->format("m/d/Y") : null); ?>"/>
-                    <span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
-                </div>
-            </div>
--->
-
             <div class="form-group">
                 <label class="control-label">Other Monthly Costs</label>
                 <input type="text" class="form-control" name="otherCosts" id="otherCosts" placeholder="Enter other costs" value="<?php echo htmlentities(@$project->otherCosts); ?>"/>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Departments</label>
+                <div class="departmentSelector"></div>
             </div>
 
             <button type="submit" class="btn btn-default"><?php
@@ -154,13 +169,31 @@
     </div>
 </div>
 <script>
+
+var views = {};
+
 require(["main"], function() {
     require([
+        "views/DepartmentSelectorView",
+        "EditProjectData",
         "bootstrap-datepicker"
-    ], function() {
+    ], function(DepartmentSelectorView, data) {
         registerBuildUI(function($) {
+            views.departmentSelector = new DepartmentSelectorView({
+                            el : $(".departmentSelector"),
+                            collection : data.departments,
+                            selectedValues : data.projectDepartments,
+                            name : "departments"
+                        }).render();
+
             // Init date pickers
             $('[data-provide="datepicker"]').datepicker();
+
+            var spinner = $("#spinner");
+            spinner.hide();
+            $("div", spinner).css({ display : "block" });
+
+            $("#projectDiv").show();
         });
     });
 });
