@@ -78,7 +78,9 @@ function doLogin(form) {
 	<body>
 		<div class="navbar navbar-inverse navbar-static-top">
 			<div class="container">
-				<a href="#" class="navbar-brand">UPay Solutions</a>
+				<a href="#" class="navbar-brand">
+				<span class="glyphicon glyphicon-usd"></span>
+				UPay Solutions</a>
 				<button class="navbar-toggle" data-toggle="collapse" data-target=".navHeaderCollapse">
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
@@ -120,7 +122,10 @@ function doLogin(form) {
                         	</div>
                         	</br>
                         	<div>
-                        		<input class="btn btn-primary" name="commit" type="submit" value="Log In" />
+                        		
+                        		<button class="btn btn-primary" name="commit" type="submit">
+                        		<span class="glyphicon glyphicon-log-in"></span> Submit
+                        		</button>
                         	</div>
                 		</fieldset>
            			</form>

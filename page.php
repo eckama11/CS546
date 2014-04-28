@@ -35,7 +35,9 @@ function showError(message) {
 	<body>
 		<div class="navbar navbar-inverse navbar-static-top">
 			<div class="container">
-				<a href="#" class="navbar-brand">UPay Solutions</a>
+				<a href="#" class="navbar-brand">
+				<span class="glyphicon glyphicon-usd"></span>
+				UPay Solutions</a>
 				<button class="navbar-toggle" data-toggle="collapse" data-target=".navHeaderCollapse">
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
@@ -48,7 +50,9 @@ function showError(message) {
 						<li><a href="page.php/Employee/Pass">Account Settings</a></li>
 <?php if ($loginSession->isAdministrator) { ?>
 						<li class="dropdown">
-          					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Info <b class="caret"></b></a>
+          					<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+          					<span class="glyphicon glyphicon-stats"></span>
+          					Info <b class="caret"></b></a>
           					<ul class="dropdown-menu" role="menu">
             					<li><a href="page.php/Admin/SelectEmployee?for=info">View Employee Info</a></li>
             					<li><a href="page.php/Admin/SelectEmployee?for=paystubs">View Pay Stubs</a></li>
@@ -61,7 +65,7 @@ function showError(message) {
           					</ul>
         				</li>
 						<li class="dropdown">
-          					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Project <b class="caret"></b></a>
+          					<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-wrench"></span> Project <b class="caret"></b></a>
           					<ul class="dropdown-menu" role="menu">
             					<li><a href="page.php/Admin/EditProject">Add Project</a></li>
             					<li><a href="page.php/Admin/SelectProject?for=modifyInfo">Modify Project Info</a></li>
@@ -69,7 +73,8 @@ function showError(message) {
           					</ul>
                         </li>
 						<li class="dropdown">
-          					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Employee <b class="caret"></b></a>
+          					<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> Employee <b class="caret"></b></a>
+          					
           					<ul class="dropdown-menu" role="menu">
             					<li><a href="page.php/Admin/EditEmployee">Add Employee</a></li>
             					<li><a href="page.php/Admin/SelectEmployee?for=modifyInfo">Modify Employee Info</a></li>
@@ -80,7 +85,9 @@ function showError(message) {
           					</ul>
         				</li>
 <?php } ?>
-						<li><a href="logout.php">Logout</a></li>
+						<li><a href="logout.php">
+						<span class="glyphicon glyphicon-log-out"></span>
+						Logout</a></li>
 					</ul>
 				</div>
 			</div>

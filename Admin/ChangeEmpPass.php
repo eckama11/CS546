@@ -56,8 +56,7 @@ function updatePassword(form) {
         .fail(function( jqXHR, textStatus, errorThrown ) {
             console.log("Error: "+ textStatus +" (errorThrown="+ errorThrown +")");
             console.log(jqXHR.textContent);
-
-            $("#spinner").hide();
+			$("#spinner").hide();
             $("#content").show();
             showError("Request failed, unable to change password: "+ errorThrown);
         })
