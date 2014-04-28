@@ -22,6 +22,8 @@ ob_start();
 		<link rel="stylesheet" href="css/bootstrap-datepicker.css" />
 		<link rel="stylesheet" href="css/custom.css" />
         <script data-main="js/main" src="js/require.js"></script>
+        <!--<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">-->
+		<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
 <script>
 function showError(message) {
     $("#message").text(message);
@@ -45,9 +47,11 @@ function showError(message) {
 				</button>
 				<div class="collapse navbar-collapse navHeaderCollapse">
 					<ul class="nav navbar-nav navbar-right">
-						<li><a href="page.php/Employee/MyPay">MyPay</a></li>
-						<li><a href="page.php/Employee/MyInfo">MyInfo</a></li>
-						<li><a href="page.php/Employee/Pass">Account Settings</a></li>
+						<li><a href="page.php/Employee/MyPay"><i class="icon-money"></i> MyPay</a></li>
+						<li><a href="page.php/Employee/MyInfo">
+						<span class="glyphicon glyphicon-info-sign"></span>
+						 MyInfo</a></li>
+						<li><a href="page.php/Employee/Pass"><i class="icon-cog"></i> Account Settings</a></li>
 <?php if ($loginSession->isAdministrator) { ?>
 						<li class="dropdown">
           					<a href="#" class="dropdown-toggle" data-toggle="dropdown">
