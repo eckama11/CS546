@@ -124,7 +124,7 @@ function doLogin(form) {
                         	<div>
                         		
                         		<button class="btn btn-primary" name="commit" type="submit">
-                        		<span class="glyphicon glyphicon-log-in"></span> Submit
+                        		<span class="glyphicon glyphicon-log-in"></span> Login
                         		</button>
                         	</div>
                 		</fieldset>
