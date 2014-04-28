@@ -1356,7 +1356,7 @@ class DBInterface {
      *                          use the current date.  May be a date string or a DateTime instance.
      *
      * @return  Object  An object with the following properties:
-     *                      int      numGenerated    The number of paystubs which were generated.
+     *                      int      numGenerated    The number of pay stubs which were generated.
      *                      DateTime startDate       The pay period start date
      *                      DateTime endDate         The pay period end date
      */
@@ -1375,9 +1375,10 @@ class DBInterface {
         $firstOfYear = new DateTime( $generationDate->format("Y-01-01T00:00:00P") );
 
         // Determine which employees need to have pay stubs generated
-        static $stmt;
-        if ($stmt == null) {
-            $stmt = $this->dbh->prepare(
+        static $stmtEmployee;
+        static $stmtProject;
+        if ($stmtEmployee == null) {
+            $stmtEmployee = $this->dbh->prepare(
                     "SELECT e.id ".
                         "FROM employee e ".
                         "WHERE NOT EXISTS (".
@@ -1395,25 +1396,65 @@ class DBInterface {
                             ")"
                 );
 
-            if (!$stmt)
-                throw new Exception($this->formatErrorMessage(null, "Unable to prepare generate pay stub query"));
+            if (!$stmtEmployee)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare generate pay stub employee query"));
+
+            $stmtProject = $this->dbh->prepare(
+                    "SELECT p.id, p.otherCosts ".
+                        "FROM project p ".
+                        "WHERE NOT EXISTS (".
+                                "SELECT * ".
+                                    "FROM projectCostHistory h ".
+                                    "WHERE h.project = p.id ".
+                                        "AND h.department IS NULL ".
+                                        "AND h.startDate <= :payPeriodEndDate ".
+                                        "AND h.endDate >= :payPeriodStartDate ".
+                            ")"
+                );
+
+            if (!$stmtProject)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare generate pay stub project query"));
         }
 
-        $success = $stmt->execute(Array(
+        // Compute "other" (non-employee) project costs for the pay period
+        $success = $stmtProject->execute(Array(
                         ':payPeriodStartDate' => $payPeriodStartDate->format("Y-m-d"),
                         ':payPeriodEndDate' => $payPeriodEndDate->format("Y-m-d")
                     ));
         if ($success == false)
-            throw new Exception($this->formatErrorMessage($stmt, "Unable to query employees who need pay stubs generated"));
+            throw new Exception($this->formatErrorMessage($stmtProject, "Unable to query projects which need costs generated"));
+
+        while ($row = $stmtProject->fetchObject()) {
+            $this->writeProjectCostHistory(
+                    new ProjectCostHistory(
+                        $payPeriodStartDate,
+                        $payPeriodEndDate,
+                        null,
+                        $this->readProject($row->id),
+                        null,
+                        $row->otherCosts
+                    )
+                );
+        } // while
+
+        // Process each employee
+        $success = $stmtEmployee->execute(Array(
+                        ':payPeriodStartDate' => $payPeriodStartDate->format("Y-m-d"),
+                        ':payPeriodEndDate' => $payPeriodEndDate->format("Y-m-d")
+                    ));
+        if ($success == false)
+            throw new Exception($this->formatErrorMessage($stmtEmployee, "Unable to query employees who need pay stubs generated"));
 
         $numGenerated = 0;
-        while ($row = $stmt->fetchObject()) {
+        while ($row = $stmtEmployee->fetchObject()) {
             $employee = $this->readEmployee( $row->id );
             $history = $this->readEmployeeHistory( null, $row->id, $payPeriodStartDate, $payPeriodEndDate );
 
-            $tax = $this->computeTax($payPeriodStartDate, $payPeriodEndDate, null, null);
+            // This first call just gets an entry with all zero values
+            // Subsequent calls will add onto these values
+            $tax = $this->computeTax($payPeriodStartDate, $payPeriodEndDate, null, null, null);
             foreach ($history as $entry) {
-                $tax = $this->computeTax($payPeriodStartDate, $payPeriodEndDate, $entry, $tax);
+                $tax = $this->computeTax($payPeriodStartDate, $payPeriodEndDate, $employee, $entry, $tax);
 
                 $entry->lastPayPeriodEndDate = $payPeriodEndDate;
                 $this->writeEmployeeHistory( $employee->id, $entry );
@@ -1459,7 +1500,14 @@ class DBInterface {
                     $deductionsYTD
                 );
 
-            $this->writePaystub( $paystub );
+            $paystub = $this->writePaystub( $paystub );
+
+            // Write the cost history records, now that we know the pay stub id
+            foreach ($tax->projectCosts as $entry) {
+                $entry->payStub = $paystub;
+                $this->writeProjectCostHistory($entry);
+            } // foreach
+
             ++$numGenerated;
         } // while
 
@@ -1472,7 +1520,7 @@ class DBInterface {
     } // generatePayStubs
 
     /**
-     * Computes the tax owed for a given monthly salary and number of deductions.
+     * Computes the tax owed for a given monthly salary and number of deductions as well as updating related project costs.
      *
      * @param   DateTime        $startDate  The starting date of the pay period to compute the tax
      *                                      for.  The greater of the $entry->startDate and this date
@@ -1480,6 +1528,7 @@ class DBInterface {
      * @param   DateTime        $endDate    The ending date of the pay period to compute the tax
      *                                      for.  The lesser of the $entry->endDate and this date
      *                                      will be used for the actual computation.
+     * @param   Employee        $employee   The employee to compute the tax for
      * @param   EmployeeHistory $entry      An employee history entry to compute the tax for
      * @param   Object          $prevTax    A previous result object from this function (for cumulative totals).
      *
@@ -1489,17 +1538,21 @@ class DBInterface {
      *                      "tax"
      *                      "taxableSalary"
      *                      "deductions"
+     *                      "projectCosts"
      *                  }
      */
-    protected function computeTax(DateTime $startDate, DateTime $endDate, EmployeeHistory $entry = null, $prevTax = null) {
+    protected function computeTax(DateTime $startDate, DateTime $endDate, $employee, EmployeeHistory $entry = null, $prevTax = null) {
         if ($entry == null) {
             return (Object)[
                     'salary' => 0,
                     'tax' => 0,
                     'taxableSalary' => 0,
-                    'deductions' => 0
+                    'deductions' => 0,
+                    'projectCosts' => [ ], // Array( ProjectCostHistory )
                 ];
         }
+
+        $payPeriodEndDate = $endDate;
 
         if ($startDate < $entry->startDate)
             $startDate = $entry->startDate;
@@ -1543,11 +1596,45 @@ class DBInterface {
         if (!$prevTax)
             $prevTax = $this->computeTax($startDate, $endDate, null, null);
 
+        // Update project cost records if needed
+        $projectCosts = $prevTax->projectCosts;
+        $associations = $this->readProjectEmployeeAssociations($employee, $startDate, $endDate);
+        foreach ($associations as $assoc) {
+            $sDate = $startDate;
+            if ($sDate < $assoc->startDate)
+                $sDate = $assoc->startDate;
+
+            $eDate = $endDate;
+            if ($assoc->endDate && ($eDate > $assoc->endDate))
+                $eDate = $assoc->endDate;
+
+            $daysInRange = $eDate->diff($sDate)->format("%d");
+            $portionOfYear = $daysInRange / 365;
+
+            $cost = $entry->salary * $portionOfYear * $assoc->percentAllocation;
+
+            array_push(
+                    $projectCosts,
+                    new ProjectCostHistory(
+                        $sDate,
+                        $eDate,
+                        null,   // To be filled in later after the pay stub entry is written
+                        $assoc->project,
+                        $assoc->department,
+                        $cost
+                    )
+                );
+
+            $assoc->lastPayPeriodEndDate = $payPeriodEndDate;
+            $this->writeProjectEmployeeAssociation($assoc);
+        } // foreach
+
         return (Object)[
                 'salary' => $salary + $prevTax->salary,
 				'tax' => $taxOwed + $prevTax->tax,
 				'taxableSalary' => $taxableSalary + $prevTax->taxableSalary,
-				'deductions' => $deductions + $prevTax->deductions
+				'deductions' => $deductions + $prevTax->deductions,
+                'projectCosts' => $projectCosts
 			];
     } // computeTax
 
@@ -1833,13 +1920,291 @@ class DBInterface {
         } // foreach
     } // writeDepartmentsForProject
 
-    public function readEmployeesForProject($projectId) {
-// TODO:XXX: Finish me!!!
-        return [];
-    } // readEmployeesForProject
+    /**
+     * Reads ProjectEmployeeAssociation records to the database.
+     *
+     * @param   Project|Employee|Department   $for  The object to retrieve the related associations for.
+     * @param   DateTime    $startDate
+     * @param   DateTime    $endDate
+     */
+    public function readProjectEmployeeAssociations($for, DateTime $startDate = null, DateTime $endDate = null) {
+        $project = $employee = $department = null;
 
-    public function writeEmployeesForProject($projectId, $employees) {
-// TODO:XXX: Finish me!!!
-    } // writeEmployeesForProject
+        if ($for instanceof Project) {
+            $project = $for;
+        } else if ($for instanceof Employee) {
+            $employee = $for;
+        } else if ($for instanceof Department) {
+            $department = $for;
+        } else
+            throw new Exception("The $for parameter must be an instance of Department, Employee or Project.");
+
+        if ($project && !$project->id)
+            throw new Exception("The Project must have an ID assigned");
+
+        if ($employee && !$employee->id)
+            throw new Exception("The Employee must have an ID assigned");
+
+        if ($department && !$department->id)
+            throw new Exception("The Employee must have an ID assigned");
+
+        if ($startDate == null)
+            $startDate = new DateTime('1900-01-01');
+        $startDate = $startDate->format("Y-m-d");
+
+        if ($endDate == null)
+            $endDate = new DateTime('9999-12-31');
+        $endDate = $endDate->format("Y-m-d");
+
+        static $stmt;
+        if ($stmt == null) {
+            $stmt = $this->dbh->prepare(
+                    "SELECT a.id, a.project, a.employee, a.department, ".
+                    "a.startDate, a.endDate, a.lastPayPeriodEndDate, a.percentAllocation ".
+                        "FROM projectEmployeeAssociation a ".
+                        "WHERE  ".
+                            "( ".
+                                "a.project = :projectId ".
+                                "OR a.employee = :employeeId ".
+                                "OR a.department = :departmentId ".
+                            ") AND ( ".
+                                "a.endDate >= :startDate AND a.startDate <= :endDate ".
+                            ") ".
+                        "ORDER BY a.startDate DESC"
+                );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project employees association query"));
+        }
+
+        $success = $stmt->execute(Array(
+                            ':projectId' => ($project ? $project->id : null),
+                            ':employeeId' => ($employee ? $employee->id : null),
+                            ':departmentId' => ($department ? $department->id : null),
+                            ':startDate' => $startDate,
+                            ':endDate' => $endDate,
+                        ));
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for project employee associations"));
+
+        $rv = Array();
+        while ($row = $stmt->fetchObject()) {
+            $rv[] = new ProjectEmployee(
+                        $row->id,
+                        $row->startDate,
+                        $row->endDate,
+                        $row->lastPayPeriodEndDate,
+                        ($project ? $project : $this->readProject($row->project)),
+                        ($employee ? $employee : $this->readEmployee($row->employee)),
+                        ($department ? $department : $this->readDepartment($row->department)),
+                        $row->percentAllocation
+                    );
+        } // while
+
+        return $rv;
+    } // readProjectEmployeeAssociations
+
+    /**
+     * Writes a ProjectEmployee entry.
+     *
+     * @param ProjectEmployee $association
+     *
+     * @return  Returns a new ProjectEmployee instance (with a new id if a new record was created).
+     */
+    public function writeProjectEmployeeAssociation(ProjectEmployee $association) {
+        static $stmtInsert;
+        static $stmtUpdate;
+        if ($stmtInsert == null) {
+            $stmtInsert = $this->dbh->prepare(
+                    "INSERT INTO projectEmployeeAssociation ( ".
+                            "startDate, endDate, lastPayPeriodEndDate, ".
+                            "project, department, employee, percentAllocation ".
+                        ") VALUES ( ".
+                            ":startDate, :endDate, :lastPayPeriodEndDate, ".
+                            ":project, :department, :employee, :percentAllocation ".
+                        ")"
+                );
+
+            if (!$stmtInsert)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project employee insert"));
+
+            $stmtUpdate = $this->dbh->prepare(
+                    "UPDATE projectEmployeeAssociation SET ".
+                            "startDate = :startDate, ".
+                            "endDate = :endDate, ".
+                            "lastPayPeriodEndDate = :lastPayPeriodEndDate, ".
+                            "project = :project, ".
+                            "department = :department, ".
+                            "employee = :employee, ".
+                            "percentAllocation = :percentAllocation ".
+                        "WHERE id = :id"
+                );
+
+            if (!$stmtUpdate)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project employee update"));
+        }
+        
+        $params = Array(
+                ':startDate' => $association->startDate->format("Y-m-d"),
+                ':endDate' => ($association->endDate
+                                ? $association->endDate->format("Y-m-d")
+                                : null),
+                ':lastPayPeriodEndDate' => ($association->lastPayPeriodEndDate
+                                ? $association->lastPayPeriodEndDate->format("Y-m-d")
+                                : null),
+                ':project' => $association->project->id,
+                ':department' => $association->department->id,
+                ':employee' => $association->employee->id,
+                ':percentAllocation' => $employee->percentAllocation,
+            );
+
+        if ($association->id == 0) {
+            $stmt = $stmtInsert;
+        } else {
+            $params[':id'] = $association->id;
+            $stmt = $stmtUpdate;
+        }
+
+        $success = $stmt->execute($params);
+
+        if ($success == false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to store project employee record in database"));
+
+        if ($association->id == 0)
+            $newId = $this->dbh->lastInsertId();
+        else
+            $newId = $association->id;
+
+        return new ProjectEmployee(
+                $newId,
+                $association->startDate,
+                $association->endDate,
+                $association->lastPayPeriodEndDate,
+                $association->project,
+                $association->employee,
+                $association->department,
+                $association->percentAllocation
+            );
+    } // writeProjectEmployeeAssociation
+
+    /**
+     *
+     */
+    public function readProjectCostHistory($for, DateTime $startDate = null, DateTime $endDate = null) {
+        $project = $payStub = $department = null;
+
+        if ($for instanceof Project) {
+            $project = $for;
+        } else if ($for instanceof PayStub) {
+            $payStub = $for;
+        } else if ($for instanceof Department) {
+            $department = $for;
+        } else
+            throw new Exception("The $for parameter must be an instance of Department, PayStub or Project.");
+
+        if ($project && !$project->id)
+            throw new Exception("The Project must have an ID assigned");
+
+        if ($payStub && !$payStub->id)
+            throw new Exception("The PayStub must have an ID assigned");
+
+        if ($department && !$department->id)
+            throw new Exception("The Employee must have an ID assigned");
+
+        if ($startDate == null)
+            $startDate = new DateTime('1900-01-01');
+        $startDate = $startDate->format("Y-m-d");
+
+        if ($endDate == null)
+            $endDate = new DateTime('9999-12-31');
+        $endDate = $endDate->format("Y-m-d");
+
+        static $stmt;
+        if ($stmt == null) {
+            $stmt = $this->dbh->prepare(
+                    "SELECT h.project, h.paystub, h.department ".
+                            "h.startDate, h.endDate, h.cost ".
+                        "FROM projectCostHistory h ".
+                        "WHERE  ".
+                            "( ".
+                                "h.project = :projectId ".
+                                "OR h.paystub = :paystubId ".
+                                "OR h.department = :departmentId ".
+                            ") AND ( ".
+                                "h.endDate >= :startDate AND h.startDate <= :endDate ".
+                            ") ".
+                        "ORDER BY h.startDate DESC"
+                );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project cost history query"));
+        }
+
+        $success = $stmt->execute(Array(
+                            ':projectId' => ($project ? $project->id : null),
+                            ':paystubId' => ($payStub ? $payStub->id : null),
+                            ':departmentId' => ($department ? $department->id : null),
+                        ));
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for project cost history"));
+
+        $rv = Array();
+        while ($row = $stmt->fetchObject()) {
+            $rv[] = new ProjectCostHistory(
+                        $row->startDate,
+                        $row->endDate,
+                        ($payStub ? $payStub : $this->readPayStub($row->paystub)),
+                        ($project ? $project : $this->readProject($row->project)),
+                        ($department ? $department : $this->readDepartment($row->department)),
+                        $row->cost
+                    );
+        } // while
+
+        return $rv;
+    } // readProjectCostHistory
+
+    /**
+     *
+     */
+    public function writeProjectCostHistory(ProjectCostHistory $history) {
+        static $stmt;
+        if ($stmt == null) {
+            $stmt = $this->dbh->prepare(
+                    "INSERT INTO projectCostHistory ( ".
+                            "startDate, endDate, paystub, ".
+                            "project, department, cost ".
+                        ") VALUES ( ".
+                            ":startDate, :endDate, :paystub, ".
+                            ":project, :department, :cost ".
+                        ")"
+                );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project cost history insert"));
+        }
+        
+        $params = Array(
+                ':startDate' => $history->startDate->format("Y-m-d"),
+                ':endDate' => $history->endDate->format("Y-m-d"),
+                ':paystub' => ($history->payStub ? $history->payStub->id : null),
+                ':project' => $history->project->id,
+                ':department' => ($history->department ? $history->department->id : null),
+                ':cost' => $history->cost,
+            );
+
+        $success = $stmt->execute($params);
+
+        if ($success == false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to store project cost history record in database"));
+
+        return new ProjectCostHistory(
+                $history->startDate,
+                $history->endDate,
+                $history->payStub,
+                $history->project,
+                $history->department,
+                $history->cost
+            );
+    } // writeProjectCostHistory
 
 } // DBInterface

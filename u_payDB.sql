@@ -115,8 +115,8 @@ CREATE TABLE project(
 
 CREATE TABLE projectCostHistory(
     project INT NOT NULL,
-    paystub INT NOT NULL,
-    department INT NOT NULL,
+    paystub INT NULL,
+    department INT NULL,
     startDate DATE NOT NULL,
     endDate DATE NOT NULL,
     cost DECIMAL(9,2) UNSIGNED NOT NULL,
@@ -139,11 +139,15 @@ CREATE TABLE projectDepartmentAssociation(
 );
 
 CREATE TABLE projectEmployeeAssociation(
+    id INT NOT NULL AUTO_INCREMENT,
     project INT NOT NULL,
     employee INT NOT NULL,
     department INT NOT NULL,
     startDate DATE NOT NULL,
     endDate DATE NOT NULL,
+    lastPayPeriodEndDate DATE NOT NULL,
+    percentAllocation DECIMAL(9,6),
+    PRIMARY KEY (id),
     FOREIGN KEY (project) REFERENCES project(id),
     FOREIGN KEY (employee) REFERENCES employee(id),
     FOREIGN KEY (department) REFERENCES department(id),
