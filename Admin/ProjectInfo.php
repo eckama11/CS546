@@ -9,7 +9,11 @@
     $projectId = @$_GET['id'];
     $project = null;
 
-//An administrator should be able to generate a report on each project which should display the people associated with the project and the total cost.
+/*
+ *	An administrator should be able to generate a report on each 
+ *	project which should display the 
+ *	people associated with the project and the total cost.
+*/
 
 ?>
 <!--Load the AJAX API-->
