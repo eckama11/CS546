@@ -1,0 +1,33 @@
+<% if (employees.length > 0) { %>
+<thead>
+	<tr>
+		<th>Employee</th>
+		<th>Department</th>
+		<th>% Allocation</th>
+		<th>Start Date</th>
+		<th>End Date</th>
+		<th>Last Pay<br/>Period End Date</th>
+	</tr>
+</thead>
+<tbody>
+<%
+  for (var i = 0; i < employees.length; ++i) {
+	var entry = employees.at(i);
+%>
+	<tr employee-id='<%- entry.id %>'<% if (entry.isActive()) print(' class="upayActive"'); %>>
+		<td><%- entry.get('employee').get('name') %></td>
+		<td><%- entry.get('department').get('name') %></td>
+		<td class='numeric'>$&nbsp;<%- formatNumber(entry.get('percentAllocation'), 2) %></td>
+		<td><%- formatDate(entry.get('startDate'), dateFormat) %></td>
+		<td><%- formatDate(entry.get('endDate'), dateFormat) %></td>
+		<td><%- formatDate(entry.get('lastPayPeriodEndDate'), dateFormat) %></td>
+	</tr>
+<% } %>
+</tbody>
+<% } else { %>
+<tbody>
+  <tr>
+	<td>No employees assigned to project.</td>
+  </tr>
+</tbody>
+<% } %>

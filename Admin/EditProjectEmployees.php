@@ -19,12 +19,12 @@
 ?>
 <script>
     define(
-        'EditeditEmployeeViewData',
-        ['models/EmployeeCollection', 'models/DepartmentCollection'],
-        function(EmployeeCollection, DepartmentCollection) {
+        'EditProjectEmployeeData',
+        ['models/ProjectEmployeeCollection', 'models/DepartmentCollection'],
+        function(ProjectEmployeeCollection, DepartmentCollection) {
             return {
                 projectId : <?= $projectId ?>,
-                employees : new EmployeeCollection(<?= json_encode($employees) ?>),
+                employees : new ProjectEmployeeCollection(<?= json_encode($employees) ?>),
                 departments : new DepartmentCollection(<?= json_encode($departments) ?>)
             };
         });
@@ -57,7 +57,7 @@
                 var ProjectEmployeeView = require("views/ProjectEmployeeView");
                 var ModalDialogView = require("views/ModalDialogView");
                 var EditProjectEmployeeView = require("views/EditProjectEmployeeView");
-                var data = require("EditeditEmployeeViewData");
+                var data = require("EditProjectEmployeeData");
 
                 views.editEmployeeView = new EditProjectEmployeeView({
                         projectId : data.projectId,
@@ -123,7 +123,7 @@
 
                 views.editEmployeeViewModal.on("invalid", function() { console.log("invalid stuff!"); });
 
-                views.salaryHistory = new EmployeeSalaryHistoryView({
+                views.projectEmployees = new ProjectEmployeeView({
                         el : $("#ProjectEmployees"),
                         collection : data.employees,
                         events : {
