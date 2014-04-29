@@ -61,6 +61,14 @@
 			echo   '<td>'. ($proj->endDate ? htmlentities($proj->endDate->format("Y-m-d")) : '') .'</td>';
 			echo '</tr>';
     } 
+
+	if ($title == 'View Info') {
+		echo '<tr onclick="selectProject(this)" proj-id="0">';
+		echo '<td>All Projects</td>';
+		echo '<td>Beginning of Time</td>';
+		echo '<td>End of Time</td>';
+		echo '</tr>';
+	}
 ?>
     </tbody>
     </table>
