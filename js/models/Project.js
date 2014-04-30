@@ -1,7 +1,9 @@
 define([
-    "backbone"
+    "backbone",
+    "models/DepartmentCollection"
 ], function(
-    Backbone
+    Backbone,
+    DepartmentCollection
 ) {
     return Backbone.Model.extend({
         initialize: function() {
@@ -10,6 +12,9 @@ define([
 
             if ((this.attributes.endDate != null) && !(this.attributes.endDate instanceof Date))
                 this.attributes.endDate = new Date(this.attributes.endDate);
+
+            if ((this.attributes.departments != null) && !(this.attributes.departments instanceof DepartmentCollection))
+                this.attributes.departments = new DepartmentCollection(this.attributes.departments);
         }
     });
 });

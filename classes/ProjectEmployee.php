@@ -55,6 +55,7 @@ class ProjectEmployee
         $rv->startDate = $this->startDate->format("Y-m-d");
         $rv->endDate = ($this->endDate ? $this->endDate->format("Y-m-d") : null);
         $rv->lastPayPeriodEndDate = ($this->lastPayPeriodEndDate ? $this->lastPayPeriodEndDate->format("Y-m-d") : null);
+        //$rv->project = $this->project;
         $rv->department = $this->department;
         $rv->employee = $this->employee;
         return $rv;

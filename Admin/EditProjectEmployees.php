@@ -12,14 +12,13 @@
     try {
         $projectId = (int) $projectId;
         $project = $db->readProject($projectId);
+        $project->departments = $db->readDepartmentsForProject($projectId);
 
-        $departments = $db->readDepartmentsForProject($projectId);
         $employees = $db->readProjectEmployeeAssociations($project);
 
         $unassignedEmployees = [];
-        foreach ($departments as $dept) {
+        foreach ($project->departments as $dept) {
             $emps = $db->readEmployees(null, $projectId, $dept->id, true);
-echo sprintf("<!-- projectId=%s  departmentId=%s numEmps=%s -->\n", $projectId, $dept->id, count($emps));
             if (count($emps))
                 $unassignedEmployees[$dept->id] = $emps;
         } // foreach
@@ -28,12 +27,12 @@ echo sprintf("<!-- projectId=%s  departmentId=%s numEmps=%s -->\n", $projectId, 
 <script>
     define(
         'EditProjectEmployeeData',
-        ['models/ProjectEmployeeCollection', 'models/DepartmentCollection', 'models/EmployeeCollection'],
-        function(ProjectEmployeeCollection, DepartmentCollection, EmployeeCollection) {
+        ['models/Project', 'models/ProjectEmployeeCollection', 'models/EmployeeCollection'],
+        function(Project, ProjectEmployeeCollection, EmployeeCollection) {
             return {
                 projectId : <?= $projectId ?>,
+                project : new Project(<?= json_encode($project) ?>),
                 employees : new ProjectEmployeeCollection(<?= json_encode($employees) ?>),
-                departments : new DepartmentCollection(<?= json_encode($departments) ?>),
                 unassignedEmployees : { <?php
                     $sep = '';
                     foreach ($unassignedEmployees as $deptId => $emps)
@@ -67,23 +66,23 @@ echo sprintf("<!-- projectId=%s  departmentId=%s numEmps=%s -->\n", $projectId, 
         <script>
             var views = {}; // In global scope for debugging/console access to the views
 
-            function buildEditEmployeeView() {
+            function buildEditProjectEmployeeView() {
                 var ProjectEmployeeView = require("views/ProjectEmployeeView");
                 var ModalDialogView = require("views/ModalDialogView");
                 var EditProjectEmployeeView = require("views/EditProjectEmployeeView");
                 var data = require("EditProjectEmployeeData");
 
-                views.editEmployeeView = new EditProjectEmployeeView({
-                        projectId : data.projectId,
-                        model : null,
-                        departments : data.departments
+                views.editProjectEmployeeView = new EditProjectEmployeeView({
+                        project : data.project,
+                        unassignedEmployees : data.unassignedEmployees,
+                        model : null
                     });
 
-                    views.editEmployeeView.on({
+                    views.editProjectEmployeeView.on({
                             request : function(model, data, options) {
                                     // Don't allow user to dismiss the dialog during the request
-                                    views.editEmployeeViewModal.$(".btn-primary,.btn-default").attr("disabled", "disabled");
-                                    views.editEmployeeViewModal.$(".close").hide();
+                                    views.editProjectEmployeeViewModal.$(".btn-primary,.btn-default").attr("disabled", "disabled");
+                                    views.editProjectEmployeeViewModal.$(".close").hide();
                                 },
                             error : function(model, data, options) {
                                     console.log("Error!", model, data, options);
@@ -91,38 +90,38 @@ echo sprintf("<!-- projectId=%s  departmentId=%s numEmps=%s -->\n", $projectId, 
                                     showError(data.error);
 
                                     // Re-enable the dialog
-                                    views.editEmployeeViewModal.$(".btn-primary,.btn-default").removeAttr("disabled");
-                                    views.editEmployeeViewModal.$(".close").show();
+                                    views.editProjectEmployeeViewModal.$(".btn-primary,.btn-default").removeAttr("disabled");
+                                    views.editProjectEmployeeViewModal.$(".close").show();
                                 },
                             sync : function(model, data, options) {
                                     // Re-enable the dialog
-                                    views.editEmployeeViewModal.$(".btn-primary,.btn-default").removeAttr("disabled");
-                                    views.editEmployeeViewModal.$(".close").show();
+                                    views.editProjectEmployeeViewModal.$(".btn-primary,.btn-default").removeAttr("disabled");
+                                    views.editProjectEmployeeViewModal.$(".close").show();
 
                                     // Close the dialog and refresh the list of employees
-                                    views.editEmployeeViewModal.close();
+                                    views.editProjectEmployeeViewModal.close();
 
                                     views.salaryHistory.collection.add(model, {merge:true});
                                     views.salaryHistory.collection.sort();
                                     views.salaryHistory.render();
                                 },
                             change : function(view) {
-                                    views.editEmployeeViewModal.$(".btn-primary").removeAttr("disabled");
+                                    views.editProjectEmployeeViewModal.$(".btn-primary").removeAttr("disabled");
                                 }
                         });
 
-                views.editEmployeeViewModal = new ModalDialogView({
+                views.editProjectEmployeeViewModal = new ModalDialogView({
                         title : "Edit Employee Assignment",
-                        contentView : views.editEmployeeView.render(),
+                        contentView : views.editProjectEmployeeView.render(),
                         events : {
                             "click .btn-primary" : function(e) {
-                                    views.editEmployeeView.save();
+                                    views.editProjectEmployeeView.save();
                                 },
                             "hide.bs.modal" : function(e) {
                                     if (e.namespace != "bs.modal")
                                         return;
 
-                                    if (views.editEmployeeView.model.hasChanged()) {
+                                    if (views.editProjectEmployeeView.model.hasChanged()) {
                                         if (!confirm("Cancel changes and close dialog?"))
                                             e.preventDefault();
                                     }
@@ -130,12 +129,12 @@ echo sprintf("<!-- projectId=%s  departmentId=%s numEmps=%s -->\n", $projectId, 
                             "show.bs.modal" : function(e) {
                                     if (e.namespace != "bs.modal")
                                         return;
-                                    views.editEmployeeViewModal.$(".btn-primary").attr("disabled", "disabled");
+                                    views.editProjectEmployeeViewModal.$(".btn-primary").attr("disabled", "disabled");
                                 }
                         }
                     });
 
-                views.editEmployeeViewModal.on("invalid", function() { console.log("invalid stuff!"); });
+                views.editProjectEmployeeViewModal.on("invalid", function() { console.log("invalid stuff!"); });
 
                 views.projectEmployees = new ProjectEmployeeView({
                         el : $("#ProjectEmployees"),
@@ -149,8 +148,8 @@ echo sprintf("<!-- projectId=%s  departmentId=%s numEmps=%s -->\n", $projectId, 
                                     var id = row.getAttribute("employee-id");
                                     var entry = data.employees.get(id).clone();
 
-                                    views.editEmployeeView.setModel(entry);
-                                    views.editEmployeeViewModal.show();
+                                    views.editProjectEmployeeView.setModel(entry);
+                                    views.editProjectEmployeeViewModal.show();
                                 }
                         }
                     }).render();
@@ -159,8 +158,8 @@ echo sprintf("<!-- projectId=%s  departmentId=%s numEmps=%s -->\n", $projectId, 
             function addEmployeeEntry() {
                 var ProjectEmployee = require("models/ProjectEmployee");
                 var entry = new ProjectEmployee({ });
-                views.editEmployeeView.setModel(entry);
-                views.editEmployeeViewModal.show();
+                views.editProjectEmployeeView.setModel(entry);
+                views.editProjectEmployeeViewModal.show();
             }
         </script>
 
@@ -177,7 +176,7 @@ require([
     "EditProjectEmployeeData"
 ], function() {
     registerBuildUI(function($) {
-        buildEditEmployeeView();
+        buildEditProjectEmployeeView();
 
         var spinner = $("#spinner");
         spinner.hide();

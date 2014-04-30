@@ -1,0 +1,13 @@
+<select class="form-control" <% if (name) { %>name="<%- name %>"<% } %>>
+	<option disabled<% if (selectedValue == null) print(' selected'); %>>Select One</option>
+<%
+if (collection) {
+	collection.each(function(department) {
+		var id = department.get("id");
+%>
+	<option value="<%- id %>" <% if (id == selectedValue) print(' selected'); %>><%- String(department) %></option>
+<%
+	})
+}
+%>
+</select>

@@ -2,6 +2,7 @@
 
 class Project
     extends GetterSetter
+    implements JsonSerializable
 {
 
     private $_id;
@@ -10,6 +11,7 @@ class Project
     private $_name;
     private $_description;
     private $_otherCosts;
+    private $_departments;
 
     /**
      * Constructs a new Project object.
@@ -48,6 +50,19 @@ class Project
         $this->_otherCosts = (double) $otherCosts;
     } // __construct
 
+    public function jsonSerialize() {
+        $rv = new StdClass();
+        $rv->id = $this->id;
+        $rv->startDate = $this->startDate->format("Y-m-d");
+        $rv->endDate = $this->endDate->format("Y-m-d");
+        $rv->name = $this->name;
+        $rv->description = $this->description;
+        $rv->otherCosts = $this->otherCosts;
+        if ($this->departments != null)
+            $rv->departments = $this->departments;
+        return $rv;
+    } // jsonSerialize
+
     protected function getId() {
         return $this->_id;
     } // getId
@@ -72,8 +87,17 @@ class Project
         return $this->_otherCosts;
     } // getOtherCosts
 
+    protected function getDepartments() {
+        return $this->_departments;
+    } // getDepartments()
+
+    /* A hack to allow specifying a departments property in some cases */
+    protected function setDepartments($newDepartments) {
+        $this->_departments = $newDepartments;
+    } // setDepartments()
+
     public function __toString() {
-        return __CLASS__ ."(id=$this->id, startDate=$this->startDate, endDate=$this->endDate, name=$this->name, description=$this->description, otherCosts=$this->otherCosts)";
+        return __CLASS__ ."(id=$this->id, startDate=$this->startDate, endDate=$this->endDate, name=$this->name, description=$this->description, otherCosts=$this->otherCosts". ($this->departments ? ", departments=". implode(",", $this->departments) : "") .")";
     } // __toString
 
-} // class EmployeeDepartmentAssociation
+} // class Project

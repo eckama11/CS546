@@ -2,14 +2,18 @@ define([
     "backbone",
     "bootstrap-datepicker",
     "text!./EditProjectEmployeeView.txt",
-    "views/DepartmentSelectorView",
+    "views/SingleDepartmentSelectorView",
+    "views/EmployeeSelectorView",
     "models/ProjectEmployee",
+    "models/Project"
 ], function(
     Backbone,
     bsDatepicker,
     templateText,
-    DepartmentSelectorView,
-    ProjectEmployee
+    SingleDepartmentSelectorView,
+    EmployeeSelectorView,
+    ProjectEmployee,
+    Project
 ) {
     var defaultEvents = {
             "change" : "_handleChangeEvent"
@@ -22,39 +26,35 @@ define([
 
         template : _.template(templateText),
 
-//        employeeId : null,
+        project : null,
+        unassignedEmployees : null,
         model : null,
-        departments : null,
-//        ranks : null,
 
-//        departmentSelector : null,
-//        rankSelector : null,
+        departmentSelector : null,
+        employeeSelector : null,
 
         initialize : function(options) {
             options = options || {};
 
             this.events = _.extend(defaultEvents, this.events || {});
 
-//            this.setDepartments(options.departments);
-//            this.setRanks(options.ranks);
-//            this.setEmployeeId(options.employeeId);
-
+            this.setProject(options.project);
+            this.setUnassignedEmployees(options.unassignedEmployees);
             this.setModel(options.model);
 
             this.on("invalid", this._handleInvalidInput, this);
         },
 
-/*
-        setEmployeeId : function(employeeId) {
-            if (isNaN(employeeId) || !employeeId)
-                throw new Error("The specified employeeId is invalid.");
-            this.employeeId = employeeId;
+        setProject : function(project) {
+            if (!(project instanceof Project))
+                throw new Error("The project must be specified");
+
+            this.project = project;
         },
-*/
 
         setModel : function(model) {
             if (model == null)
-                model = new ProjectEmployee();
+                model = new ProjectEmployee({ project : this.project });
             else if (!(model instanceof ProjectEmployee))
                 throw new Error("The model must be a ProjectEmployee");
 
@@ -66,66 +66,60 @@ define([
 
             this.render();
         },
-/*
-        setRanks : function(ranks) {
-            this.ranks = ranks;
-            if (this.rankSelector)
-                this.rankSelector.setCollection(this.ranks);
+
+        setUnassignedEmployees : function(unassignedEmployees) {
+            this.unassignedEmployees = unassignedEmployees;
         },
 
-        setDepartments : function(departments) {
-            this.departments = departments;
-            if (this.departmentSelector)
-                this.departmentSelector.setCollection(this.departments);
-        },
-*/
         render : function() {
             if (this.className)
                 this.$el.addClass(this.className);
 
             this.$el.html(
                 this.template({
-//                    employeeId : this.employeeId,
                     model : this.model
                 })
             );
 
             this.$('[data-provide="datepicker"]').datepicker();
-/*
+
             var $deptSel = this.$(".departmentSelector");
-            var depts = this.model.get("departments");
-            depts = (depts ? depts.map(function(val) { return val.get("id"); }) : null);
+            var dept = this.model.get("department");
+            dept = (dept ? dept.get("id") : null);
 
             if (!this.departmentSelector) {
-                this.departmentSelector = new DepartmentSelectorView({
+                this.departmentSelector = new SingleDepartmentSelectorView({
                         el : $deptSel,
-                        name : "departments",
-                        collection : this.departments,
-                        selectedValues : depts
+                        name : "department",
+                        collection : this.model.get("project").get("departments"),
+                        selectedValue : dept
                     });
             } else {
                 $deptSel.replaceWith(this.departmentSelector.el);
                 this.departmentSelector.delegateEvents();
-                this.departmentSelector.setSelectedValues(depts);
+                this.departmentSelector.setSelectedValue(dept);
             }
 
-            var $rankSel = this.$(".rankSelector");
-            var rank = this.model.get("rank");
-            rank = (rank ? rank.get("id") : null);
+            var $employeeSel = this.$(".employeeSelector");
+            var employee = this.model.get("employee");
+            employee = (employee ? employee.get("id") : null);
 
-            if (!this.rankSelector) {
-                this.rankSelector = new RankSelectorView({
-                        el : $rankSel,
-                        name : "rank",
-                        collection : this.ranks,
-                        selectedValue : rank
+            if (!this.employeeSelector) {
+                this.employeeSelector = new EmployeeSelectorView({
+                        el : $employeeSel,
+                        name : "employee",
+                        collection : (
+                                this.departmentSelector.selectedValue
+                                    ? this.unassignedEmployees[this.departmentSelector.selectedValue]
+                                    : null
+                            ),
+                        selectedValue : employee
                     }).render();
             } else {
-                $rankSel.replaceWith(this.rankSelector.el);
-                this.rankSelector.delegateEvents();
-                this.rankSelector.setSelectedValue(rank);
+                $employeeSel.replaceWith(this.employeeSelector.el);
+                this.employeeSelector.delegateEvents();
+                this.employeeSelector.setSelectedValue(employee);
             }
-*/
 
             this._resetTooltips();
 
@@ -235,8 +229,10 @@ define([
                 if (val != null) {
                     if ((name == 'startDate') || (name == 'endDate')) {
                         val = new Date(val);
-                    } else if (name == 'rank') {
-                        val = this.ranks.get(val);
+                    } else if (name == 'department') {
+                        val = this.departmentSelector.collection.get(val);
+                    } else if (name == 'employee') {
+                        val = this.employeeSelector.collection.get(val);
                     }
                 }
 

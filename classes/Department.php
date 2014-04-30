@@ -55,7 +55,7 @@ class Department
     } // getManagers()
 
     public function __toString() {
-        return __CLASS__ ."(id=$this->id, name=$this->name". ($this->managers ? ", managers=".implode($this->managers) : "") .")";
+        return __CLASS__ ."(id=$this->id, name=$this->name". ($this->managers ? ", managers=". implode(",", $this->managers) : "") .")";
     } // __toString
 
 } // class Department

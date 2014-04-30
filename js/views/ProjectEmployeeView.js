@@ -27,7 +27,7 @@ define([
 
             if (this.collection) {
                 if (!(this.collection instanceof ProjectEmployeeCollection))
-                    throw new Error("The collection must be an ProjectEmployeeCollection");
+                    throw new Error("The collection must be a ProjectEmployeeCollection");
 
                 if (!this.collection.comparator)
                     this.collection.comparator =

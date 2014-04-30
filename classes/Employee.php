@@ -2,6 +2,7 @@
 
 class Employee
     extends GetterSetter
+    implements JsonSerializable
 {
 
     private $_id;
@@ -39,7 +40,15 @@ class Employee
         $this->taxId = $taxId;
         $this->current = $current;
     } // __construct
-    
+
+    public function jsonSerialize() {
+        $rv = new StdClass();
+        $rv->id = $this->id;
+        $rv->name = $this->name;
+        $rv->username = $this->username;
+        return $rv;
+    } // jsonSerialize
+
     protected function getId() {
         return $this->_id;
     } // getId
