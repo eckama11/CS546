@@ -25,9 +25,9 @@
 <% } %>
 </tbody>
 <% } else { %>
-<tbody>
+<thead>
   <tr>
-	<td>No employees assigned to project.</td>
+	<th>No employees assigned to project.</th>
   </tr>
-</tbody>
+</thead>
 <% } %>

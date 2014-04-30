@@ -16,16 +16,30 @@
         $departments = $db->readDepartmentsForProject($projectId);
         $employees = $db->readProjectEmployeeAssociations($project);
 
+        $unassignedEmployees = [];
+        foreach ($departments as $dept) {
+            $emps = $db->readEmployees(null, $projectId, $dept->id, true);
+echo sprintf("<!-- projectId=%s  departmentId=%s numEmps=%s -->\n", $projectId, $dept->id, count($emps));
+            if (count($emps))
+                $unassignedEmployees[$dept->id] = $emps;
+        } // foreach
+
 ?>
 <script>
     define(
         'EditProjectEmployeeData',
-        ['models/ProjectEmployeeCollection', 'models/DepartmentCollection'],
-        function(ProjectEmployeeCollection, DepartmentCollection) {
+        ['models/ProjectEmployeeCollection', 'models/DepartmentCollection', 'models/EmployeeCollection'],
+        function(ProjectEmployeeCollection, DepartmentCollection, EmployeeCollection) {
             return {
                 projectId : <?= $projectId ?>,
                 employees : new ProjectEmployeeCollection(<?= json_encode($employees) ?>),
-                departments : new DepartmentCollection(<?= json_encode($departments) ?>)
+                departments : new DepartmentCollection(<?= json_encode($departments) ?>),
+                unassignedEmployees : { <?php
+                    $sep = '';
+                    foreach ($unassignedEmployees as $deptId => $emps)
+                        echo '"'. $deptId .'" : new EmployeeCollection('. json_encode($emps) .')'. $sep;
+                        $sep = ', ';
+                ?> }
             };
         });
 </script>
@@ -46,7 +60,7 @@
 	<div id="employeeDiv" class="row" style="display:none">
 		<legend>Update Employees for <?php echo htmlentities($project->name); ?></legend>
 
-        <table id="editEmployeeView" class="table table-striped table-bordered table-condensed table-hover"></table>
+        <table id="ProjectEmployees" class="table table-striped table-bordered table-condensed table-hover"></table>
         
         <button type="button" class="btn btn-default" onclick="addEmployeeEntry()">Add</button>
         
@@ -142,9 +156,9 @@
                     }).render();
             }
 
-            function addHistoryEntry() {
+            function addEmployeeEntry() {
                 var ProjectEmployee = require("models/ProjectEmployee");
-                var entry = new ProjectEmployee({ startDate : new Date() });
+                var entry = new ProjectEmployee({ });
                 views.editEmployeeView.setModel(entry);
                 views.editEmployeeViewModal.show();
             }

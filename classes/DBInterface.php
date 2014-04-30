@@ -681,7 +681,9 @@ class DBInterface {
 	/**
      * Tests whether a specific taxId is in currently assigned to an employee or not.
      *
-     * @param   String  $taxId   The taxId to test for.
+     * @param   String  $taxId              The taxId to test for.
+     * @param   int     $ignoreEmployeeId   The ID of an Employee entry to ignore (eg. typically,
+     *                                      the Employee being updated)
      *
      * @return  int    Returns the employee ID of the employee the tax ID is assigned to if found,
      *                  false if the tax ID is not assigned to an existing employee.
@@ -893,14 +895,23 @@ class DBInterface {
     /**
      * Reads a list of all employees from the database.
      *
-     * @param   DateTime|null|false $effectiveDate Determines which employees are returned.  If a
-     *                  DateTime is given, only employees that are active for that date are returned.
-     *                  If null or not specified, all employees are returned, and if false, return
-     *                  inactive employees only.
+     * @param   DateTime|null|false $effectiveDate
+     *                                  Determines which employees are returned.  If a DateTime is
+     *                                  given, only employees that are active for that date are
+     *                                  returned.  If null or not specified, all employees are
+     *                                  returned, and if false, returns inactive employees only.
+     * @param   int     $projectId      The ID of a project to filter employees by.  If specified,
+     *                                  $departmentId must also be provided.
+     * @param   int     $departmentId   The ID of department associated with the project.  If specified,
+     *                                  $projectId must also be provided.
+     * @param   boolean $getUnassigned  When a $projectId and $departmentId are provided, whether to
+     *                                  return employees that are associated to the project via the
+     *                                  department (false), or to return employees associated with the
+     *                                  department that are not assigned to the project (true).
      *
-     * @return  Array[Employee] Array of Employee instances.
+     * @return  Array[Employee] Array of matching Employee instances.
      */
-    public function readEmployees($effectiveDate = null) {
+    public function readEmployees($effectiveDate = null, $projectId = null, $departmentId = null, $getUnassigned = false) {
         static $stmt;
         if ($stmt == null) {
             $stmt = $this->dbh->prepare(
@@ -910,14 +921,43 @@ class DBInterface {
                             "ON h.employee = e.id ".
                                 "AND h.startDate <= :effectiveDate ".
                                 "AND (h.endDate IS NULL OR h.endDate >= :effectiveDate) ".
-                        "WHERE :returnAll = 1 ".
-                            "OR CASE WHEN (h.id IS NOT NULL) THEN 1 ELSE 0 END = :activeFlag ".
+                        "LEFT JOIN employeeDepartmentAssociation eda ".
+                            "ON eda.employeeHistory = h.id ".
+                                "AND eda.department = :departmentId ".
+                        "LEFT JOIN projectEmployeeAssociation pea ".
+                            "ON pea.project = :projectId ".
+                                "AND pea.department = :departmentId ".
+                                "AND pea.employee = e.id ".
+                        "WHERE ( ".
+                                ":returnAll = 1 ".
+                                "OR CASE WHEN (h.id IS NOT NULL) THEN 1 ELSE 0 END = :activeFlag ".
+                            ") AND ( ".
+                                "(:projectId IS NULL) ".
+                                "OR ".
+                                "( :getUnassigned = 0 AND pea.id IS NOT NULL ) ". // Return assigned
+                                "OR ".
+                                "( :getUnassigned = 1 AND eda.employeeHistory IS NOT NULL AND pea.id IS NULL ) ". // Return unassigned
+                            ") ".
                         "ORDER BY name"
                 );
 
             if (!$stmt)
                 throw new Exception($this->formatErrorMessage(null, "Unable to prepare employees query"));
         }
+
+        if ($projectId !== null) {
+            if (!is_numeric($projectId))
+                throw new Exception("Parameter \$projectId must be an integer");
+            $projectId = (int) $projectId;
+        } else if ($departmentId !== null)
+            throw new Exception("The \$projectId must be provided if a \$departmentId is given");
+
+        if ($departmentId !== null) {
+            if (!is_numeric($departmentId))
+                throw new Exception("Parameter \$departmentId must be an integer");
+            $departmentId = (int) $departmentId;
+        } else if ($projectId !== null)
+            throw new Exception("The \$departmentId must be provided if a \$projectId is given");
 
         $returnAll = false;
         $activeFlag = true;
@@ -934,6 +974,9 @@ class DBInterface {
                 ':effectiveDate' => $effectiveDate->format('Y-m-d'),
                 ':activeFlag' => ($activeFlag ? 1 : 0),
                 ':returnAll' => ($returnAll ? 1 : 0),
+                ':projectId' => $projectId,
+                ':departmentId' => $departmentId,
+                ':getUnassigned' => ($getUnassigned ? 1 : 0),
             ));
         if ($success === false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for employee records"));
@@ -1400,7 +1443,7 @@ class DBInterface {
                 throw new Exception($this->formatErrorMessage(null, "Unable to prepare generate pay stub employee query"));
 
             $stmtProject = $this->dbh->prepare(
-                    "SELECT p.id, p.otherCosts ".
+                    "SELECT p.id, p.startDate, p.endDate, p.otherCosts ".
                         "FROM project p ".
                         "WHERE NOT EXISTS (".
                                 "SELECT * ".
@@ -1425,14 +1468,20 @@ class DBInterface {
             throw new Exception($this->formatErrorMessage($stmtProject, "Unable to query projects which need costs generated"));
 
         while ($row = $stmtProject->fetchObject()) {
+            $startDate = new DateTime($row->startDate);
+            $startDate = ($payPeriodStartDate >= $startDate ? $payPeriodStartDate : $startDate);
+
+            $endDate = new DateTime($row->endDate);
+            $endDate = ($payPeriodEndDate >= $endDate ? $payPeriodEndDate : $endDate);
+
             $this->writeProjectCostHistory(
                     new ProjectCostHistory(
-                        $payPeriodStartDate,
-                        $payPeriodEndDate,
+                        $startDate,
+                        $endDate,
                         null,
                         $this->readProject($row->id),
                         null,
-                        $row->otherCosts
+                        $row->otherCosts * $this->portionOfYear($startDate, $endDate)
                     )
                 );
         } // while
@@ -1519,6 +1568,11 @@ class DBInterface {
             ];
     } // generatePayStubs
 
+    protected function portionOfYear($startDate, $endDate) {
+        $daysInRange = $endDate->diff($startDate)->format("%d");
+        return $daysInRange / 365;
+    }
+
     /**
      * Computes the tax owed for a given monthly salary and number of deductions as well as updating related project costs.
      *
@@ -1560,8 +1614,7 @@ class DBInterface {
         if ($entry->endDate && ($endDate > $entry->endDate))
             $endDate = $entry->endDate;
 
-        $daysInRange = $endDate->diff($startDate)->format("%d");
-        $portionOfYear = $daysInRange / 365;
+        $portionOfYear = $this->portionOfYear($startDate, $endDate);
 
         $salary = $entry->salary * $portionOfYear;
 
@@ -1608,10 +1661,7 @@ class DBInterface {
             if ($assoc->endDate && ($eDate > $assoc->endDate))
                 $eDate = $assoc->endDate;
 
-            $daysInRange = $eDate->diff($sDate)->format("%d");
-            $portionOfYear = $daysInRange / 365;
-
-            $cost = $entry->salary * $portionOfYear * $assoc->percentAllocation;
+            $cost = $entry->salary * $this->portionOfYear($sDate, $eDate) * $assoc->percentAllocation;
 
             array_push(
                     $projectCosts,
@@ -1638,28 +1688,39 @@ class DBInterface {
 			];
     } // computeTax
 
-    /**
-     * Tests whether a specific name is in currently assigned to an project or not.
+	/**
+     * Tests whether a specific name is in currently assigned to a project or not.
      *
-     * @param   String  $name   The name to test for.
+     * @param   String  $name               The name to test for.
+     * @param   int     $ignoreProjectId    The ID of an Project entry to ignore (eg. typically,
+     *                                      the Project being updated)
      *
-     * @return  Boolean    True if the name is assigned to an existing project, false if not.
+     * @return  int    Returns the employee ID of the employee the tax ID is assigned to if found,
+     *                  false if the tax ID is not assigned to an existing employee.
      */
-    public function isProjectNameInUse( $name ) {
+     public function isProjectNameInUse( $name, $ignoreProjectId = null ) {
         static $stmt;
         if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                   "SELECT id ".
                     "FROM project ".
-                    "WHERE name=:name"
+                    "WHERE name = :name ".
+                        "AND id != :ignoreProjectId"
                 );
 
             if (!$stmt)
                 throw new Exception($this->formatErrorMessage(null, "Unable to prepare project name query"));
         }
 
+        if ($ignoreProjectId !== null) {
+            if (!is_numeric($ignoreProjectId))
+                throw new Exception("The \$ignoreProjectId parameter must be an integer");
+            $ignoreProjectId = (int) $ignoreProjectId;
+        }
+
         $success = $stmt->execute(Array(
-                ':name' => $name
+                ':name' => $name,
+                'ignoreProjectId' => $ignoreProjectId
             ));
         if ($success === false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for project name"));
@@ -2088,10 +2149,16 @@ class DBInterface {
     } // writeProjectEmployeeAssociation
 
     /**
+     * Reads ProjectCostHistory records for a Project, PayStub, Department or Employee.
      *
+     * @param   Project|PayStub|Department|Employee $for    The object to retrieve associated cost history records for.
+     * @param   DateTime    $startDate  
+     * @param   DateTime    $endDate    
+     *
+     * @return  Array[ProjectCostHistory] Array of matching ProjectCostHistory records.
      */
     public function readProjectCostHistory($for, DateTime $startDate = null, DateTime $endDate = null) {
-        $project = $payStub = $department = null;
+        $project = $payStub = $department = $employee = null;
 
         if ($for instanceof Project) {
             $project = $for;
@@ -2099,8 +2166,10 @@ class DBInterface {
             $payStub = $for;
         } else if ($for instanceof Department) {
             $department = $for;
+        } else if ($for instanceof Employee) {
+            $employee = $for;
         } else
-            throw new Exception("The $for parameter must be an instance of Department, PayStub or Project.");
+            throw new Exception("The $for parameter must be an instance of Department, Employee, PayStub or Project.");
 
         if ($project && !$project->id)
             throw new Exception("The Project must have an ID assigned");
@@ -2109,6 +2178,9 @@ class DBInterface {
             throw new Exception("The PayStub must have an ID assigned");
 
         if ($department && !$department->id)
+            throw new Exception("The Department must have an ID assigned");
+
+        if ($employee && !$employee->id)
             throw new Exception("The Employee must have an ID assigned");
 
         if ($startDate == null)
@@ -2125,11 +2197,14 @@ class DBInterface {
                     "SELECT h.project, h.paystub, h.department, ".
                             "h.startDate, h.endDate, h.cost ".
                         "FROM projectCostHistory h ".
+                        "LEFT JOIN paystub ps ".
+                            "ON ps.id = h.paystub ".
                         "WHERE  ".
                             "( ".
                                 "h.project = :projectId ".
                                 "OR h.paystub = :paystubId ".
                                 "OR h.department = :departmentId ".
+                                "OR ps.employee = :employeeId ".
                             ") AND ( ".
                                 "h.endDate >= :startDate AND h.startDate <= :endDate ".
                             ") ".
@@ -2141,9 +2216,12 @@ class DBInterface {
         }
 
         $success = $stmt->execute(Array(
+                            ':startDate' => $startDate,
+                            ':endDate' => $endDate,
                             ':projectId' => ($project ? $project->id : null),
                             ':paystubId' => ($payStub ? $payStub->id : null),
                             ':departmentId' => ($department ? $department->id : null),
+                            ':employeeId' => ($employee ? $employee->id : null),
                         ));
         if ($success === false)
             throw new Exception($this->formatErrorMessage($stmt, "Unable to query database for project cost history"));

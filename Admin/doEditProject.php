@@ -20,7 +20,7 @@ try {
         throw new Exception("You must provide a project name");
 
     // Verify the project name is unique
-    if ($db->isProjectNameInUse($name))
+    if ($db->isProjectNameInUse($name, ($id ? $id : null)))
         throw new Exception("The name '$name' is already assigned to another project");
 
     if (!strlen($description))
