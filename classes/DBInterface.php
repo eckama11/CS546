@@ -2122,7 +2122,7 @@ class DBInterface {
         static $stmt;
         if ($stmt == null) {
             $stmt = $this->dbh->prepare(
-                    "SELECT h.project, h.paystub, h.department ".
+                    "SELECT h.project, h.paystub, h.department, ".
                             "h.startDate, h.endDate, h.cost ".
                         "FROM projectCostHistory h ".
                         "WHERE  ".

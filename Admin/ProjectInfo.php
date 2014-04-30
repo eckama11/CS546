@@ -5,9 +5,16 @@
 
     if (!$loginSession->isAdministrator)
         doUnauthorizedRedirect();
-
-    $projectId = @$_GET['id'];
-    $project = null;
+	
+	
+		$projectId = (int)@$_GET['id'];
+	try {
+		$pro = ($db->readProject($projectId));
+		$projectArray[] = ($db->readProjectCostHistory($pro));
+	} catch (Exception $ex) {
+        handleDBException($ex);
+        return;
+	}
 
 /*
  *	An administrator should be able to generate a report on each 
