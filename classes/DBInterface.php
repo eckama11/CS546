@@ -2307,4 +2307,42 @@ class DBInterface {
             );
     } // writeProjectCostHistory
 
+	/*
+	*
+	*/
+	public function readProjectChart(int $project) {
+	 	static $stmt;
+	 	if ($stmt == null) {
+            $stmt = $this->dbh->prepare(
+                    "SELECT P.name, SUM(T.cost)".
+                    	"FROM projectCostHistory T, paystub P".
+                    	"WHERE T.paystub = P.id".
+                    		"AND T.project = ". 
+                    		":project".
+                    	"GROUP BY P.id, P.name"
+                );
+
+            if (!$stmt)
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project cost history insert"));
+        }
+        
+        $params = Array(
+                ':project' => $project,
+            );
+
+        $success = $stmt->execute($params);
+
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to select employees and cost for project."));
+		
+		$rv = Array();
+        while ($row = $stmt->fetchObject()) {
+            $rv[] = new Array(
+                        $row->name,
+                        $row->cost
+                    );
+        } // while
+
+        return $rv;
+	 }//readProjectChart
 } // DBInterface

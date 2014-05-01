@@ -9,8 +9,8 @@
 	
 		$projectId = (int)@$_GET['id'];
 	try {
-		$pro = ($db->readProject($projectId));
-		$projectArray[] = ($db->readProjectCostHistory($pro));
+		
+		$projectArray[] = ($db->readProjectChart($pro));
 	} catch (Exception $ex) {
         handleDBException($ex);
         return;
