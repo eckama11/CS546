@@ -2315,12 +2315,13 @@ class DBInterface {
 	 	 
 	 	if ($stmt == null) {
             $stmt = $this->dbh->prepare(
-                    "SELECT P.name, SUM(T.cost)".
-                    	"FROM projectCostHistory T, paystub P".
-                    	"WHERE T.paystub = P.id".
+            //SELECT P.name, SUM(T.cost) FROM projectCostHistory T, paystub P WHERE T.paystub = P.id AND T.project = 2 GROUP BY P.id, P.name
+                    "SELECT P.name, SUM(T.cost) as totalCost ".
+                    	"FROM projectCostHistory T, paystub P ".
+                    	"WHERE T.paystub = P.id ".
                     		"AND T.project = ". 
-                    		":project".
-                    	"GROUP BY P.id, P.name"
+                    		(int)$project.
+                    	" GROUP BY P.id, P.name"
                 );
 
             if (!$stmt)
@@ -2339,16 +2340,12 @@ class DBInterface {
 		$rv = Array();
 		
         while ($row = $stmt->fetchObject()) {
-            
             $rv[] = array(
                         $row->name,
-                        $row->cost
+                        $row->totalCost
                     );
-           
         } // while
-	
-        return $rv;
-         
-	 }//readProjectChart
+		return $rv;
+     }//readProjectChart
 	
 } // DBInterface

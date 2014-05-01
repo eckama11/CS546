@@ -9,8 +9,7 @@
 	
 		$projectId = @$_GET['id'];
 	try {
-		
-		//$projectArray[] = ($db->readProjectChart($pro));
+		$projectArray = ($db->readProjectChart($projectId));
 	} catch (Exception $ex) {
         handleDBException($ex);
         return;
@@ -44,10 +43,10 @@
 	data.addColumn('number', 'Dollars');
 	data.addRows([
 	  ['Other Costs', <?= json_encode($db->readProject($projectId)->otherCosts) ?>],
-	  ['Onions', 1],
-	  ['Olives', 1],
-	  ['Zucchini', 1],
-	  ['Pepperoni', 2]
+	  ['Other Costs', 0]
+	  //while ($projectArray has $pro) {
+	  	//[$projectArray
+	  //}
 	]);
 
 	// Set chart options
@@ -63,4 +62,6 @@
 
 <div class="container col-md-6 col-md-offset-3">
 	<div id="chart_div"></div>
+	<div><?php var_dump($projectArray); ?></div>
+	<div><?php echo $projectId; ?></div>
 <div>
