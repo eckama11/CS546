@@ -40,8 +40,6 @@ define([
                     employee = this.attributes.employee = new Employee(employee);
                 //employee.on("change", this._proxyChangeEvent, this);
             }
-
-            this.attributes.percentAllocation = Number(this.attributes.percentAllocation);
         },
 
         toJSON: function(options) {
@@ -93,14 +91,14 @@ define([
             if (attributes.lastPayPeriodEndDate && !(attributes.lastPayPeriodEndDate instanceof Date))
                 errs.push(new ValidateError("The last pay period end date is invalid", "lastPayPeriodEndDate"));
 
-            if (!(attributes.department instanceof Department) || !attributes.department.id)
-                errs.push(new ValidateError("You must select at least one department for employee", "departments"));
-
             if (!(attributes.project instanceof Project) || !attributes.project.id)
                 errs.push(new ValidateError("You must specify the project", "project"));
 
+            if (!(attributes.department instanceof Department) || !attributes.department.id)
+                errs.push(new ValidateError("You must select a department", "department"));
+
             if (!(attributes.employee instanceof Employee) || !attributes.employee.id)
-                errs.push(new ValidateError("You must specify the employee", "employee"));
+                errs.push(new ValidateError("You must select an employee", "employee"));
 
             if (attributes.percentAllocation == null)
                 errs.push(new ValidateError("You must enter the employee's percent allocation", "percentAllocation"));

@@ -5,7 +5,9 @@ define([
     "views/SingleDepartmentSelectorView",
     "views/EmployeeSelectorView",
     "models/ProjectEmployee",
-    "models/Project"
+    "models/Project",
+    "models/DepartmentCollection",
+    "models/EmployeeCollection"
 ], function(
     Backbone,
     bsDatepicker,
@@ -13,7 +15,9 @@ define([
     SingleDepartmentSelectorView,
     EmployeeSelectorView,
     ProjectEmployee,
-    Project
+    Project,
+    DepartmentCollection,
+    EmployeeCollection
 ) {
     var defaultEvents = {
             "change" : "_handleChangeEvent"
@@ -27,7 +31,7 @@ define([
         template : _.template(templateText),
 
         project : null,
-        unassignedEmployees : null,
+        deptEmployees : null,
         model : null,
 
         departmentSelector : null,
@@ -36,10 +40,12 @@ define([
         initialize : function(options) {
             options = options || {};
 
+            _.bindAll(this, "_handleDepartmentChanged");
+
             this.events = _.extend(defaultEvents, this.events || {});
 
             this.setProject(options.project);
-            this.setUnassignedEmployees(options.unassignedEmployees);
+            this.setDeptEmployees(options.deptEmployees);
             this.setModel(options.model);
 
             this.on("invalid", this._handleInvalidInput, this);
@@ -67,8 +73,8 @@ define([
             this.render();
         },
 
-        setUnassignedEmployees : function(unassignedEmployees) {
-            this.unassignedEmployees = unassignedEmployees;
+        setDeptEmployees : function(deptEmployees) {
+            this.deptEmployees = deptEmployees;
         },
 
         render : function() {
@@ -84,46 +90,81 @@ define([
             this.$('[data-provide="datepicker"]').datepicker();
 
             var $deptSel = this.$(".departmentSelector");
+
             var dept = this.model.get("department");
-            dept = (dept ? dept.get("id") : null);
+
+            var depts = this.model.get("project").get("departments");
+
+            if (dept && !depts.get(dept))
+                depts.add(dept);
 
             if (!this.departmentSelector) {
                 this.departmentSelector = new SingleDepartmentSelectorView({
                         el : $deptSel,
                         name : "department",
-                        collection : this.model.get("project").get("departments"),
-                        selectedValue : dept
+                        collection : depts,
+                        selectedValue : (dept ? dept.get("id") : null),
+                        readOnly : !!this.model.id,
+                        events : {
+                            "change select" : this._handleDepartmentChanged
+                        }
                     });
             } else {
                 $deptSel.replaceWith(this.departmentSelector.el);
                 this.departmentSelector.delegateEvents();
-                this.departmentSelector.setSelectedValue(dept);
+                this.departmentSelector.readOnly = !!this.model.id;
+                this.departmentSelector.setCollection(depts);
+                this.departmentSelector.setSelectedValue((dept ? dept.get("id") : null));
             }
 
             var $employeeSel = this.$(".employeeSelector");
             var employee = this.model.get("employee");
-            employee = (employee ? employee.get("id") : null);
+
+            var emps = this.departmentSelector.selectedValue
+                            ? this.deptEmployees[this.departmentSelector.selectedValue]
+                            : null;
+            if (!emps)
+                emps = new EmployeeCollection();
+
+            if (employee && !emps.get(employee))
+                emps.add(employee);
 
             if (!this.employeeSelector) {
                 this.employeeSelector = new EmployeeSelectorView({
                         el : $employeeSel,
                         name : "employee",
-                        collection : (
-                                this.departmentSelector.selectedValue
-                                    ? this.unassignedEmployees[this.departmentSelector.selectedValue]
-                                    : null
-                            ),
-                        selectedValue : employee
+                        readOnly : !!this.model.id,
+                        collection : emps,
+                        selectedValue : (employee ? employee.get("id") : null)
                     }).render();
             } else {
                 $employeeSel.replaceWith(this.employeeSelector.el);
                 this.employeeSelector.delegateEvents();
-                this.employeeSelector.setSelectedValue(employee);
+                this.employeeSelector.readOnly = !!this.model.id;
+                this.employeeSelector.setCollection(emps);
+                this.employeeSelector.setSelectedValue((employee ? employee.get("id") : null));
             }
 
             this._resetTooltips();
 
             return this;
+        },
+
+        _handleDepartmentChanged : function(e) {
+            if (!this.deptEmployees)
+                return;
+
+            var newDepartment = $(e.target).val();
+
+            var emps = this.deptEmployees[newDepartment];
+            if (!emps)
+                emps = new EmployeeCollection();
+
+            var employee = this.model.get("employee");
+            if (employee && !emps.get(employee))
+                emps.add(employee);
+
+            this.employeeSelector.setCollection(emps);
         },
 
         showSpinner : function() {
@@ -162,9 +203,7 @@ define([
             }
         },
 
-/*
         save : function(options) {
-            this.model.set("employeeId", this.employeeId);
             this._resetTooltips();
             if (!this.model.isValid()) {
                 // Errors occurred
@@ -177,7 +216,7 @@ define([
             var self = this;
             var xhr = $.ajax({
                 "type" : "POST",
-                "url" : "Admin/doEditEmployeeSalary.php",
+                "url" : "Admin/doEditProjectEmployees.php",
                 "data" : this.model.toJSON(),
                 "dataType" : "json"
                 })
@@ -213,7 +252,6 @@ define([
 
             return false;
         },
-*/
 
         _handleChangeEvent : function(e) {
             if (e.target.form == this.$("form").get(0)) {

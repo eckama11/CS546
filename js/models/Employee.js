@@ -13,6 +13,10 @@ define([
                     current = this.attributes.current = new EmployeeHistory(current);
                 //current.on("change", this._proxyChangeEvent, this);
             }
+        },
+
+        toString : function() {
+            return this.get('id') +": "+ this.get('name');
         }
     });
 });

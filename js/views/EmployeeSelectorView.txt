@@ -1,13 +1,26 @@
+<% if (readOnly) { %>
+<div class="form-control" disabled="disabled"><%
+     if (selectedValue) {
+       var entry = collection.get(selectedValue);
+       if (entry)
+         print(_.escape(String(entry)));
+       else
+	     print("?? "+ selectedValue);
+     } else
+       print("No Selection");
+%>&nbsp;</div>
+<% } else { %>
 <select class="form-control" <% if (name) { %>name="<%- name %>"<% } %>>
+<%   if (collection && collection.length) { %>
 	<option disabled<% if (selectedValue == null) print(' selected'); %>>Select One</option>
-<%
-if (collection) {
-	collection.each(function(employee) {
-		var id = employee.get("id");
+<%	   collection.each(function(entry) {
+         var id = entry.get("id");
 %>
-	<option value="<%- id %>" <% if (id == selectedValue) print(' selected'); %>><%- String(employee) %></option>
+	<option value="<%- id %>" <% if (id == selectedValue) print(' selected'); %>><%- String(entry) %></option>
 <%
-	})
-}
-%>
+	   })
+     } else { %>
+	<option disabled selected>None available</option>
+<% 	 } %>
 </select>
+<% } %>

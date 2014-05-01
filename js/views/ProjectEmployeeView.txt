@@ -17,7 +17,7 @@
 	<tr employee-id='<%- entry.id %>'<% if (entry.isActive()) print(' class="upayActive"'); %>>
 		<td><%- entry.get('employee').get('name') %></td>
 		<td><%- entry.get('department').get('name') %></td>
-		<td class='numeric'>$&nbsp;<%- formatNumber(entry.get('percentAllocation'), 2) %></td>
+		<td class='numeric'><%- formatNumber(entry.get('percentAllocation'), 2) %>&nbsp;%</td>
 		<td><%- formatDate(entry.get('startDate'), dateFormat) %></td>
 		<td><%- formatDate(entry.get('endDate'), dateFormat) %></td>
 		<td><%- formatDate(entry.get('lastPayPeriodEndDate'), dateFormat) %></td>

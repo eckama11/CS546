@@ -16,11 +16,11 @@
 
         $employees = $db->readProjectEmployeeAssociations($project);
 
-        $unassignedEmployees = [];
+        $deptEmployees = [];
         foreach ($project->departments as $dept) {
-            $emps = $db->readEmployees(null, $projectId, $dept->id, true);
+            $emps = $db->readEmployeesForDepartment($dept->id, null, $project->startDate, $project->endDate);
             if (count($emps))
-                $unassignedEmployees[$dept->id] = $emps;
+                $deptEmployees[$dept->id] = $emps;
         } // foreach
 
 ?>
@@ -29,17 +29,22 @@
         'EditProjectEmployeeData',
         ['models/Project', 'models/ProjectEmployeeCollection', 'models/EmployeeCollection'],
         function(Project, ProjectEmployeeCollection, EmployeeCollection) {
-            return {
+            var rv = {
                 projectId : <?= $projectId ?>,
                 project : new Project(<?= json_encode($project) ?>),
                 employees : new ProjectEmployeeCollection(<?= json_encode($employees) ?>),
-                unassignedEmployees : { <?php
+                deptEmployees : { <?php
                     $sep = '';
-                    foreach ($unassignedEmployees as $deptId => $emps)
-                        echo '"'. $deptId .'" : new EmployeeCollection('. json_encode($emps) .')'. $sep;
+                    foreach ($deptEmployees as $deptId => $emps) {
+                        echo $sep .'"'. $deptId .'" : new EmployeeCollection('. json_encode($emps) .')';
                         $sep = ', ';
+                    }
                 ?> }
             };
+            for (var i = 0; i < rv.employees.length; ++i) {
+                rv.employees.at(i).set('project', rv.project);
+            }
+            return rv;
         });
 </script>
 <?php
@@ -74,7 +79,7 @@
 
                 views.editProjectEmployeeView = new EditProjectEmployeeView({
                         project : data.project,
-                        unassignedEmployees : data.unassignedEmployees,
+                        deptEmployees : data.deptEmployees,
                         model : null
                     });
 
@@ -101,9 +106,9 @@
                                     // Close the dialog and refresh the list of employees
                                     views.editProjectEmployeeViewModal.close();
 
-                                    views.salaryHistory.collection.add(model, {merge:true});
-                                    views.salaryHistory.collection.sort();
-                                    views.salaryHistory.render();
+                                    views.projectEmployees.collection.add(model, {merge:true});
+                                    views.projectEmployees.collection.sort();
+                                    views.projectEmployees.render();
                                 },
                             change : function(view) {
                                     views.editProjectEmployeeViewModal.$(".btn-primary").removeAttr("disabled");
@@ -157,7 +162,9 @@
 
             function addEmployeeEntry() {
                 var ProjectEmployee = require("models/ProjectEmployee");
-                var entry = new ProjectEmployee({ });
+                var data = require("EditProjectEmployeeData");
+
+                var entry = new ProjectEmployee({ project : data.project });
                 views.editProjectEmployeeView.setModel(entry);
                 views.editProjectEmployeeViewModal.show();
             }

@@ -21,6 +21,8 @@ define([
 
         selectedValue : null,
 
+        readOnly : false,
+
         "$selectEl" : null,
 
         initialize : function(options) {
@@ -30,6 +32,9 @@ define([
                 this.setSelectedValue(options.selectedValue);
 
             this.name = options.name || this.name;
+
+            if (options.readOnly != null)
+                this.readOnly = options.readOnly;
 
             this.setCollection(this.collection);
         },
@@ -41,11 +46,14 @@ define([
                 this.template({
                     collection : this.collection,
                     name : this.name,
-                    selectedValue : this.selectedValue
+                    selectedValue : this.selectedValue,
+                    readOnly : this.readOnly
                 })
             );
 
             this.$selectEl = this.$("> select");
+            if (!this.$selectEl.length)
+                this.$selectEl = null;
 
             return this;
         },
@@ -65,7 +73,8 @@ define([
                     this.selectedValue = this.$selectEl.val();
                 } else
                     this.$selectEl.get(0).selectedIndex = 0;
-            }
+            } else if (this.readOnly)
+                this.render();
             return this;
         },
 
@@ -82,6 +91,8 @@ define([
                 this.collection.on("change add remove reset sort", this.render, this);
 
             this.render();
+
+            return this;
         }
 
     });

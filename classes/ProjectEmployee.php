@@ -12,7 +12,7 @@ class ProjectEmployee
     private $_project;
     private $_employee;
     private $_department;
-    private $_percentAllocation;
+    private $_percentAllocation = 0;
 
 
     /**
@@ -58,6 +58,7 @@ class ProjectEmployee
         //$rv->project = $this->project;
         $rv->department = $this->department;
         $rv->employee = $this->employee;
+        $rv->percentAllocation = $this->percentAllocation;
         return $rv;
     } // jsonSerialize
 
@@ -134,7 +135,7 @@ class ProjectEmployee
         return $this->_project;
     } // getProject
 
-    protected function setProject( Department $newProject ) {
+    protected function setProject( Project $newProject ) {
         if ($this->lastPayPeriodEndDate)
             throw new Exception("The project cannot be modified if the lastPayPeriodEndDate is set");
 

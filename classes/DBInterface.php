@@ -1276,31 +1276,36 @@ class DBInterface {
      * @param   int $departmentId The ID of the Department to retrieve the Employees for.
      * @param   EmployeeType $employeeType Type of employees to return.  If not specified,
      *                     all employees associated with the department will be returned.
-     * @param   DateTime    $forDate    The date to return assignments for.  If not provided, the
+     * @param   DateTime    $startDate  The starting date to return matches for.  If not provided, the
      *                                  current date will be used.
+     * @param   DateTime    $endDate    The ending date to return matches for.  If not provided, the
+     *                                  $startDate will be used.
      * @return  Array[Employee]   Array of the Employees for a Department.
      */
-    public function readEmployeesForDepartment( $departmentId, EmployeeType $employeeType = null, DateTime $forDate = null ) {
+    public function readEmployeesForDepartment( $departmentId, EmployeeType $employeeType = null, DateTime $startDate = null, DateTime $endDate = null ) {
         if (!is_numeric($departmentId))
             throw new Exception("Parameter \$departmentId must be an integer");
         $departmentId = (int) $departmentId;
 
-        if ($forDate === null)
-            $forDate = new DateTime();
+        if ($startDate === null)
+            $startDate = new DateTime();
+
+        if ($endDate === null)
+            $endDate = $startDate;
 
         static $stmt;
         if ($stmt == null) {
             $stmt = $this->dbh->prepare(
-                    "SELECT h.employee ".
+                    "SELECT DISTINCT h.employee ".
                         "FROM ( ".
-                            "SELECT :date as forDate, :employeeType as employeeType, :departmentId as departmentId ".
+                            "SELECT :startDate as startDate, :endDate as endDate, :employeeType as employeeType, :departmentId as departmentId ".
                         ") s ".
                         "INNER JOIN employeeDepartmentAssociation a ".
                             "ON a.department = s.departmentId ".
                         "INNER JOIN employeeHistory h ".
                             "ON h.id = a.employeeHistory ".
-                                "AND h.startDate <= s.forDate ".
-                                "AND (h.endDate >= s.forDate OR h.endDate IS NULL) ".
+                                "AND h.startDate <= s.endDate ".
+                                "AND (h.endDate >= s.startDate OR h.endDate IS NULL) ".
                         "INNER JOIN rank r ".
                             "ON r.id = h.rank ".
                                 "AND (s.employeeType IS NULL OR r.employeeType = s.employeeType) ".
@@ -1314,8 +1319,9 @@ class DBInterface {
         }
 
         $success = $stmt->execute(Array(
-                ':date' => $forDate->format("Y-m-d"),
-                ':employeeType' => $employeeType->name,
+                ':startDate' => $startDate->format("Y-m-d"),
+                ':endDate' => $endDate->format("Y-m-d"),
+                ':employeeType' => ($employeeType == null ? null : $employeeType->name),
                 ':departmentId' => $departmentId,
             ));
         if ($success === false)
@@ -1982,14 +1988,17 @@ class DBInterface {
     } // writeDepartmentsForProject
 
     /**
-     * Reads ProjectEmployeeAssociation records to the database.
+     * Reads ProjectEmployeeAssociation records from the database.
      *
-     * @param   Project|Employee|Department   $for  The object to retrieve the related associations for.
+     * @param   Project|Employee|Department|int  $for  The object to retrieve the related associations for.
      * @param   DateTime    $startDate
      * @param   DateTime    $endDate
+     *
+     * @return  A single ProjectEmployee instance or null when $for is an integer, otherwise
+     *          an array of ProjectEmployee instances that match the specified parameters.
      */
     public function readProjectEmployeeAssociations($for, DateTime $startDate = null, DateTime $endDate = null) {
-        $project = $employee = $department = null;
+        $project = $employee = $department = $projectEmployeeId = null;
 
         if ($for instanceof Project) {
             $project = $for;
@@ -1997,8 +2006,10 @@ class DBInterface {
             $employee = $for;
         } else if ($for instanceof Department) {
             $department = $for;
+        } else if (is_numeric($for)) {
+            $projectEmployeeId = (int) $for;
         } else
-            throw new Exception("The $for parameter must be an instance of Department, Employee or Project.");
+            throw new Exception("The $for parameter must be an instance of Department, Employee or Project or an integer.");
 
         if ($project && !$project->id)
             throw new Exception("The Project must have an ID assigned");
@@ -2008,6 +2019,9 @@ class DBInterface {
 
         if ($department && !$department->id)
             throw new Exception("The Employee must have an ID assigned");
+
+        if (($projectEmployeeId !== null) && !$projectEmployeeId)
+            throw new Exception("The id cannot be 0");
 
         if ($startDate == null)
             $startDate = new DateTime('1900-01-01');
@@ -2025,11 +2039,12 @@ class DBInterface {
                         "FROM projectEmployeeAssociation a ".
                         "WHERE  ".
                             "( ".
-                                "a.project = :projectId ".
+                                "a.id = :projectEmployeeId ".
+                                "OR a.project = :projectId ".
                                 "OR a.employee = :employeeId ".
                                 "OR a.department = :departmentId ".
                             ") AND ( ".
-                                "a.endDate >= :startDate AND a.startDate <= :endDate ".
+                                "(a.endDate IS NULL OR a.endDate >= :startDate) AND a.startDate <= :endDate ".
                             ") ".
                         "ORDER BY a.startDate DESC"
                 );
@@ -2039,6 +2054,7 @@ class DBInterface {
         }
 
         $success = $stmt->execute(Array(
+                            ':projectEmployeeId' => $projectEmployeeId,
                             ':projectId' => ($project ? $project->id : null),
                             ':employeeId' => ($employee ? $employee->id : null),
                             ':departmentId' => ($department ? $department->id : null),
@@ -2052,8 +2068,8 @@ class DBInterface {
         while ($row = $stmt->fetchObject()) {
             $rv[] = new ProjectEmployee(
                         $row->id,
-                        $row->startDate,
-                        $row->endDate,
+                        new DateTime($row->startDate),
+                        ($row->endDate ? new DateTime($row->endDate) : null),
                         $row->lastPayPeriodEndDate,
                         ($project ? $project : $this->readProject($row->project)),
                         ($employee ? $employee : $this->readEmployee($row->employee)),
@@ -2061,6 +2077,12 @@ class DBInterface {
                         $row->percentAllocation
                     );
         } // while
+
+        if ($projectEmployeeId != null) {
+            if (count($rv) != 1)
+                throw new Exception("No such project employee association: $projectEmployeeId");
+            $rv = $rv[0];
+        }
 
         return $rv;
     } // readProjectEmployeeAssociations
@@ -2116,7 +2138,7 @@ class DBInterface {
                 ':project' => $association->project->id,
                 ':department' => $association->department->id,
                 ':employee' => $association->employee->id,
-                ':percentAllocation' => $employee->percentAllocation,
+                ':percentAllocation' => $association->percentAllocation,
             );
 
         if ($association->id == 0) {

@@ -1,13 +1,13 @@
 <select class="form-control" <% if (name) { %>name="<%- name %>"<% } %>>
+<% if (collection && collection.length) { %>
 	<option disabled<% if (selectedValue == null) print(' selected'); %>>Select One</option>
-<%
-if (collection) {
-	collection.each(function(rank) {
+<%	collection.each(function(rank) {
 		var id = rank.get("id");
 %>
 	<option value="<%- id %>" rank-base-salary="<%- rank.get("baseSalary") %>"<% if (id == selectedValue) print(' selected'); %>><%- String(rank) %></option>
 <%
 	})
-}
-%>
+} else { %>
+	<option disabled selected>None available</option>
+<% } %>
 </select>
