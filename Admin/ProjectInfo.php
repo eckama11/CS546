@@ -7,10 +7,10 @@
         doUnauthorizedRedirect();
 	
 	
-		$projectId = (int)@$_GET['id'];
+		$projectId = @$_GET['id'];
 	try {
 		
-		$projectArray[] = ($db->readProjectChart($pro));
+		//$projectArray[] = ($db->readProjectChart($pro));
 	} catch (Exception $ex) {
         handleDBException($ex);
         return;

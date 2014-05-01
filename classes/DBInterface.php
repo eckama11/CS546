@@ -2307,11 +2307,12 @@ class DBInterface {
             );
     } // writeProjectCostHistory
 
-	/*
-	*
-	*/
-	public function readProjectChart(int $project) {
+	
+	
+	
+	public function readProjectChart($project) {
 	 	static $stmt;
+	 	 
 	 	if ($stmt == null) {
             $stmt = $this->dbh->prepare(
                     "SELECT P.name, SUM(T.cost)".
@@ -2325,7 +2326,7 @@ class DBInterface {
             if (!$stmt)
                 throw new Exception($this->formatErrorMessage(null, "Unable to prepare project cost history insert"));
         }
-        
+       
         $params = Array(
                 ':project' => $project,
             );
@@ -2336,13 +2337,18 @@ class DBInterface {
             throw new Exception($this->formatErrorMessage($stmt, "Unable to select employees and cost for project."));
 		
 		$rv = Array();
+		
         while ($row = $stmt->fetchObject()) {
-            $rv[] = new Array(
+            
+            $rv[] = array(
                         $row->name,
                         $row->cost
                     );
+           
         } // while
-
+	
         return $rv;
+         
 	 }//readProjectChart
+	
 } // DBInterface
