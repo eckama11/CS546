@@ -9,7 +9,9 @@
 	
 		$projectId = @$_GET['id'];
 	try {
-		$projectArray = ($db->readProjectChart($projectId));
+		$projectArray = ($db->readProjectChartEmployees($projectId));
+		$projectOther = ($db->readProjectChartOther($projectId));
+		$projectDepartments = ($db->readProjectChartProjects($projectId));
 	} catch (Exception $ex) {
         handleDBException($ex);
         return;
@@ -31,10 +33,12 @@
 
   // Set a callback to run when the Google Visualization API is loaded.
   google.setOnLoadCallback(drawChart);
+  google.setOnLoadCallback(drawChart2);
 
   // Callback that creates and populates a data table,
   // instantiates the pie chart, passes in the data and
   // draws it.
+  
   function drawChart() {
 
 	// Create the data table.
@@ -42,13 +46,12 @@
 	data.addColumn('string', 'Costs');
 	data.addColumn('number', 'Dollars');
 	data.addRows([
-		
-	  ['Other Costs', <?= json_encode($db->readProject($projectId)->otherCosts) ?>],
-	  
-	].concat(<?= json_encode($projectArray) ?>));
+	
+	].concat(<?= json_encode($projectOther) ?>)
+	.concat(<?= json_encode($projectArray) ?>));
 
 	// Set chart options
-	var options = {'title':<?= json_encode($db->readProject($projectId)->name) ?>,
+	var options = {'title':<?= json_encode($db->readProject($projectId)->name) ?> ,
 				   'width':800,
 				   'height':500};
 
@@ -56,10 +59,31 @@
 	var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
 	chart.draw(data, options);
   }
+  
+  function drawChart2() {
+
+	// Create the data table.
+	var data = new google.visualization.DataTable();
+	data.addColumn('string', 'Costs');
+	data.addColumn('number', 'Dollars');
+	data.addRows([].concat(<?= json_encode($projectDepartments) ?>));
+
+	// Set chart options
+	var options = {'title':<?= json_encode($db->readProject($projectId)->name) ?>,
+				   'width':800,
+				   'height':500};
+
+	// Instantiate and draw our chart, passing in some options.
+	var chart = new google.visualization.PieChart(document.getElementById('chart_div2'));
+	chart.draw(data, options);
+  }
 </script>
 
 <div class="container col-md-6 col-md-offset-3">
+	<legend>Employee Report</legend>
 	<div id="chart_div"></div>
-	<div><?php var_dump($projectArray); ?></div>
-	<div><?php echo $projectId; ?></div>
+	<br>
+	<legend>Department Report</legend>
+	<div id="chart_div2"></div>
+	<br>
 <div>
