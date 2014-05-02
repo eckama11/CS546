@@ -2361,23 +2361,23 @@ class DBInterface {
 
 	public function readProjectChartProjects($project, $startDate = null, $endDate = null) {
 	 	static $stmt;
-	 	 
-	 	if ($stmt == null) {
-            $stmt = $this->dbh->prepare(
-            	"SELECT COALESCE(D.name, 'Other Costs') as name, SUM(P.cost) as totalCost ".
-                    "FROM projectCostHistory P ".
-                    "LEFT JOIN department D ".
-                        "ON P.department = D.id ".
-                    "WHERE P.project = :project ". 
-                        "AND P.startDate <= :endDate ".
-                        "AND P.endDate >= :startDate ".
-                    "GROUP BY D.id, D.name"
-                );
+	 		if ($stmt == null) {
+				$stmt = $this->dbh->prepare(
+					"SELECT COALESCE(D.name, 'Other Costs') as name, SUM(P.cost) as totalCost ".
+						"FROM projectCostHistory P ".
+						"LEFT JOIN department D ".
+							"ON P.department = D.id ".
+						"WHERE P.project = :project ". 
+							"AND P.startDate <= :endDate ".
+							"AND P.endDate >= :startDate ".
+						"GROUP BY D.id, D.name"
+					);
 
-            if (!$stmt)
-                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project department cost query"));
-        }
-       
+				if (!$stmt)
+					throw new Exception($this->formatErrorMessage(null, "Unable to prepare project department cost query"));
+			}
+	 		//throw new Exception($this->formatErrorMessage(null, "project 0"));
+	 		
         if ($startDate == null)
             $startDate = new DateTime('1900-01-01');
         $startDate = $startDate->format("Y-m-d");
@@ -2408,4 +2408,90 @@ class DBInterface {
 		return $rv;
     } // readProjectChartProjects
 
+	public function readProjectChartAllDepartments($project, $startDate = null, $endDate = null) {
+		static $stmt;
+		if ($stmt == null) {
+				$stmt = $this->dbh->prepare(
+					"SELECT D.name, SUM(P.cost) as totalCost ".
+                    "FROM projectCostHistory P, department D ".
+                    "WHERE P.department = D.id ".
+                    	"AND P.startDate <= :endDate ".
+						"AND P.endDate >= :startDate ".
+                    "GROUP BY D.id, D.name"
+				);
+
+				if (!$stmt)
+					throw new Exception($this->formatErrorMessage(null, "Unable to prepare project department cost query"));
+			}
+		if ($startDate == null)
+            $startDate = new DateTime('1900-01-01');
+        $startDate = $startDate->format("Y-m-d");
+
+        if ($endDate == null)
+            $endDate = new DateTime('9999-12-31');
+        $endDate = $endDate->format("Y-m-d");
+
+        $params = Array(
+                ':startDate' => $startDate,
+                ':endDate' => $endDate
+            );
+
+        $success = $stmt->execute($params);
+
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to select department costs for project."));
+		
+		$rv = Array();
+		
+        while ($row = $stmt->fetchObject()) {
+            $rv[] = array(
+            			$row->name,
+                        (double)$row->totalCost
+                    );
+        } // while
+		return $rv;
+	}// readProjectChartProjectsAllDepartments
+	
+	public function readProjectChartAll($project, $startDate = null, $endDate = null) {
+		static $stmt;
+		if ($stmt == null) {
+				$stmt = $this->dbh->prepare(
+					"SELECT SUM(cost) as totalCost ".
+                    "FROM projectCostHistory ".
+                    "WHERE department IS NULL ".
+                    	"AND startDate <= :endDate ".
+						"AND endDate >= :startDate"
+				);
+
+				if (!$stmt)
+					throw new Exception($this->formatErrorMessage(null, "Unable to prepare other costs query"));
+			}
+		if ($startDate == null)
+            $startDate = new DateTime('1900-01-01');
+        $startDate = $startDate->format("Y-m-d");
+
+        if ($endDate == null)
+            $endDate = new DateTime('9999-12-31');
+        $endDate = $endDate->format("Y-m-d");
+
+        $params = Array(
+                ':startDate' => $startDate,
+                ':endDate' => $endDate
+            );
+
+        $success = $stmt->execute($params);
+
+        if ($success === false)
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to select other costs for all projects."));
+		
+		$rv = Array();
+		
+        while ($row = $stmt->fetchObject()) {
+            $rv[] = array(
+            			'Other Costs',
+                        (double)$row->totalCost
+                    );
+        } // while
+		return $rv;
+	}// readProjectChartProjectsAll
 } // DBInterface
