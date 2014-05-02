@@ -1451,14 +1451,15 @@ class DBInterface {
             $stmtProject = $this->dbh->prepare(
                     "SELECT p.id, p.startDate, p.endDate, p.otherCosts ".
                         "FROM project p ".
-                        "WHERE NOT EXISTS (".
+                        "WHERE NOT EXISTS ( ".
                                 "SELECT * ".
                                     "FROM projectCostHistory h ".
                                     "WHERE h.project = p.id ".
-                                        "AND h.department IS NULL ".
                                         "AND h.startDate <= :payPeriodEndDate ".
                                         "AND h.endDate >= :payPeriodStartDate ".
-                            ")"
+                            ") ".
+                            "AND p.startDate <= :payPeriodEndDate ".
+                            "AND p.endDate >= :payPeriodStartDate"
                 );
 
             if (!$stmtProject)
@@ -1487,7 +1488,7 @@ class DBInterface {
                         null,
                         $this->readProject($row->id),
                         null,
-                        $row->otherCosts * $this->portionOfYear($startDate, $endDate)
+                        $row->otherCosts * 12 * $this->portionOfYear($startDate, $endDate)
                     )
                 );
         } // while
@@ -1517,9 +1518,6 @@ class DBInterface {
 
             $effectiveTaxRate = (($tax->salary > 0) ? $tax->tax / $tax->salary : 0);
 
-            $departments = $this->readDepartmentsForEmployeeHistory( $payPeriodStartDate, $employee->id );
-            $departments = array_map(function($dept) { return $this->departmentToPaystubDepartment($dept); }, $departments);
-
             // Read previous pay stub for YTD information
             $salaryYTD = $tax->salary;
             $taxWithheldYTD = $tax->tax;
@@ -1534,6 +1532,11 @@ class DBInterface {
                 $deductionsYTD += $lastPaystub->deductionsYTD;
             }
 
+            $current = $history[count($history) - 1];
+
+            $departments = $this->readDepartmentsForEmployeeHistory( $current->id );
+            $departments = array_map(function($dept) { return $this->departmentToPaystubDepartment($dept); }, $departments);
+
             $paystub = new PayStub(
                     0,
                     $payPeriodStartDate,
@@ -1541,12 +1544,12 @@ class DBInterface {
                     $employee, 
                     $employee->name,
                     $employee->address,
-                    $employee->current->rank,
-                    $employee->current->rank->employeeType,
+                    $current->rank,
+                    $current->rank->employeeType,
                     $employee->taxId,
                     $departments,
                     $tax->salary,
-                    $employee->current->numDeductions,
+                    $current->numDeductions,
                     $tax->tax,
                     $effectiveTaxRate,
                     $tax->deductions,
@@ -1575,7 +1578,7 @@ class DBInterface {
     } // generatePayStubs
 
     protected function portionOfYear($startDate, $endDate) {
-        $daysInRange = $endDate->diff($startDate)->format("%d");
+        $daysInRange = $endDate->diff($startDate)->format("%d") + 1;
         return $daysInRange / 365;
     }
 
@@ -1667,7 +1670,7 @@ class DBInterface {
             if ($assoc->endDate && ($eDate > $assoc->endDate))
                 $eDate = $assoc->endDate;
 
-            $cost = $entry->salary * $this->portionOfYear($sDate, $eDate) * $assoc->percentAllocation;
+            $cost = $entry->salary * $this->portionOfYear($sDate, $eDate) * $assoc->percentAllocation / 100;
 
             array_push(
                     $projectCosts,
@@ -2070,7 +2073,7 @@ class DBInterface {
                         $row->id,
                         new DateTime($row->startDate),
                         ($row->endDate ? new DateTime($row->endDate) : null),
-                        $row->lastPayPeriodEndDate,
+                        ($row->lastPayPeriodEndDate ? new DateTime($row->lastPayPeriodEndDate) : null),
                         ($project ? $project : $this->readProject($row->project)),
                         ($employee ? $employee : $this->readEmployee($row->employee)),
                         ($department ? $department : $this->readDepartment($row->department)),

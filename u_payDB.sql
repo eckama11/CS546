@@ -193,6 +193,7 @@ INSERT INTO department (
     name
   ) VALUES
     ( 'Corporate' ),
+  /*
     ( 'Human Resources' ),
     ( 'Marketing' ),
     ( 'Customer Support' ),
@@ -201,6 +202,9 @@ INSERT INTO department (
     ( 'Documentation' ),
     ( 'Legacy Product Maintenance' ),
     ( 'New Product Development' )
+    */
+    ( 'Mobile Development' ),
+    ( 'Data Application Development' )
 ;
 
 -- Populate the ranks
@@ -211,15 +215,15 @@ INSERT INTO rank (
     ( 'Built-in System Administrator', 0.00, 'Administrator' ),
     ( 'President',               1000000.00, 'Administrator' ),
     ( 'Vice-President',           500000.00, 'Administrator' ),
-    ( 'Human Resources Manager',  100000.00, 'Administrator' ),
+--    ( 'Human Resources Manager',  100000.00, 'Administrator' ),
     -- Manager roles
-    ( 'New Product Manager',      125000.00, 'Manager' ),
-    ( 'Legacy Product Manager',   125000.00, 'Manager' ),
-    ( 'Customer Support Manager', 125000.00, 'Manager' ),
-    ( 'Project Leader',           115000.00, 'Manager' ),
+    ( 'Mobile Development Manager',      125000.00, 'Manager' ),
+    ( 'Data Application Manager',   125000.00, 'Manager' ),
+    -- ( 'Customer Support Manager', 125000.00, 'Manager' ),
+    -- ( 'Project Leader',           115000.00, 'Manager' ),
     -- Developer roles
-    ( 'Senior Software Developer', 80000.00, 'Software Developer' ),
-    ( 'Software Developer II',     60000.00, 'Software Developer' ),
+    -- ( 'Senior Software Developer', 80000.00, 'Software Developer' ),
+    -- ( 'Software Developer II',     60000.00, 'Software Developer' ),
     ( 'Software Developer',        50000.00, 'Software Developer' ),
     ( 'Programmer',                45000.00, 'Software Developer' )
 ;
@@ -232,19 +236,41 @@ INSERT INTO employee (
     ( 'joe', 'password', 'Joe Josephson', '123 Main Street
 Smalltown, WI 55555', '999-88-7777' ),
     ( 'linda', 'password', 'Linda Linders', 'W1234 Highway 12
-Westville, WI 55556', '111-22-3333' );
+Westville, WI 55556', '111-22-3333' ),
+    ( 'mobile1', 'password', 'Mobile Developer 1', 'Mobile Dev 1 Address', '001-45-6789' ),
+    ( 'mobile2', 'password', 'Mobile Developer 2', 'Mobile Dev 2 Address', '002-45-6789' ),
+    ( 'mobile3', 'password', 'Mobile Developer 3', 'Mobile Dev 3 Address', '003-45-6789' ),
+    ( 'data1', 'password', 'Data Developer 1', 'Data Dev 1 Address', '004-45-6789' ),
+    ( 'data2', 'password', 'Data Developer 2', 'Data Dev 2 Address', '005-45-6789' ),
+    ( 'data3', 'password', 'Data Developer 3', 'Data Dev 3 Address', '006-45-6789' )
+;
 
 INSERT INTO employeeHistory (
     employee, startDate, rank, numDeductions, salary
   ) VALUES
     (1, DATE_SUB(CURDATE(), INTERVAL 1 YEAR), 1, 0, 0.00),
-    (2, DATE_SUB(CURDATE(), INTERVAL 3 MONTH), 5, 3, 125000.00),
-    (3, DATE_SUB(CURDATE(), INTERVAL 1 MONTH), 6, 2, 125000.00);
+    (2, DATE_SUB(CURDATE(), INTERVAL 3 MONTH), 4, 3, 125000.00),
+    (3, DATE_SUB(CURDATE(), INTERVAL 1 MONTH), 5, 2, 125000.00),
+
+    (4, DATE_SUB(CURDATE(), INTERVAL 2 MONTH), 6, 1, 52000.00),
+    (5, DATE_SUB(CURDATE(), INTERVAL 3 MONTH), 7, 1, 48000.00),
+    (6, DATE_SUB(CURDATE(), INTERVAL 4 MONTH), 6, 2, 60000.00),
+    (7, DATE_SUB(CURDATE(), INTERVAL 5 MONTH), 6, 1, 50000.00),
+    (8, DATE_SUB(CURDATE(), INTERVAL 6 MONTH), 7, 2, 65000.00),
+    (9, DATE_SUB(CURDATE(), INTERVAL 7 MONTH), 6, 2, 55000.00)
+;
 
 INSERT INTO employeeDepartmentAssociation (
 	employeeHistory, department
   ) VALUES
     ( 1, 1 ),
-    ( 2, 9 ),
-    ( 2, 8 ),
-    ( 3, 8 );
+    ( 2, 2 ),
+    ( 3, 3 ),
+
+    ( 4, 2 ),
+    ( 5, 2 ),
+    ( 6, 2 ),
+    ( 7, 3 ),
+    ( 8, 3 ),
+    ( 9, 3 )
+;

@@ -163,8 +163,11 @@
             function addEmployeeEntry() {
                 var ProjectEmployee = require("models/ProjectEmployee");
                 var data = require("EditProjectEmployeeData");
-
-                var entry = new ProjectEmployee({ project : data.project });
+                var entry = new ProjectEmployee({
+                                project : data.project,
+                                startDate : data.project.get("startDate"),
+                                endDate : data.project.get("endDate")
+                            });
                 views.editProjectEmployeeView.setModel(entry);
                 views.editProjectEmployeeViewModal.show();
             }
