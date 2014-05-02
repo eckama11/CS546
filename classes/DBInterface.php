@@ -2310,7 +2310,7 @@ class DBInterface {
             );
     } // writeProjectCostHistory
 
-	public function readProjectChartEmployees($project) {
+	public function readProjectChartEmployees($project, $startDate = null, $endDate = null) {
 	 	static $stmt;
 	 	 
 	 	if ($stmt == null) {
@@ -2320,15 +2320,27 @@ class DBInterface {
                     "LEFT JOIN paystub P ".
                         "ON T.paystub = P.id ".
                     "WHERE T.project = :project ".
+                        "AND T.startDate <= :endDate ".
+                        "AND T.endDate >= :startDate ".
                     "GROUP BY P.id, P.name"
                 );
 
             if (!$stmt)
                 throw new Exception($this->formatErrorMessage(null, "Unable to prepare project employee cost query"));
         }
-       
+
+        if ($startDate == null)
+            $startDate = new DateTime('1900-01-01');
+        $startDate = $startDate->format("Y-m-d");
+
+        if ($endDate == null)
+            $endDate = new DateTime('9999-12-31');
+        $endDate = $endDate->format("Y-m-d");
+
         $params = Array(
                 ':project' => $project,
+                ':startDate' => $startDate,
+                ':endDate' => $endDate
             );
 
         $success = $stmt->execute($params);
@@ -2347,7 +2359,7 @@ class DBInterface {
 		return $rv;
     } // readProjectChartEmployees
 
-	public function readProjectChartProjects($project) {
+	public function readProjectChartProjects($project, $startDate = null, $endDate = null) {
 	 	static $stmt;
 	 	 
 	 	if ($stmt == null) {
@@ -2356,7 +2368,9 @@ class DBInterface {
                     "FROM projectCostHistory P ".
                     "LEFT JOIN department D ".
                         "ON P.department = D.id ".
-                    "WHERE project = :project ". 
+                    "WHERE P.project = :project ". 
+                        "AND P.startDate <= :endDate ".
+                        "AND P.endDate >= :startDate ".
                     "GROUP BY D.id, D.name"
                 );
 
@@ -2364,8 +2378,18 @@ class DBInterface {
                 throw new Exception($this->formatErrorMessage(null, "Unable to prepare project department cost query"));
         }
        
+        if ($startDate == null)
+            $startDate = new DateTime('1900-01-01');
+        $startDate = $startDate->format("Y-m-d");
+
+        if ($endDate == null)
+            $endDate = new DateTime('9999-12-31');
+        $endDate = $endDate->format("Y-m-d");
+
         $params = Array(
                 ':project' => $project,
+                ':startDate' => $startDate,
+                ':endDate' => $endDate
             );
 
         $success = $stmt->execute($params);
