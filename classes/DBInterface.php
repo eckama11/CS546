@@ -2345,7 +2345,7 @@ class DBInterface {
         while ($row = $stmt->fetchObject()) {
             $rv[] = array(
                         $row->name,
-                        $row->totalCost
+                        (double)$row->totalCost
                     );
         } // while
 		return $rv;

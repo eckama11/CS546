@@ -42,12 +42,10 @@
 	data.addColumn('string', 'Costs');
 	data.addColumn('number', 'Dollars');
 	data.addRows([
+		
 	  ['Other Costs', <?= json_encode($db->readProject($projectId)->otherCosts) ?>],
-	  ['Other Costs', 0]
-	  //while ($projectArray has $pro) {
-	  	//[$projectArray
-	  //}
-	]);
+	  
+	].concat(<?= json_encode($projectArray) ?>));
 
 	// Set chart options
 	var options = {'title':<?= json_encode($db->readProject($projectId)->name) ?>,
