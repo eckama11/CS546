@@ -2315,16 +2315,16 @@ class DBInterface {
 	 	 
 	 	if ($stmt == null) {
             $stmt = $this->dbh->prepare(
-            	"SELECT P.name, SUM(T.cost) as totalCost ".
-                    	"FROM projectCostHistory T, paystub P ".
-                    	"WHERE T.paystub = P.id ".
-                    		"AND T.project = ". 
-                    		(int)$project.
-                    	" GROUP BY P.id, P.name"
+            	"SELECT COALESCE(P.name, 'Other Costs') as name, SUM(T.cost) as totalCost ".
+                    "FROM projectCostHistory T ".
+                    "LEFT JOIN paystub P ".
+                        "ON T.paystub = P.id ".
+                    "WHERE T.project = :project ".
+                    "GROUP BY P.id, P.name"
                 );
 
             if (!$stmt)
-                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project cost history insert"));
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project employee cost query"));
         }
        
         $params = Array(
@@ -2334,7 +2334,7 @@ class DBInterface {
         $success = $stmt->execute($params);
 
         if ($success === false)
-            throw new Exception($this->formatErrorMessage($stmt, "Unable to select employees and cost for project."));
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to select employee costs for project."));
 		
 		$rv = Array();
 		
@@ -2345,70 +2345,33 @@ class DBInterface {
                     );
         } // while
 		return $rv;
-     }//readProjectChartEmployees
-	
-	public function readProjectChartOther($project) {
-	 	static $stmt;
-	 	 
-	 	if ($stmt == null) {
-            $stmt = $this->dbh->prepare(
-            	"SELECT SUM(cost) as totalCost ".
-                    "FROM projectCostHistory ".
-                    "WHERE project = ". 
-                    	(int)$project.
-                    " AND paystub IS NULL".
-                    " AND department IS NULL"
-                );
+    } // readProjectChartEmployees
 
-            if (!$stmt)
-                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project cost history insert"));
-        }
-       
-        $params = Array(
-                ':project' => $project,
-            );
-
-        $success = $stmt->execute();
-
-        if ($success === false)
-            throw new Exception($this->formatErrorMessage($stmt, "Unable to select other costs for project."));
-		
-		$rv = Array();
-		
-        while ($row = $stmt->fetchObject()) {
-            $rv[] = array(
-            			"Other Costs",
-                        (double)$row->totalCost
-                    );
-        } // while
-		return $rv;
-     }//readProjectChartOther
-	
 	public function readProjectChartProjects($project) {
 	 	static $stmt;
 	 	 
 	 	if ($stmt == null) {
             $stmt = $this->dbh->prepare(
-            	"SELECT D.name, SUM(P.cost) as totalCost ".
-                    "FROM projectCostHistory P, department D ".
-                    "WHERE P.department = D.id ".
-                    	" AND project = ". 
-                    	(int)$project.
-                    " GROUP BY D.id, D.name"
+            	"SELECT COALESCE(D.name, 'Other Costs') as name, SUM(P.cost) as totalCost ".
+                    "FROM projectCostHistory P ".
+                    "LEFT JOIN department D ".
+                        "ON P.department = D.id ".
+                    "WHERE project = :project ". 
+                    "GROUP BY D.id, D.name"
                 );
 
             if (!$stmt)
-                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project cost history insert"));
+                throw new Exception($this->formatErrorMessage(null, "Unable to prepare project department cost query"));
         }
        
         $params = Array(
                 ':project' => $project,
             );
 
-        $success = $stmt->execute();
+        $success = $stmt->execute($params);
 
         if ($success === false)
-            throw new Exception($this->formatErrorMessage($stmt, "Unable to select other costs for project."));
+            throw new Exception($this->formatErrorMessage($stmt, "Unable to select department costs for project."));
 		
 		$rv = Array();
 		
@@ -2419,5 +2382,6 @@ class DBInterface {
                     );
         } // while
 		return $rv;
-     }//readProjectChartProjects
+    } // readProjectChartProjects
+
 } // DBInterface

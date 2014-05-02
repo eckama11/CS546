@@ -7,10 +7,10 @@
         doUnauthorizedRedirect();
 	
 	
-		$projectId = @$_GET['id'];
+	$projectId = @$_GET['id'];
 	try {
+        $projectName = $db->readProject($projectId)->name;
 		$projectArray = ($db->readProjectChartEmployees($projectId));
-		$projectOther = ($db->readProjectChartOther($projectId));
 		$projectDepartments = ($db->readProjectChartProjects($projectId));
 	} catch (Exception $ex) {
         handleDBException($ex);
@@ -45,13 +45,10 @@
 	var data = new google.visualization.DataTable();
 	data.addColumn('string', 'Costs');
 	data.addColumn('number', 'Dollars');
-	data.addRows([
-	
-	].concat(<?= json_encode($projectOther) ?>)
-	.concat(<?= json_encode($projectArray) ?>));
+	data.addRows(<?= json_encode($projectArray) ?>);
 
 	// Set chart options
-	var options = {'title':<?= json_encode($db->readProject($projectId)->name) ?> ,
+	var options = {'title':<?= json_encode($projectName) ?> ,
 				   'width':800,
 				   'height':500};
 
@@ -66,10 +63,10 @@
 	var data = new google.visualization.DataTable();
 	data.addColumn('string', 'Costs');
 	data.addColumn('number', 'Dollars');
-	data.addRows([].concat(<?= json_encode($projectDepartments) ?>));
+	data.addRows(<?= json_encode($projectDepartments) ?>);
 
 	// Set chart options
-	var options = {'title':<?= json_encode($db->readProject($projectId)->name) ?>,
+	var options = {'title':<?= json_encode($projectName) ?>,
 				   'width':800,
 				   'height':500};
 
