@@ -73,3 +73,19 @@ table.table.table-hover tr:hover {
 .datepicker table tr td.today {
     background-color: #fff2c5;
 }
+
+.tab-content {
+    border: 2px solid darkgreen;
+    padding: 15px;
+}
+
+.nav-tabs>li>a {
+    color: #888;
+    border-top-color: #ccc;
+    border-left-color: #ccc;
+    border-right-color: #ccc;
+}
+
+.nav>li>a:hover, .nav>li>a:focus {
+    background-color: #ccc;
+}

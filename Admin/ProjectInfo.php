@@ -6,31 +6,43 @@
     if (!$loginSession->isAdministrator)
         doUnauthorizedRedirect();
 	
-	$currentDate = new DateTime();
-    $currentDate->setTimezone(new DateTimeZone('GMT'));
+    $projectPeriodStartDate = @$_POST['projectPeriodStartDate'];
+    $projectPeriodStartDate = ($projectPeriodStartDate
+                ? new DateTime($projectPeriodStartDate)
+                : new DateTime());
+    $projectPeriodStartDate = new DateTime( $projectPeriodStartDate->format("Y-m-01T00:00:00P") );
 
-    $projectPeriodStartDate = new DateTime( $currentDate->format("Y-m-01T00:00:00P") );
-    $projectPeriodEndDate = (clone $projectPeriodStartDate);
+    $projectPeriodEndDate = @$_POST['projectPeriodEndDate'];
+    if ($projectPeriodEndDate) {
+        $projectPeriodEndDate = new DateTime($projectPeriodEndDate);
+        $projectPeriodEndDate = new DateTime( $projectPeriodEndDate->format("Y-m-01T00:00:00P") );
+    } else {
+        $projectPeriodEndDate = (clone $projectPeriodStartDate);
+    }
     $projectPeriodEndDate->add(new DateInterval('P1M'))->sub(new DateInterval('P1D'));
 
     $projectPeriodDuration = $projectPeriodEndDate->diff($projectPeriodStartDate)->format("%a") + 1;
 
-    $projectPeriod = htmlentities($projectPeriodStartDate->format("F, Y"));
-    $projectPeriodStartDate = htmlentities($projectPeriodStartDate->format("Y-m-d"));
-    $projectPeriodEndDate = htmlentities($projectPeriodEndDate->format("Y-m-d"));
-	
 	$projectId = @$_GET['id'];
+    if ($projectId == null)
+        $projectId = @$_POST['id'];
+
 	$projectAll = 0;
 	try {
         $projectName = $db->readProject($projectId)->name;
-		$projectArray = ($db->readProjectChartEmployees($projectId));
-		$projectDepartments = ($db->readProjectChartProjects($projectId));
-		$allProjects = ($db->readProjectChartAllDepartments($projectAll));
-		$allProjectsOther = ($db->readProjectChartAll($projectAll));
+
+		$projectArray = ($db->readProjectChartEmployees($projectId, $projectPeriodStartDate, $projectPeriodEndDate));
+		$projectDepartments = ($db->readProjectChartProjects($projectId, $projectPeriodStartDate, $projectPeriodEndDate));
+		$allProjects = ($db->readProjectChartAllDepartments($projectAll, $projectPeriodStartDate, $projectPeriodEndDate));
+		$allProjectsOther = ($db->readProjectChartAll($projectAll, $projectPeriodStartDate, $projectPeriodEndDate));
 	} catch (Exception $ex) {
         handleDBException($ex);
         return;
 	}
+
+    $projectPeriod = htmlentities($projectPeriodStartDate->format("F, Y"));
+    $projectPeriodStartDate = htmlentities($projectPeriodStartDate->format("m/d/Y"));
+    $projectPeriodEndDate = htmlentities($projectPeriodEndDate->format("m/d/Y"));
 
 /*
  *	An administrator should be able to generate a report on each 
@@ -39,21 +51,6 @@
 */
 
 ?>
-<style type="text/css">
-  .navigateButton {
-    padding:5px 5px;
-    font-weight: bold;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-  }
-
-  .navigateButton:hover {
-    color: red;
-    background-color: #ccc;
-    border: 1px solid black;
-  }
-</style>
 <!--Load the AJAX API-->
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
@@ -66,10 +63,13 @@
   google.setOnLoadCallback(drawChart2);
   google.setOnLoadCallback(drawChart3);
 
+  var chartWidth = 800;
+  var chartHeight = 500;
+
   // Callback that creates and populates a data table,
   // instantiates the pie chart, passes in the data and
   // draws it.
-  
+
   function drawChart() {
 
 	// Create the data table.
@@ -80,11 +80,11 @@
 
 	// Set chart options
 	var options = {'title':<?= json_encode($projectName) ?> ,
-				   'width':800,
-				   'height':500};
+				   'width':chartWidth,
+				   'height':chartHeight};
 
 	// Instantiate and draw our chart, passing in some options.
-	var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+	var chart = new google.visualization.PieChart(document.getElementById('chart_byEmployee'));
 	chart.draw(data, options);
   }
   
@@ -98,11 +98,11 @@
 
 	// Set chart options
 	var options = {'title':<?= json_encode($projectName) ?>,
-				   'width':800,
-				   'height':500};
+				   'width':chartWidth,
+				   'height':chartHeight};
 
 	// Instantiate and draw our chart, passing in some options.
-	var chart = new google.visualization.PieChart(document.getElementById('chart_div2'));
+	var chart = new google.visualization.PieChart(document.getElementById('chart_byDepartment'));
 	chart.draw(data, options);
   }
   
@@ -116,127 +116,125 @@
 	data.addRows(<?= json_encode($allProjectsOther) ?>);
 	// Set chart options
 	var options = {'title': 'All Projects',
-				   'width':800,
-				   'height':500};
+				   'width':chartWidth,
+				   'height':chartHeight};
 
 	// Instantiate and draw our chart, passing in some options.
 	var chart = new google.visualization.PieChart(document.getElementById('chart_div3'));
 	chart.draw(data, options);
   }
+
+  function validateDates(form) {
+    var startDate = new Date($(form.elements.projectPeriodStartDate).val());
+    var endDate = new Date($(form.elements.projectPeriodEndDate).val());
+
+    if (endDate < startDate) {
+        showError("The end date must come after the start date.");
+        return false;
+    }
+
+    return true;
+  }
 </script>
 
-<script>
-function generateReports(form) {
-    $("#spinner").show();
-    $("#content").hide();
-
-    $.ajax({
-        "type" : "POST",
-        "url" : "Admin/doGenerateReports.php",
-        "data" : $(form).serialize(),
-        "dataType" : "json"
-        })
-        .done(function(data) {
-            $("#spinner").hide();
-
-            if (data.error != null) {
-                showError(data.error);
-                $("#content").show();
-            } else {
-                $("#successDiv .message").text(data.message);
-                $("#successDiv").show();
-            }
-        })
-        .fail(function( jqXHR, textStatus, errorThrown ) {
-            console.log("Error: "+ textStatus +" (errorThrown="+ errorThrown +")");
-            console.log(jqXHR.textContent);
-
-            $("#spinner").hide();
-            $("#content").show();
-            showError("Request failed, unable to generate reports: "+ errorThrown);
-        })
-
-    return false;
-} // generateProjectReports
-
-function previousMonth() {
-    updateProjectPeriodDisplay(-1);
-} // previousMonth
-
-function nextMonth() {
-    updateProjectPeriodDisplay(1);
-} // nextMonth
-
-function updateProjectPeriodDisplay(addMonths) {
-    var formElem = $('#generateForm input[name="projectPeriodStartDate"]');
-
-    var date = new Date(formElem.val());
-    date = new Date(date.getUTCFullYear(), date.getUTCMonth() + addMonths, date.getUTCDate());
-
-    var endDate = new Date(date.getUTCFullYear(), date.getUTCMonth() + 1, 0);
-
-    $("#projectPeriod").text(formatDate(date, "F, Y"));
-    $("#projectPeriodStartDate").text(formatDate(date, "Y-m-d"));
-    $("#projectPeriodEndDate").text(formatDate(endDate, "Y-m-d"));
-
-    var numDays = endDate.getUTCDate() - date.getUTCDate() + 1;
-    $("#projectPeriodDuration").text(numDays);
-
-    formElem.val(formatDate(date, "Y-m-d"));
-} // updateProjectPeriodDisplay
-</script>
-<div class="container col-md-6 col-md-offset-3">
-	<div id="spinner" style="padding-bottom:10px;text-align:center;display:none">
-        <div style="color:black;padding-bottom:32px;">Generating Reports for <?php echo $projectPeriodStartDate .' to '. $projectPeriodEndDate; ?>...</div>
-        <img src="spinner.gif">
-    </div>
+<div class="container">
     <div id="content">
-        <form id="generateForm" class="form" onsubmit="return generateReports(this)">
-            <legend>Generate Reports</legend>
+        <form class="form" method="post" onsubmit="return validateDates(this)">
+            <legend>Project Report</legend>
 
-            <table class="table">
-                <tr>
-                    <th>Report Period</th>
-                    <td style="width:50%">
-                        <span id="projectPeriod"><?php echo $projectPeriod; ?></span>
-                        </span>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Project Period Start Date</th>
-                    <td>
-                    	<span id="projectPeriodStartDate"><?php echo $projectPeriodStartDate; ?></span>
-                    	<span style="float:right">
-                    	<span class="navigateButton" onclick="previousMonth(event)">&lt;</span>
-                        <span class="navigateButton" onclick="nextMonth(event)">&gt;</span>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Project Period End Date</th>
-                    <td>
-                    	<span id="projectPeriodEndDate"><?php echo $projectPeriodEndDate; ?></span>
-                    	<span style="float:right">
-                    	<span class="navigateButton" onclick="previousMonth(event)">&lt;</span>
-                        <span class="navigateButton" onclick="nextMonth(event)">&gt;</span>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Project Period Duration</th>
-                    <td><span id="projectPeriodDuration"><?php echo $projectPeriodDuration; ?></span></td>
-                </tr>
-            </table>
+            <div class="form-group">
+                <label class="control-label">Report Period</label>
+                <div class="input-group">
+                    <input data-provide="datepicker" data-date-autoclose="true" data-date-min-view-mode="months" class="form-control" type="text" name="projectPeriodStartDate" id="projectPeriodStartDate" placeholder="Enter project report start date" value="<?php echo $projectPeriodStartDate; ?>"/>
+                    <span class="input-group-addon">to</span>
+                    <input data-provide="datepicker" data-date-autoclose="true" data-date-min-view-mode="months" class="form-control" type="text" name="projectPeriodEndDate" id="projectPeriodEndDate" placeholder="Enter project report end date" value="<?php echo $projectPeriodEndDate; ?>"/>
+                </div>
+            </div>
 
-            <input type="hidden" name="projectPeriodStartDate" value="<?php echo htmlentities($projectPeriodStartDate); ?>"/>
-            <button style="margin-top: 10px" type="submit" class="btn btn-default">Generate Reports</button>
+            <input type="hidden" name="id" value="<?php echo htmlentities($projectId); ?>"/>
+            <button style="margin-top: 10px" type="submit" class="btn btn-default">Apply</button>
         </form>
     </div>
-    <legend>Employee Report</legend>
-	<div id="chart_div"></div>
-	<br>
-	<legend>Department Report</legend>
-	<div id="chart_div2"></div>
-	<br>
-	<legend>All Projects Department Report</legend>
-	<div id="chart_div3"></div>
-	<br>
+
+    <br/>
+    <table class="table">
+        <tr>
+            <th>Report Period</th>
+            <td style="width:50%">
+                <span><?php echo $projectPeriod; ?></span>
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <th>Report Period Start Date</th>
+            <td>
+                <span><?php echo $projectPeriodStartDate; ?></span>
+            </td>
+        </tr>
+        <tr>
+            <th>Report Period End Date</th>
+            <td>
+                <span><?php echo $projectPeriodEndDate; ?></span>
+            </td>
+        </tr>
+        <tr>
+            <th>Report Period Duration</th>
+            <td><span><?php echo $projectPeriodDuration; ?></span></td>
+        </tr>
+    </table>
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#byDepartment" data-toggle="tab">By Department</a></li>
+        <li><a href="#byEmployee" data-toggle="tab">By Employee</a></li>
+        <li><a href="#byProject" data-toggle="tab">By Project</a></li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content">
+        <div class="tab-pane active" id="byDepartment">
+            <legend>Department Report</legend>
+            <div id="chart_byDepartment"></div>
+        </div>
+        <div class="tab-pane" id="byEmployee">
+            <legend>Employee Report</legend>
+            <div id="chart_byEmployee"></div>
+        </div>
+        <div class="tab-pane" id="byProject">
+            <legend>All Projects Department Report</legend>
+            <div id="chart_div3"></div>
+        </div>
+    </div>
 <div>
+<br/>
+<script>
+require(["main"], function() {
+    require([
+        "bootstrap-datepicker"
+    ], function(DepartmentSelectorView, data) {
+        registerBuildUI(function($) {
+            // Init date pickers
+            $('[data-provide="datepicker"]').datepicker();
+            
+            $('#projectPeriodEndDate').on(
+                "change",
+                function(e) {
+                    var $el = $(e.target);
+
+                    var val = $el.val();
+
+                    var desired = new Date(val);
+                    desired = new Date(
+                                desired.getFullYear(), desired.getMonth() + 1, 0,
+                                0, 0, 0
+                              );
+                    desired = formatDate(desired, "m/d/Y");
+
+                    if (val != desired)
+                        $el.datepicker('update', desired);
+                }
+            );
+        });
+    });
+});
+</script>

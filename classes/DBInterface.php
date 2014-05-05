@@ -2310,7 +2310,7 @@ class DBInterface {
             );
     } // writeProjectCostHistory
 
-	public function readProjectChartEmployees($project, $startDate = null, $endDate = null) {
+	public function readProjectChartEmployees($project, DateTime $startDate = null, DateTime $endDate = null) {
 	 	static $stmt;
 	 	 
 	 	if ($stmt == null) {
@@ -2359,7 +2359,7 @@ class DBInterface {
 		return $rv;
     } // readProjectChartEmployees
 
-	public function readProjectChartProjects($project, $startDate = null, $endDate = null) {
+	public function readProjectChartProjects($project, DateTime $startDate = null, DateTime $endDate = null) {
 	 	static $stmt;
 	 		if ($stmt == null) {
 				$stmt = $this->dbh->prepare(
@@ -2408,7 +2408,7 @@ class DBInterface {
 		return $rv;
     } // readProjectChartProjects
 
-	public function readProjectChartAllDepartments($project, $startDate = null, $endDate = null) {
+	public function readProjectChartAllDepartments($project, DateTime $startDate = null, DateTime $endDate = null) {
 		static $stmt;
 		if ($stmt == null) {
 				$stmt = $this->dbh->prepare(
@@ -2452,7 +2452,7 @@ class DBInterface {
 		return $rv;
 	}// readProjectChartAllDepartments
 	
-	public function readProjectChartAll($project, $startDate = null, $endDate = null) {
+	public function readProjectChartAll($project, DateTime $startDate = null, DateTime $endDate = null) {
 		static $stmt;
 		if ($stmt == null) {
 				$stmt = $this->dbh->prepare(
