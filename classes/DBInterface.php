@@ -2450,7 +2450,7 @@ class DBInterface {
                     );
         } // while
 		return $rv;
-	}// readProjectChartProjectsAllDepartments
+	}// readProjectChartAllDepartments
 	
 	public function readProjectChartAll($project, $startDate = null, $endDate = null) {
 		static $stmt;
@@ -2493,5 +2493,6 @@ class DBInterface {
                     );
         } // while
 		return $rv;
-	}// readProjectChartProjectsAll
+	}// readProjectChartAll
+
 } // DBInterface

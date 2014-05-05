@@ -204,7 +204,7 @@
             <div class="form-group">
                 <label class="control-label">Start Date</label>
                 <div class="input-group">
-                    <input data-provide="datepicker" class="form-control" type="text" name="startDate" id="startDate" placeholder="Enter employment start date" />
+                    <input data-provide="datepicker" data-date-autoclose="true" class="form-control" type="text" name="startDate" id="startDate" placeholder="Enter employment start date" />
                     <span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
                 </div>
             </div>
