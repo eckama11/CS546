@@ -3,7 +3,7 @@
 		<div class="form-group" style="width:48%;display:inline-block">
 			<label class="control-label">Start Date</label>
 			<div class="input-group">
-				<input data-provide="datepicker" data-date-autoclose="true" class="form-control" type="text" name="startDate" placeholder="Enter start date" value="<%- formatDate(model.get("startDate"), "m/d/Y") %>"/>
+				<input data-provide="datepicker" data-date-autoclose="true" data-date-today-btn="true" data-date-today-highlight="true" class="form-control" type="text" name="startDate" placeholder="Enter start date" value="<%- formatDate(model.get("startDate"), "m/d/Y") %>"/>
 				<span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
 			</div>
 		</div>
@@ -11,7 +11,7 @@
 		<div class="form-group" style="width:48%;display:inline-block; float:right">
 			<label class="control-label">End Date</label>
 			<div class="input-group">
-				<input data-provide="datepicker" data-date-autoclose="true" class="form-control" type="text" name="endDate" placeholder="Enter end date" value="<%- formatDate(model.get("endDate"), "m/d/Y") %>"/>
+				<input data-provide="datepicker" data-date-autoclose="true" data-date-today-btn="true" data-date-today-highlight="true" class="form-control" type="text" name="endDate" placeholder="Enter end date" value="<%- formatDate(model.get("endDate"), "m/d/Y") %>"/>
 				<span class="input-group-addon" glyphicon glyphicon-calendar><span class="glyphicon glyphicon-calendar"></span></span>
 			</div>
 		</div>

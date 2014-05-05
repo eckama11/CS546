@@ -142,9 +142,9 @@
             <div class="form-group">
                 <label class="control-label">Project Duration</label>
                 <div class="input-group">
-                    <input data-provide="datepicker" data-date-autoclose="true" class="form-control" type="text" name="startDate" id="startDate" placeholder="Enter project start date" value="<?php echo htmlentities($project ? $project->startDate->format("m/d/Y") : null); ?>"/>
+                    <input data-provide="datepicker" data-date-autoclose="true" data-date-today-btn="true" data-date-today-highlight="true" class="form-control" type="text" name="startDate" id="startDate" placeholder="Enter project start date" value="<?php echo htmlentities($project ? $project->startDate->format("m/d/Y") : null); ?>"/>
                     <span class="input-group-addon">to</span>
-                    <input data-provide="datepicker" data-date-autoclose="true" class="form-control" type="text" name="endDate" id="endDate" placeholder="Enter project end date" value="<?php echo htmlentities($project ? $project->endDate->format("m/d/Y") : null); ?>"/>
+                    <input data-provide="datepicker" data-date-autoclose="true" data-date-today-btn="true" data-date-today-highlight="true" class="form-control" type="text" name="endDate" id="endDate" placeholder="Enter project end date" value="<?php echo htmlentities($project ? $project->endDate->format("m/d/Y") : null); ?>"/>
                 </div>
             </div>
 

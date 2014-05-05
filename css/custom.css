@@ -66,4 +66,10 @@ table.table.table-hover tr:hover {
     white-space: nowrap;
 }
 
+.input-group-addon {
+    color: white;
+}
 
+.datepicker table tr td.today {
+    background-color: #fff2c5;
+}
