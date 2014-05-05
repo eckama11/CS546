@@ -89,3 +89,8 @@ table.table.table-hover tr:hover {
 .nav>li>a:hover, .nav>li>a:focus {
     background-color: #ccc;
 }
+
+.table:hover {
+	background-color: #aaa;
+}
+
