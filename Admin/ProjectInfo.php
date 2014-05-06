@@ -195,14 +195,98 @@
         <div class="tab-pane active" id="byDepartment">
             <legend>Department Report</legend>
             <div id="chart_byDepartment"></div>
+            <br>
+            <legend>Department Report Table</legend>
+            <?php if (count($projectDepartments) == 0) { ?>
+    		<div>Sorry, there are currently no departments to display.</div>
+    		<div>Please check back later.</div>
+			<?php } else { ?>
+				<table class="table table-striped table-bordered">
+					<thead>
+						<tr>
+							<th>Department</th>
+							<th>Costs</th>
+						</tr>
+					</thead>
+					<tbody>
+			<?php
+    				foreach ($projectDepartments as $pro) {
+						echo '<tr>';
+						echo   '<td>'. htmlentities($pro[0]) .'</td>';
+						echo   '<td>'. htmlentities($pro[1]) .'</td>';
+						echo '</tr>';
+				} 
+			?>
+				</tbody>
+				</table>
+			<?php } ?>
         </div>
         <div class="tab-pane" id="byEmployee">
             <legend>Employee Report</legend>
             <div id="chart_byEmployee"></div>
+            <br>
+            <legend>Employee Report Table</legend>
+            <?php if (count($projectArray) == 0) { ?>
+    		<div>Sorry, there are currently no employees to display.</div>
+    		<div>Please check back later.</div>
+			<?php } else { ?>
+				<table class="table table-striped table-bordered">
+					<thead>
+						<tr>
+							<th>Employee</th>
+							<th>Costs</th>
+						</tr>
+					</thead>
+					<tbody>
+			<?php
+    				foreach ($projectArray as $pArr) {
+						echo '<tr>';
+						echo   '<td>'. htmlentities($pArr[0]) .'</td>';
+						echo   '<td>'. htmlentities($pArr[1]) .'</td>';
+						echo '</tr>';
+				} 
+			?>
+					</tbody>
+				</table>
+			<?php } ?>
         </div>
         <div class="tab-pane" id="byProject">
             <legend>All Projects Department Report</legend>
             <div id="chart_div3"></div>
+            <br>
+            <legend>All Projects Department Report Table</legend>
+            <?php if (count($allProjects) == 0 && count($allProjectsOther) == 0) { ?>
+    		<div>Sorry, there are currently no projects to display.</div>
+    		<div>Please check back later.</div>
+			<?php } else { ?>
+				<table class="table table-striped table-bordered">
+					<thead>
+						<tr>
+							<th>Department</th>
+							<th>Costs</th>
+						</tr>
+					</thead>
+					<tbody>
+			<?php
+    				foreach ($allProjects as $all) {
+						echo '<tr>';
+						echo   '<td>'. htmlentities($all[0]) .'</td>';
+						echo   '<td>'. htmlentities($all[1]) .'</td>';
+						echo '</tr>';
+				} 
+			?>
+			
+			<?php
+    				foreach ($allProjectsOther as $allOther) {
+						echo '<tr>';
+						echo   '<td>'. htmlentities($allOther[0]) .'</td>';
+						echo   '<td>'. htmlentities($allOther[1]) .'</td>';
+						echo '</tr>';
+				} 
+			?>
+					</tbody>
+				</table>
+			<?php } ?>
         </div>
     </div>
 <div>
