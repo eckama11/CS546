@@ -10,6 +10,10 @@ body{background-color: #F7F7F6; color:black;}
 .form-control { color: black; }
 .form-control[disabled] { background-color: #ccc; }
 
+table.table.table-hover tr:hover th {
+    color: black;
+}
+
 table.table.table-hover tr:hover {
     color: white;
 }
@@ -89,8 +93,3 @@ table.table.table-hover tr:hover {
 .nav>li>a:hover, .nav>li>a:focus {
     background-color: #ccc;
 }
-
-.table:hover {
-	background-color: #aaa;
-}
-

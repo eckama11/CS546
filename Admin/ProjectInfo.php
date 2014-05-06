@@ -210,12 +210,18 @@
 					</thead>
 					<tbody>
 			<?php
+                    $total = 0;
     				foreach ($projectDepartments as $pro) {
+                        $total += $pro[1];
 						echo '<tr>';
 						echo   '<td>'. htmlentities($pro[0]) .'</td>';
-						echo   '<td>'. htmlentities($pro[1]) .'</td>';
+						echo   '<td class="numeric">$&nbsp;'. htmlentities(number_format($pro[1], 2)) .'</td>';
 						echo '</tr>';
-				} 
+                    } 
+                    echo '<tr>';
+                    echo   '<th>Total</th>';
+                    echo   '<th class="numeric">$&nbsp;'. htmlentities(number_format($total, 2)) .'</th>';
+                    echo '</tr>';
 			?>
 				</tbody>
 				</table>
@@ -239,12 +245,18 @@
 					</thead>
 					<tbody>
 			<?php
+                    $total = 0;
     				foreach ($projectArray as $pArr) {
+                        $total += $pArr[1];
 						echo '<tr>';
 						echo   '<td>'. htmlentities($pArr[0]) .'</td>';
-						echo   '<td>'. htmlentities($pArr[1]) .'</td>';
+						echo   '<td class="numeric">$&nbsp;'. htmlentities(number_format($pArr[1], 2)) .'</td>';
 						echo '</tr>';
-				} 
+                    } 
+                    echo '<tr>';
+                    echo   '<th>Total</th>';
+                    echo   '<th class="numeric">$&nbsp;'. htmlentities(number_format($total, 2)) .'</th>';
+                    echo '</tr>';
 			?>
 					</tbody>
 				</table>
@@ -268,21 +280,27 @@
 					</thead>
 					<tbody>
 			<?php
+                    $total = 0;
     				foreach ($allProjects as $all) {
+                        $total += $all[1];
 						echo '<tr>';
 						echo   '<td>'. htmlentities($all[0]) .'</td>';
-						echo   '<td>'. htmlentities($all[1]) .'</td>';
+						echo   '<td class="numeric">'. htmlentities(number_format($all[1], 2)) .'</td>';
 						echo '</tr>';
-				} 
-			?>
-			
-			<?php
+                    } 
+
     				foreach ($allProjectsOther as $allOther) {
+                        $total += $allOther[1];
 						echo '<tr>';
 						echo   '<td>'. htmlentities($allOther[0]) .'</td>';
-						echo   '<td>'. htmlentities($allOther[1]) .'</td>';
+						echo   '<td class="numeric">'. htmlentities(number_format($allOther[1], 2)) .'</td>';
 						echo '</tr>';
-				} 
+                    }
+
+                    echo '<tr>';
+                    echo   '<th>Total</th>';
+                    echo   '<th class="numeric">$&nbsp;'. htmlentities(number_format($total, 2)) .'</th>';
+                    echo '</tr>';
 			?>
 					</tbody>
 				</table>
